@@ -27,6 +27,37 @@ export const TEMPLATE_DATABASE = 'kapka_template';
 let server: EmbeddedPostgres | null = null;
 let dataDir = '';
 
+/**
+ * Holds on to the run's verdict and puts it back at the very last moment.
+ *
+ * Something after the global teardown resets the exit code to 0. The effect
+ * was that `npm test` reported "1 failed" and exited 0, so the CI test step
+ * could not fail — a red suite went green, and so did every step after it.
+ * Probed: process.exitCode is 1 throughout teardown and 0 by the time the
+ * exit event fires.
+ *
+ * Mutating the exit code inside an 'exit' listener is the last word on what
+ * the process returns, so re-asserting it there survives whatever clears it.
+ *
+ * Takes the three things it needs rather than a process-shaped object:
+ * Node types `exitCode` as an optional property, which under
+ * exactOptionalPropertyTypes no hand-written interface can quite match.
+ */
+export function guardExitCode(
+  /** Node widened this to include null, so the guard accepts it too. */
+  readCode: () => number | string | null | undefined,
+  setCode: (code: number) => void,
+  onExit: (listener: () => void) => void,
+): void {
+  const code = readCode();
+  const failed = code !== undefined && code !== 0;
+  onExit(() => {
+    // A floor, not a replacement: a teardown crash sets its own code and
+    // flattening it to 1 would hide why the run died.
+    if (failed && !readCode()) setCode(1);
+  });
+}
+
 export default async function setup(project: TestProject): Promise<() => Promise<void>> {
   dataDir = mkdtempSync(join(tmpdir(), 'kapka-pg-'));
 
@@ -56,6 +87,16 @@ export default async function setup(project: TestProject): Promise<() => Promise
   project.provide('postgresPort', PORT);
 
   return async function teardown() {
+    guardExitCode(
+      () => process.exitCode,
+      (code) => {
+        process.exitCode = code;
+      },
+      (listener) => {
+        process.on('exit', listener);
+      },
+    );
+
     /*
      * Nothing here may throw. A teardown error fails the whole run while every
      * test passes, which is a confusing way to learn that a temp directory was

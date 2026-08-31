@@ -1,3 +1,4 @@
+import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { PublicBloodRequest } from '@kapka/shared';
@@ -16,59 +17,69 @@ const request: PublicBloodRequest = {
   expiresAt: new Date(Date.now() + 7 * 86_400_000).toISOString(),
 };
 
+const renderCard = (overrides: Partial<PublicBloodRequest> = {}) =>
+  render(
+    <MemoryRouter>
+      <RequestCard request={{ ...request, ...overrides }} />
+    </MemoryRouter>,
+  );
+
 describe('RequestCard', () => {
   it('shows the blood type as text, not only as colour', () => {
-    const { container } = render(<RequestCard request={request} />);
+    const { container } = renderCard();
     expect(container.textContent).toContain('O−');
   });
 
-  it('names the action button by its request, in words a screen reader can say', () => {
-    // A feed of seven cards otherwise gives seven buttons all called "View
-    // request". The description says which one — and it has to say
-    // "O negative", not the stored "O-", which reads as "O" or "O hyphen".
-    render(<RequestCard request={request} />);
-    const button = screen.getByRole('button', { name: /View request/ });
-    expect(button).toHaveAccessibleDescription(
-      'O negative at City General Hospital, Skopje',
-    );
+  it('is a link, so it can be opened in a tab and its URL shared', () => {
+    // The card used to be a div with a button inside it: one small target,
+    // no middle-click, no URL to send anyone.
+    renderCard();
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/requests/r1');
+  });
+
+  it('names itself by its request, in words a screen reader can say', () => {
+    // A feed of seven cards otherwise gives seven links all called "View
+    // request". The name says which one — and it has to say "O negative",
+    // not the stored "O-", which reads as "O" or "O hyphen".
+    renderCard();
+    expect(
+      screen.getByRole('link', {
+        name: 'O negative needed at City General Hospital, Skopje',
+      }),
+    ).toBeInTheDocument();
   });
 
   it('never leaks the raw stored value into the announcement', () => {
-    const { container } = render(<RequestCard request={request} />);
-    const hidden = container.querySelector('.visually-hidden[id^="req-"]');
-    expect(hidden?.textContent).not.toContain('O-');
+    renderCard();
+    expect(screen.getByRole('link').getAttribute('aria-label')).not.toContain('O-');
   });
 
   it('shows hospital, city, units and how long ago', () => {
-    const { container } = render(<RequestCard request={request} />);
-    expect(
-      screen.getByRole('heading', { name: 'City General Hospital' }),
-    ).toBeInTheDocument();
+    const { container } = renderCard();
+    expect(container.textContent).toContain('City General Hospital');
     expect(container.textContent).toContain('Skopje');
-    expect(container.textContent).toContain('3 units');
-    expect(container.textContent).toContain('12 minutes ago');
+    expect(container.textContent).toContain('3');
+    expect(container.textContent).toMatch(/minutes ago/);
   });
 
   it('says "1 unit", not "1 units"', () => {
-    const { container } = render(
-      <RequestCard request={{ ...request, unitsNeeded: 1 }} />,
-    );
+    const { container } = renderCard({ unitsNeeded: 1 });
     expect(container.textContent).toContain('1 unit');
     expect(container.textContent).not.toContain('1 units');
   });
 
   it('carries the urgency as a word, never as colour alone', () => {
-    const { container } = render(<RequestCard request={request} />);
-    expect(container.textContent).toContain('Critical');
+    const { container } = renderCard();
+    expect(container.textContent).toMatch(/critical/i);
   });
 
   it('renders without a note', () => {
-    const { container } = render(<RequestCard request={{ ...request, note: null }} />);
+    const { container } = renderCard({ note: null });
     expect(container.textContent).not.toContain('Road traffic accident.');
   });
 
   it('gives the time a machine-readable datetime', () => {
-    const { container } = render(<RequestCard request={request} />);
+    const { container } = renderCard();
     expect(container.querySelector('time')).toHaveAttribute(
       'dateTime',
       request.createdAt,

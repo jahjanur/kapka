@@ -1,55 +1,91 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { PublicBloodRequest } from '@kapka/shared';
-import { SEED_REQUESTS } from './seedRequests';
+import { api, ApiError } from './api';
 
-interface QueryResult {
-  data: PublicBloodRequest[] | undefined;
+interface Snapshot<T> {
+  /** Which fetch this data belongs to. */
+  key: string;
+  data?: T;
+  error: ApiError | null;
+}
+
+export interface QueryResult<T> {
+  data: T | undefined;
   isLoading: boolean;
-  error: Error | null;
+  error: ApiError | null;
   refetch: () => void;
 }
 
-interface QueryState {
-  data?: PublicBloodRequest[];
-  error: Error | null;
-}
-
 /**
- * Stands in for the TanStack Query hook that will wrap GET /api/requests.
+ * The one fetching pattern both screens use.
  *
- * Deliberately shaped like the real thing — data / isLoading / error — so the
- * feed's loading, empty and error states are exercised for real now, and
- * swapping in useQuery later touches this file only.
+ * Shaped like TanStack Query's useQuery — data / isLoading / error / refetch —
+ * so swapping it for the real thing later is an import change rather than a
+ * rewrite of every caller.
  *
  * isLoading is derived rather than stored: setting it inside the effect would
  * mean a synchronous setState on every run, and a cascading extra render.
  */
-export function useRequests(): QueryResult {
-  const [state, setState] = useState<QueryState>({ error: null });
+function useQuery<T>(key: string, fetcher: () => Promise<T>): QueryResult<T> {
+  const [state, setState] = useState<Snapshot<T>>({ key, error: null });
   const [attempt, setAttempt] = useState(0);
+
+  /*
+   * The snapshot carries the key it belongs to, and a mismatch is read as
+   * loading during render.
+   *
+   * The obvious alternative — clearing the state at the top of the effect —
+   * is a synchronous setState inside an effect, which costs a second render
+   * pass on every fetch and is what react-hooks/set-state-in-effect is there
+   * to catch. This way navigating from one request to another shows the
+   * skeleton immediately instead of the previous request's data.
+   */
+  const current: Snapshot<T> = state.key === key ? state : { key, error: null };
 
   useEffect(() => {
     let cancelled = false;
-    // A short delay so the skeletons are the real first paint, the way they
-    // will be against a live API on a hospital connection.
-    const timer = window.setTimeout(() => {
-      if (!cancelled) setState({ data: SEED_REQUESTS, error: null });
-    }, 350);
+
+    fetcher()
+      .then((data) => {
+        if (!cancelled) setState({ key, data, error: null });
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        setState({
+          key,
+          error:
+            error instanceof ApiError
+              ? error
+              : new ApiError('INTERNAL', 'Something went wrong.', 0, undefined),
+        });
+      });
+
     return () => {
       cancelled = true;
-      window.clearTimeout(timer);
     };
-  }, [attempt]);
+    // The key identifies what is being fetched; the fetcher closure is
+    // recreated every render and would loop if it were the dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, attempt]);
 
   const refetch = useCallback(() => {
-    setState({ error: null });
     setAttempt((n) => n + 1);
   }, []);
 
   return {
-    data: state.data,
-    isLoading: state.data === undefined && state.error === null,
-    error: state.error,
+    data: current.data,
+    isLoading: current.data === undefined && current.error === null,
+    error: current.error,
     refetch,
   };
+}
+
+/** GET /api/requests — the public feed (§9.1). */
+export function useRequests(): QueryResult<PublicBloodRequest[]> {
+  return useQuery('requests', () => api.listRequests());
+}
+
+/** GET /api/requests/:id — one request (§9.4). */
+export function useRequest(id: string): QueryResult<PublicBloodRequest> {
+  return useQuery(`requests/${id}`, () => api.getRequest(id));
 }

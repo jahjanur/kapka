@@ -2,70 +2,266 @@
    Public feed (§9.1). Mobile-first: written narrow, widened upward.
    ========================================================================= */
 
-.page {
-  padding-block-end: var(--space-24);
+/* ── Hero ────────────────────────────────────────────────────────────────── */
+/* A tinted band rather than a plain white block, so the page opens with the
+   product's own colour and the feed below reads as a separate surface. */
+.hero {
+  padding-block: var(--space-8) var(--space-6);
+  background-image: linear-gradient(
+    to bottom,
+    var(--accent-surface),
+    var(--bg-canvas) 88%
+  );
+  border-block-end: 1px solid var(--border-subtle);
 }
 
-/* ── Above the fold on a phone: one sentence, one action. Nothing else. ──── */
-.hero {
-  padding-block: var(--space-block);
+.heroGrid {
+  display: grid;
+  gap: var(--space-6);
+}
+
+/* min-inline-size: 0 so a long word in the lead cannot push the grid column
+   wider than its track and squeeze the spotlight beside it. */
+.heroCopy {
+  min-inline-size: 0;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--fg-secondary);
+}
+
+/* A slow pulse on one small dot. The page is about urgency; a page that
+   flashes at you is about itself. */
+.pulse {
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: var(--radius-full);
+  background-color: var(--accent);
+  animation: pulse var(--dur-pulse) var(--ease-in-out) infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.35;
+  }
 }
 
 .heroTitle {
-  font-size: var(--text-3xl);
+  margin-block-start: var(--space-3);
+  font-size: var(--text-4xl);
   letter-spacing: var(--tracking-tight);
   text-wrap: balance;
 }
 
 .heroLead {
-  max-inline-size: 46ch;
+  max-inline-size: var(--measure-narrow);
   margin-block-start: var(--space-3);
   font-size: var(--text-lg);
   color: var(--fg-secondary);
 }
 
 .heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
   margin-block-start: var(--space-5);
 }
 
-/* ── Filters ─────────────────────────────────────────────────────────────── */
-/* Not sticky on a phone. The full panel — two chip rows plus the city select
-   — is taller than the space under the header, so pinning it clips the first
-   row and eats the screen the requests need. The sticky bottom CTA is the
-   element that follows you here; the filters scroll away with the content. */
-.filters {
-  padding-block: var(--space-3);
+/* ── Stat strip ──────────────────────────────────────────────────────────── */
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  margin-block-start: var(--space-8);
+  padding-block-start: var(--space-5);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.stat dt {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.stat dd {
+  margin: 0;
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-tight);
+}
+
+/* ── Spotlight ───────────────────────────────────────────────────────────── */
+/* Hidden on a phone: it repeats the first card of the feed, which is already
+   the next thing on the screen. It exists to use the width a wide screen has
+   and a phone does not. */
+.spotlight {
+  display: none;
+}
+
+.spotlightHeading {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.spotlightTop {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block-start: var(--space-4);
+}
+
+.spotlightHospital {
+  margin-block-start: var(--space-4);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-tight);
+}
+
+.spotlightMeta {
+  margin-block-start: var(--space-2);
+  margin-block-end: var(--space-5);
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+}
+
+/* Page-level layout change, so a media query by design (§7.2). */
+@media (min-width: 64rem) {
+  .hero {
+    padding-block: var(--space-16) var(--space-10);
+  }
+  .heroGrid {
+    /* The copy gets the room; the spotlight is a fixed rail beside it. This
+       is what fills the dead space a centred one-column hero leaves. */
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    gap: var(--space-16);
+    align-items: start;
+  }
+  .spotlight {
+    display: block;
+    padding: var(--space-5);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-hairline);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--elevation-2);
+  }
+}
+
+/* ── Filter toolbar ──────────────────────────────────────────────────────── */
+/* Was a left rail. A rail costs 16rem of width on every screen and leaves the
+   card grid at two columns on a monitor that fits three. */
+.toolbar {
+  position: sticky;
+  inset-block-start: var(--header-height);
+  z-index: var(--z-sticky);
+  background-color: color-mix(in oklab, var(--bg-canvas) var(--tint-chrome), transparent);
+  backdrop-filter: blur(var(--blur-chrome));
   border-block-end: 1px solid var(--border-subtle);
 }
 
-.filterStack {
+.toolbarInner {
+  padding-block: var(--space-3);
+}
+
+/* The phone control: one button, and the filters fold away behind it. */
+.filterToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: var(--hit-min);
+  padding-inline: var(--space-4);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--fg-primary);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+}
+
+.filterCount {
   display: grid;
+  place-items: center;
+  min-inline-size: 1.25rem;
+  block-size: 1.25rem;
+  padding-inline: var(--space-1);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-onAccent);
+  background-color: var(--accent);
+  border-radius: var(--radius-full);
+}
+
+.filterChevron {
+  transition: rotate var(--dur-fast) var(--ease-out);
+}
+.filterToggle[aria-expanded='true'] .filterChevron {
+  rotate: 180deg;
+}
+
+.panel {
+  display: none;
   gap: var(--space-3);
+  padding-block-start: var(--space-3);
+}
+
+.panelOpen {
+  display: grid;
+}
+
+.group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.divider {
+  display: none;
 }
 
 .cityField {
   max-inline-size: 18rem;
 }
 
-/* On a wide screen the filters become a rail that stays with you as the list
-   scrolls. WithSidebar has already put them in a column by this point. */
-@media (min-width: 64rem) {
-  .filters {
-    /* A rail is too narrow to trip the container query, and has no swipe
-       affordance, so the chips must wrap here. */
-    --filter-wrap: wrap;
-    --filter-overflow: visible;
-    --filter-snap: none;
-
-    /* Now it is a short rail beside the list, so it can follow the scroll. */
-    position: sticky;
-    inset-block-start: var(--header-height);
-    padding-block: var(--space-4);
-    border-block-end: 0;
+/* From here the toolbar is one row and the toggle is redundant. */
+@media (min-width: 48rem) {
+  .filterToggle {
+    display: none;
+  }
+  .panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+    padding-block-start: 0;
+  }
+  .divider {
+    display: block;
+    inline-size: 1px;
+    align-self: stretch;
+    background-color: var(--border-subtle);
   }
   .cityField {
-    max-inline-size: none;
+    max-inline-size: 12rem;
+    margin-inline-start: auto;
   }
+}
+
+/* ── List ────────────────────────────────────────────────────────────────── */
+.page {
+  padding-block: var(--space-6) var(--space-24);
 }
 
 .resultCount {
@@ -73,10 +269,6 @@
   font-variant-numeric: tabular-nums;
   color: var(--fg-secondary);
 }
-
-/* ── List ────────────────────────────────────────────────────────────────── */
-/* The card list is a <Grid> — see Feed.tsx. It reflows from one column to
-   several on its own, so the media query that used to live here is gone. */
 
 /* ── Skeleton card, shape-matched to RequestCard ─────────────────────────── */
 .skeletonCard {
@@ -86,7 +278,7 @@
   background-color: var(--bg-surface);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-xl);
-  box-shadow: var(--elevation-2);
+  box-shadow: var(--elevation-1);
 }
 .skeletonTop {
   display: flex;

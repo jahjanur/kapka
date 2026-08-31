@@ -1,0 +1,211 @@
+/* ============================================================================
+   One request in full (§9.4). Mobile-first: written narrow, widened upward.
+   ========================================================================= */
+
+.page {
+  padding-block: var(--space-5) var(--space-24);
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-block-size: var(--hit-min);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--fg-secondary);
+  text-decoration: none;
+}
+@media (hover: hover) {
+  .back:hover {
+    color: var(--fg-primary);
+  }
+}
+
+/* The chevron points right everywhere else in the app; here it is a back
+   link, so it is turned rather than given a second icon. */
+.backIcon {
+  rotate: 180deg;
+}
+
+.skeleton,
+.state {
+  margin-block-start: var(--space-6);
+}
+
+.layout {
+  display: grid;
+  gap: var(--space-8);
+  margin-block-start: var(--space-4);
+}
+
+/* Same reason as the feed's hero column: a long hospital name must wrap
+   rather than widen the track. */
+.main {
+  min-inline-size: 0;
+}
+
+/* ── Head ────────────────────────────────────────────────────────────────── */
+.head {
+  padding: var(--space-5);
+  padding-inline-start: var(--space-6);
+  position: relative;
+  overflow: hidden;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--elevation-1);
+}
+
+/* Same severity stripe as the card it was opened from, so the page reads as
+   the same object rather than a new one. */
+.head::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: 3px;
+  background-color: var(--border-default);
+}
+.head[data-urgency='critical']::before {
+  background-color: var(--danger);
+}
+.head[data-urgency='urgent']::before {
+  background-color: var(--warning);
+}
+.head[data-urgency='routine']::before {
+  background-color: var(--info);
+}
+
+.headTop {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.title {
+  margin-block-start: var(--space-4);
+  font-size: var(--text-2xl);
+  letter-spacing: var(--tracking-tight);
+}
+
+.where {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block-start: var(--space-3);
+  font-size: var(--text-base);
+  color: var(--fg-secondary);
+}
+
+/* ── Sections ────────────────────────────────────────────────────────────── */
+.section {
+  margin-block-start: var(--space-8);
+}
+
+.sectionHeading {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.sectionLead,
+.note {
+  max-inline-size: var(--measure);
+  margin-block-start: var(--space-3);
+  color: var(--fg-secondary);
+}
+
+.note {
+  padding: var(--space-4);
+  color: var(--fg-primary);
+  background-color: var(--bg-surface-alt);
+  border-inline-start: 2px solid var(--border-default);
+  border-radius: var(--radius-md);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-block-start: var(--space-4);
+}
+
+.fact dt {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.fact dd {
+  margin: 0;
+  margin-block-start: var(--space-1);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Action rail ─────────────────────────────────────────────────────────── */
+.actionCard {
+  padding: var(--space-5);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--elevation-2);
+}
+
+.actionHeading {
+  font-size: var(--text-lg);
+  letter-spacing: var(--tracking-tight);
+}
+
+.actionBody {
+  margin-block: var(--space-3) var(--space-5);
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+}
+
+.contact {
+  margin-block-start: var(--space-5);
+  padding-block-start: var(--space-5);
+  border-block-start: 1px solid var(--border-hairline);
+}
+
+.contactHeading {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.contactBody {
+  display: flex;
+  align-items: start;
+  gap: var(--space-2);
+  margin-block-start: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+}
+
+/* Page-level layout change, so a media query by design (§7.2). */
+@media (min-width: 64rem) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) 22rem;
+    gap: var(--space-12);
+    align-items: start;
+  }
+  .rail {
+    /* Follows the reader down a long note rather than scrolling away. */
+    position: sticky;
+    inset-block-start: calc(var(--header-height) + var(--space-4));
+  }
+  .facts {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

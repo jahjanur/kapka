@@ -15,6 +15,14 @@ interface FieldProps {
   required?: boolean;
   /** Marks the field "Optional" in the label — clearer than leaving it silent. */
   optional?: boolean;
+  /**
+   * Hides the label visually but keeps it for screen readers.
+   *
+   * For a control whose purpose is already obvious from where it sits — a
+   * city select in a filter toolbar. Never because the label looks untidy:
+   * the label still has to exist, and it still has to be right.
+   */
+  hideLabel?: boolean;
   className?: string;
 }
 
@@ -30,6 +38,7 @@ export function Field({
   error,
   required = false,
   optional = false,
+  hideLabel = false,
   className,
 }: FieldProps) {
   const controlId = useId();
@@ -50,7 +59,10 @@ export function Field({
 
   return (
     <div className={cx(styles.field, className)}>
-      <label className={styles.label} htmlFor={controlId}>
+      <label
+        className={cx(styles.label, hideLabel && 'visually-hidden')}
+        htmlFor={controlId}
+      >
         {label}
         {required && (
           <>
