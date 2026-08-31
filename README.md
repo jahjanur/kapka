@@ -171,6 +171,32 @@ never seen. The 27 pairs come from the ABO/Rh rule and match the three
 reference points in §5.1, but they have not been diffed against the plan's own
 table. Do that before going live.
 
+### "If a value is not a token, it is a bug"
+
+`packages/tokens/src/usage.test.ts` enforces that rather than leaving it to
+code review. On every commit it checks all web CSS for:
+
+- **No colour literals.** Zero hex, `rgb()`, `hsl()` or raw `oklch()` outside
+  the token files.
+- **No duration literals.** Motion timing is a design decision (§6.6:
+  entrances 220ms, exits 140ms), not a per-component choice.
+- **Every `var(--x)` resolves** to a token, a property defined in the same
+  file, or one the components set at runtime through inline styles.
+
+That last check is the one that earns its keep. A typo in
+`var(--bourder-subtle)` is **not** a CSS error — the declaration is dropped,
+the element renders with no border, and nothing tells you: not the build, not
+the console, not the type checker. All three guards were mutation-tested.
+
+Four values were untokenised when the check was first written:
+
+| Added                             | Replaced                                                                                                                            |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `--header-height`                 | The header said `3.5rem` inner and the feed's rail hard-coded `4.5rem` separately — changing either would have misaligned the other |
+| `--opacity-disabled`              | Four components had drifted to `0.5`, `0.55` and `0.6` for the same state                                                           |
+| `--blur-chrome` / `--tint-chrome` | Sticky bars used `blur(10px)`/90% and `blur(8px)`/88%, reading as different materials                                               |
+| `--dur-pulse`                     | The skeleton animation's `1.4s`                                                                                                     |
+
 ### Colour and contrast
 
 `packages/tokens/src/tokens.css` holds the OKLCH crimson and slate scales and

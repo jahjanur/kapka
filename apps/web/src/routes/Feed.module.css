@@ -59,7 +59,7 @@
 
     /* Now it is a short rail beside the list, so it can follow the scroll. */
     position: sticky;
-    inset-block-start: 4.5rem;
+    inset-block-start: var(--header-height);
     padding-block: var(--space-4);
     border-block-end: 0;
   }

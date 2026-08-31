@@ -8,8 +8,8 @@
   z-index: var(--z-header);
   padding-block: var(--space-4);
   margin-block-end: var(--space-8);
-  background-color: color-mix(in oklab, var(--bg-canvas) 88%, transparent);
-  backdrop-filter: blur(8px);
+  background-color: color-mix(in oklab, var(--bg-canvas) var(--tint-chrome), transparent);
+  backdrop-filter: blur(var(--blur-chrome));
   border-block-end: 1px solid var(--border-subtle);
 }
 

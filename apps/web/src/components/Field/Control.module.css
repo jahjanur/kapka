@@ -52,6 +52,6 @@
 
 .control:disabled {
   cursor: not-allowed;
-  opacity: 0.55;
+  opacity: var(--opacity-disabled);
   background-color: var(--bg-surface-alt);
 }

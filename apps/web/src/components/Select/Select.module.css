@@ -39,5 +39,5 @@
 }
 
 .select:disabled ~ .chevron {
-  opacity: 0.55;
+  opacity: var(--opacity-disabled);
 }

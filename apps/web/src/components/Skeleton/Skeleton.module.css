@@ -4,7 +4,7 @@
 .skeleton {
   background-color: var(--bg-surface-alt);
   border-radius: var(--radius-sm);
-  animation: pulse 1.4s var(--ease-in-out) infinite;
+  animation: pulse var(--dur-pulse) var(--ease-in-out) infinite;
 }
 
 .text {
