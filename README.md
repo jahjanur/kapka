@@ -293,6 +293,31 @@ Badge outlines are deliberately **not** held to 3:1. The Rh sign is carried by
 the badge text, which does clear 4.5:1; the outline is redundant
 reinforcement, not the only channel.
 
+### Cities
+
+City is a controlled list and never free text, because §5.1 matches on an
+exact string — a donor whose city does not match a request's is simply never
+told about it, with nothing anywhere reporting a problem.
+
+`CITIES` in `@kapka/shared` holds all 34 North Macedonian cities. `GET
+/api/cities` serves that same constant, so the dropdown and the validator
+cannot disagree.
+
+**Input is normalised, not rejected.** §3 names `"Bitola"` vs `"bitola "` vs
+`"Битола"` as the failure mode. All three now resolve to `Bitola`:
+
+| Sent       | Stored                                                      |
+| ---------- | ----------------------------------------------------------- |
+| `bitola `  | `Bitola` — trimmed, case-folded                             |
+| `Битола`   | `Bitola` — Macedonian Cyrillic is transliterated            |
+| `Stip`     | `Štip` — diacritics folded, so a plain keyboard works       |
+| `Atlantis` | rejected — normalisation resolves spellings, not inventions |
+
+Cyrillic matters rather than being a nicety: **the country writes in Cyrillic**,
+so refusing `Битола` would mean refusing the spelling a Macedonian keyboard
+produces. `Demir` resolves to nothing, because guessing between Demir Hisar
+and Demir Kapija would put a donor in the wrong place.
+
 ### Auth
 
 Four endpoints: `register`, `login`, `refresh`, `logout`.
@@ -332,6 +357,31 @@ development key, so nothing signed with it could be mistaken for a secret.
 
 `20260831130000000_refresh-tokens.sql` adds the table. §3 has none, because
 §3 does not describe rotation.
+
+### Cities
+
+City is a controlled list and never free text, because §5.1 matches on an
+exact string — a donor whose city does not match a request's is simply never
+told about it, with nothing anywhere reporting a problem.
+
+`CITIES` in `@kapka/shared` holds all 34 North Macedonian cities. `GET
+/api/cities` serves that same constant, so the dropdown and the validator
+cannot disagree.
+
+**Input is normalised, not rejected.** §3 names `"Bitola"` vs `"bitola "` vs
+`"Битола"` as the failure mode. All three now resolve to `Bitola`:
+
+| Sent       | Stored                                                      |
+| ---------- | ----------------------------------------------------------- |
+| `bitola `  | `Bitola` — trimmed, case-folded                             |
+| `Битола`   | `Bitola` — Macedonian Cyrillic is transliterated            |
+| `Stip`     | `Štip` — diacritics folded, so a plain keyboard works       |
+| `Atlantis` | rejected — normalisation resolves spellings, not inventions |
+
+Cyrillic matters rather than being a nicety: **the country writes in Cyrillic**,
+so refusing `Битола` would mean refusing the spelling a Macedonian keyboard
+produces. `Demir` resolves to nothing, because guessing between Demir Hisar
+and Demir Kapija would put a donor in the wrong place.
 
 ### Authorisation
 

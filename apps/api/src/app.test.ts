@@ -131,11 +131,21 @@ describe('POST /api/requests validation', () => {
     expect(expectErrorBody(response.body).error.code).toBe('VALIDATION_FAILED');
   });
 
-  it('rejects a non-canonical city', async () => {
+  it('normalises a city rather than rejecting a different spelling', async () => {
+    // "bitola " and "Битола" are the same city. §3 asks for them to be
+    // normalised at write time, not refused.
     const response = await request(app)
       .post('/api/requests')
       .set('Authorization', await bearer())
       .send({ ...valid, city: 'bitola ' });
+    expect(response.status).toBe(501);
+  });
+
+  it('rejects a city that is not on the list at all', async () => {
+    const response = await request(app)
+      .post('/api/requests')
+      .set('Authorization', await bearer())
+      .send({ ...valid, city: 'Atlantis' });
     expect(response.status).toBe(400);
     expect(expectErrorBody(response.body).error.field).toBe('city');
   });

@@ -46,11 +46,23 @@ describe('registerSchema', () => {
   it.each([
     ['a trailing space', 'Bitola '],
     ['the wrong case', 'bitola'],
-    ['Cyrillic', 'Битола'],
-    ['a city not on the list', 'Atlantis'],
-  ])('rejects a city with %s — free text silently breaks matching', (_label, city) => {
-    expect(registerSchema.safeParse({ ...valid, city }).success).toBe(false);
+    ['Cyrillic, which is how the country writes it', 'Битола'],
+    ['no diacritics', 'Bitola'],
+  ])('normalises a city given with %s to the canonical spelling', (_label, city) => {
+    // §3: normalise at write time. All of these must reach the database as
+    // exactly "Bitola", because §5.1 matches on an exact string.
+    const result = registerSchema.safeParse({ ...valid, city });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.city).toBe('Bitola');
   });
+
+  it.each(['Atlantis', 'Belgrade', '', 'Skopje City'])(
+    'still rejects %o, which is not a city on the list',
+    (city) => {
+      // Normalisation resolves spellings, not inventions.
+      expect(registerSchema.safeParse({ ...valid, city }).success).toBe(false);
+    },
+  );
 
   it('requires a password of at least 10 characters (§9.2)', () => {
     expect(registerSchema.safeParse({ ...valid, password: 'short' }).success).toBe(false);
