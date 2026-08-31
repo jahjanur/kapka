@@ -8,7 +8,8 @@
     ".": "./src/index.ts",
     "./tokens.css": "./src/tokens.css",
     "./scale.css": "./src/scale.css",
-    "./global.css": "./src/global.css"
+    "./global.css": "./src/global.css",
+    "./fonts.css": "./src/fonts.css"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

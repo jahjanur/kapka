@@ -197,6 +197,49 @@ Four values were untokenised when the check was first written:
 | `--blur-chrome` / `--tint-chrome` | Sticky bars used `blur(10px)`/90% and `blur(8px)`/88%, reading as different materials                                               |
 | `--dur-pulse`                     | The skeleton animation's `1.4s`                                                                                                     |
 
+### Fonts
+
+Inter, self-hosted and subsetted (§6.4, a P1 performance requirement). Two
+WOFF2 files, which is the maximum §11 allows:
+
+| File                   | Size | When it downloads                    |
+| ---------------------- | ---- | ------------------------------------ |
+| `inter-latin.woff2`    | 47KB | Always — preloaded                   |
+| `inter-cyrillic.woff2` | 18KB | Only when the page contains Cyrillic |
+
+Split by `unicode-range`, so an English page costs 47KB and a Macedonian one
+65KB, and neither pays for the other. **Cyrillic is not optional** — Macedonian
+is written in it, and without that subset every Cyrillic hospital name would
+fall back to a different face mid-sentence.
+
+Subsetting is by **script, not by observed glyphs**. The pages render
+user-supplied hospital names and notes, so any Latin or Cyrillic character can
+appear; a subset built from the text currently on screen would break on real
+data.
+
+Two details that are silent when wrong, both covered by tests:
+
+- **`tnum` is not in fontTools' default retain list.** Dropping it would
+  quietly break `font-variant-numeric: tabular-nums`, which §6.4 requires so
+  counts and dates do not jitter. The build script keeps it explicitly.
+- **`crossorigin` on the preload.** Fonts are fetched in CORS mode even
+  same-origin; without it the preloaded file is discarded and downloaded
+  again — strictly worse than not preloading.
+
+Inter's `opsz` axis is pinned to 14. That costs optical refinement on the
+largest headings and saves 25KB — 35% of the Latin file — which is the better
+trade on the 3G device profile in §2. Remove the instancer step in
+`scripts/build-fonts.sh` to get it back.
+
+Regenerate with:
+
+```bash
+pip install "fonttools[woff]" brotli
+./scripts/build-fonts.sh path/to/InterVariable.ttf
+```
+
+Inter is SIL Open Font License; the licence ships beside the fonts.
+
 ### Colour and contrast
 
 `packages/tokens/src/tokens.css` holds the OKLCH crimson and slate scales and
@@ -344,10 +387,6 @@ silently do not run for you.
 
 ## Known gaps
 
-- **Inter is not self-hosted yet.** §6.4 makes that a P1 performance
-  requirement. The font stack currently falls through to the platform UI face,
-  which looks correct and costs nothing. Drop a subsetted `InterVariable.woff2`
-  into `web/public/fonts/` and uncomment the two blocks in `web/index.html`.
 - **`--text-xs` conflicts with the responsive QA checklist.** §6.4 defines it as
   12–13px; §7.6 says no text anywhere below 14px. The tokens follow §6.4 as
   written. Decide which wins before §9 screens start using `--text-xs` for real
