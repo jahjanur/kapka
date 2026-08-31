@@ -112,6 +112,19 @@ production. Every change is a new migration with both an `-- Up Migration` and
 a `-- Down Migration` section — a test enforces that both exist, because
 without a down section a bad deploy cannot be walked back.
 
+Current migrations:
+
+| File                                           | What it does                                                                         |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `…120000000_initial-schema`                    | All six tables, five enums, the §3 indexes, `citext`, `updated_at` triggers          |
+| `…120100000_seed-blood-compatibility`          | The 27 valid (recipient, donor) pairs                                                |
+| `…120200000_deletable-users-and-query-indexes` | `ON DELETE SET NULL` so users are deletable (§12), plus indexes for the §4 endpoints |
+
+`apps/api/src/schema.test.ts` holds a manifest of every table, enum and index
+the schema must contain, checked against the up sections of all migrations.
+Deleting a `CREATE INDEX` line is easy to do and otherwise impossible to
+notice until a query gets slow in production.
+
 The enums in `20260831120000000_initial-schema.sql` mirror
 `packages/shared/src/domain.ts`. Change one and you change the other in the
 same commit; a test compares the `blood_type` enum against `BLOOD_TYPES` and
