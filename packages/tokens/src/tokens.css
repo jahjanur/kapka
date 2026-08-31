@@ -17,7 +17,9 @@
   --crimson-200: oklch(0.88 0.070 22);
   --crimson-300: oklch(0.79 0.110 23);
   --crimson-400: oklch(0.69 0.155 24);
-  --crimson-500: oklch(0.60 0.190 25);   /* primary */
+  /* L nudged from 0.60: white on 0.60 is 4.33:1, just under AA, and this
+     step carries the label of every primary button. 0.585 clears 4.5. */
+  --crimson-500: oklch(0.585 0.190 25);  /* primary */
   --crimson-600: oklch(0.53 0.185 25);
   --crimson-700: oklch(0.45 0.160 25);
   --crimson-800: oklch(0.37 0.125 25);
@@ -64,13 +66,21 @@
   --bg-overlay:     oklch(0.20 0.02 265 / 0.45);
 
   --fg-primary:   var(--slate-900);
-  --fg-secondary: var(--slate-600);
-  --fg-muted:     var(--slate-500);
+  /* Each one step darker than first drafted: slate-600 on --bg-inset was
+     3.61:1, and --fg-muted carries real content (a card's city, units and
+     time-ago), not decoration. Three distinct levels, all clearing 4.5. */
+  --fg-secondary: var(--slate-700);
+  --fg-muted:     var(--slate-600);
   --fg-onAccent:  var(--slate-0);
 
   --border-subtle:  var(--slate-200);
   --border-default: var(--slate-300);
   --border-strong:  var(--slate-400);
+  /* For a control whose border is its only affordance — an input, a
+     filter chip. WCAG 1.4.11 wants 3:1 there. The three above are for
+     dividers and decoration, which the same rule exempts; raising them
+     would give exactly the heavy borders §6.1 rules out. */
+  --border-control: var(--slate-500);
 
   --accent:         var(--crimson-500);
   --accent-hover:   var(--crimson-600);
@@ -135,10 +145,14 @@
     --border-subtle:  oklch(0.30 0.018 265);
     --border-default: oklch(0.38 0.020 265);
     --border-strong:  oklch(0.48 0.020 265);
+    --border-control: oklch(0.50 0.020 265);
 
     --accent:         var(--crimson-400);
     --accent-hover:   var(--crimson-300);
-    --accent-active:  var(--crimson-500);
+    /* Not crimson-500: --fg-onAccent is dark ink here, so a DARKER
+       active state lowers contrast rather than raising it. 0.64 keeps
+       the button label at AA. */
+    --accent-active:  oklch(0.64 0.185 25);
     --accent-surface: oklch(0.28 0.070 25);
     --accent-border:  oklch(0.40 0.100 25);
     --accent-ink:     var(--crimson-300);
@@ -196,10 +210,14 @@
   --border-subtle:  oklch(0.30 0.018 265);
   --border-default: oklch(0.38 0.020 265);
   --border-strong:  oklch(0.48 0.020 265);
+  --border-control: oklch(0.50 0.020 265);
 
   --accent:         var(--crimson-400);
   --accent-hover:   var(--crimson-300);
-  --accent-active:  var(--crimson-500);
+  /* Not crimson-500: --fg-onAccent is dark ink here, so a DARKER
+     active state lowers contrast rather than raising it. 0.64 keeps
+     the button label at AA. */
+  --accent-active:  oklch(0.64 0.185 25);
   --accent-surface: oklch(0.28 0.070 25);
   --accent-border:  oklch(0.40 0.100 25);
   --accent-ink:     var(--crimson-300);

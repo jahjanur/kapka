@@ -171,6 +171,36 @@ never seen. The 27 pairs come from the ABO/Rh rule and match the three
 reference points in §5.1, but they have not been diffed against the plan's own
 table. Do that before going live.
 
+### Colour and contrast
+
+`packages/tokens/src/tokens.css` holds the OKLCH crimson and slate scales and
+every semantic token, with dark defined alongside light rather than bolted on.
+
+`contrast.test.ts` verifies **every** foreground/background pairing in **both**
+themes on every commit — 4.5:1 for text, 3:1 for non-text (§10). It reads
+`tokens.css` itself, so changing a token without checking it fails the build.
+It also asserts the two dark blocks stay identical, since plain CSS cannot
+share a declaration list across a media-query boundary and they drift silently.
+
+That audit found four real failures the first time it ran, all now fixed:
+
+| Token                  | Was         | Why it changed                                                                       |
+| ---------------------- | ----------- | ------------------------------------------------------------------------------------ |
+| `--crimson-500`        | L 0.60      | White on it was 4.33:1 — under AA, and it carries every primary button label         |
+| `--fg-secondary`       | slate-600   | One step darker; the old value failed on `--bg-inset`                                |
+| `--fg-muted`           | slate-500   | Same — and it carries a card's city, units and time-ago, which is content            |
+| dark `--accent-active` | crimson-500 | `--fg-onAccent` is dark ink in dark mode, so a _darker_ active state lowers contrast |
+
+`--border-control` is new: on an input or a filter chip the border is the only
+thing marking where the control is, which WCAG 1.4.11 puts at 3:1.
+`--border-subtle` / `--border-default` stay lighter for dividers, which the
+same rule exempts — raising those would give exactly the heavy borders §6.1
+rules out.
+
+Badge outlines are deliberately **not** held to 3:1. The Rh sign is carried by
+the badge text, which does clear 4.5:1; the outline is redundant
+reinforcement, not the only channel.
+
 ### Seed data
 
 `npm run seed` loads synthetic data: donors covering all eight blood types

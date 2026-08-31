@@ -54,7 +54,7 @@
   line-height: var(--leading-none);
   color: var(--fg-secondary);
   background-color: var(--bg-surface);
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-full);
   cursor: pointer;
   white-space: nowrap;

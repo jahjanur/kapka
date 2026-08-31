@@ -17,7 +17,10 @@
   color: var(--fg-primary);
 
   background-color: var(--bg-inset);
-  border: 1px solid var(--border-default);
+  /* --border-control, not --border-default: on an input the border is the
+     only thing marking where the control is, which WCAG 1.4.11 puts at
+     3:1. The lighter tokens are for dividers, which it exempts. */
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-md);
   box-shadow: var(--elevation-1);
 
@@ -33,7 +36,7 @@
 
 @media (hover: hover) {
   .control:hover:not(:disabled):not([aria-invalid='true']) {
-    border-color: var(--border-strong);
+    border-color: var(--fg-secondary);
   }
 }
 

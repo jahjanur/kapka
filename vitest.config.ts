@@ -19,6 +19,14 @@ export default defineConfig({
       },
       {
         test: {
+          name: 'tokens',
+          root: './packages/tokens',
+          environment: 'node',
+          include: ['src/**/*.test.ts'],
+        },
+      },
+      {
+        test: {
           name: 'api',
           root: './apps/api',
           environment: 'node',

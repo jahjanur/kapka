@@ -2,7 +2,9 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ES2022"],
-    "types": []
+    /* The package ships browser-safe code, but its contrast test reads
+       tokens.css off disk — so node types are needed to typecheck it. */
+    "types": ["node"]
   },
   "include": ["src"]
 }
