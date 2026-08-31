@@ -2,6 +2,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { BLOOD_TYPES, parseBloodType, type BloodType } from '@kapka/shared';
+import { VALID_PAIRS } from './matching/compatibilityTable';
 
 /**
  * §13 makes this the P0 test: all 64 (recipient, donor) pairs asserted against
@@ -143,6 +144,24 @@ describe('blood_compatibility seed', () => {
         }
       }
     }
+  });
+});
+
+describe('the migration agrees with the hand-written table', () => {
+  // Checked without a database, so a disagreement fails in milliseconds rather
+  // than waiting for the Postgres-backed suite. §13 wants the hand-written
+  // table to be the reference; this is the cheapest place to compare against
+  // it.
+  const seeded = seededPairs();
+
+  it('seeds exactly the pairs the table marks valid', () => {
+    const fromTable = VALID_PAIRS.map((pair) => `${pair.recipient}>${pair.donor}`).sort();
+    expect([...seeded].sort()).toEqual(fromTable);
+  });
+
+  it('agrees on the count §13 gives', () => {
+    expect(seeded.size).toBe(27);
+    expect(VALID_PAIRS).toHaveLength(27);
   });
 });
 

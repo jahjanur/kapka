@@ -358,9 +358,8 @@ Testing it against a mock would only confirm the mock agrees with itself.
 
 What the database tests cover:
 
-- **All 64 (recipient, donor) combinations** through the real query, compared
-  against the ABO/Rh rule written from first principles — a second opinion,
-  not a restatement of the matrix being queried.
+- **All 64 (recipient, donor) combinations** through the real query, each its
+  own test case so a failure names the exact pair. See below.
 - The eligibility boundary at 55, 56 and 57 days, and never-donated.
 - Every exclusion: wrong city, availability paused, notifications off,
   unverified email, deactivated account, already notified.
@@ -374,6 +373,41 @@ including all three §5.1 reference points; changing 56 to 55, dropping the
 city join, and dropping the already-notified guard each fail too.
 
 The whole suite runs in about 7 seconds.
+
+### The 64-pair test
+
+§13 asks for all 64 pairs asserted against a **hand-written table** — 27 valid,
+37 invalid. Hand-written is the point: the query, the seed migration and the
+ABO/Rh rule are all derivations of the same idea, and checking one derivation
+against another agrees without proving anything.
+
+`apps/api/src/matching/compatibilityTable.ts` holds that table as a grid, so
+someone who does not read TypeScript can check it against a transfusion chart:
+
+```
+            O-  O+  A-  A+  B-  B+  AB- AB+
+   O-        Y   .   .   .   .   .   .   .
+   O+        Y   Y   .   .   .   .   .   .
+   ...
+   AB+       Y   Y   Y   Y   Y   Y   Y   Y
+```
+
+Rows are what the **patient needs**; columns are **who can give**. The first
+row reads: a patient needing O− can receive from O− only. The first column
+reads: an O− donor can give to everyone.
+
+That gives **three independent statements** of the same truth — the grid, the
+migration that seeds the database, and the rule derived from first principles.
+A mistake in any one shows up as a disagreement rather than passing quietly in
+all three.
+
+Mutation-tested in each direction:
+
+| Broken                                   | Caught by                                                |
+| ---------------------------------------- | -------------------------------------------------------- |
+| One cell flipped in the grid             | 4 tests — the pair, the count, and both agreement checks |
+| Compatibility join reversed in the query | 42 of 72                                                 |
+| A pair changed in the seed migration     | the migration refuses to apply at all                    |
 
 ### Cities
 
@@ -505,9 +539,8 @@ Testing it against a mock would only confirm the mock agrees with itself.
 
 What the database tests cover:
 
-- **All 64 (recipient, donor) combinations** through the real query, compared
-  against the ABO/Rh rule written from first principles — a second opinion,
-  not a restatement of the matrix being queried.
+- **All 64 (recipient, donor) combinations** through the real query, each its
+  own test case so a failure names the exact pair. See below.
 - The eligibility boundary at 55, 56 and 57 days, and never-donated.
 - Every exclusion: wrong city, availability paused, notifications off,
   unverified email, deactivated account, already notified.
@@ -521,6 +554,41 @@ including all three §5.1 reference points; changing 56 to 55, dropping the
 city join, and dropping the already-notified guard each fail too.
 
 The whole suite runs in about 7 seconds.
+
+### The 64-pair test
+
+§13 asks for all 64 pairs asserted against a **hand-written table** — 27 valid,
+37 invalid. Hand-written is the point: the query, the seed migration and the
+ABO/Rh rule are all derivations of the same idea, and checking one derivation
+against another agrees without proving anything.
+
+`apps/api/src/matching/compatibilityTable.ts` holds that table as a grid, so
+someone who does not read TypeScript can check it against a transfusion chart:
+
+```
+            O-  O+  A-  A+  B-  B+  AB- AB+
+   O-        Y   .   .   .   .   .   .   .
+   O+        Y   Y   .   .   .   .   .   .
+   ...
+   AB+       Y   Y   Y   Y   Y   Y   Y   Y
+```
+
+Rows are what the **patient needs**; columns are **who can give**. The first
+row reads: a patient needing O− can receive from O− only. The first column
+reads: an O− donor can give to everyone.
+
+That gives **three independent statements** of the same truth — the grid, the
+migration that seeds the database, and the rule derived from first principles.
+A mistake in any one shows up as a disagreement rather than passing quietly in
+all three.
+
+Mutation-tested in each direction:
+
+| Broken                                   | Caught by                                                |
+| ---------------------------------------- | -------------------------------------------------------- |
+| One cell flipped in the grid             | 4 tests — the pair, the count, and both agreement checks |
+| Compatibility join reversed in the query | 42 of 72                                                 |
+| A pair changed in the seed migration     | the migration refuses to apply at all                    |
 
 ### Cities
 
