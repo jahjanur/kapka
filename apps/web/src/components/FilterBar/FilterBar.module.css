@@ -3,7 +3,9 @@
    it has room. Container-driven, so it behaves the same in a rail or a header.
    ========================================================================= */
 
-.bar { container-type: inline-size; }
+.bar {
+  container-type: inline-size;
+}
 
 .row {
   display: flex;
@@ -22,9 +24,13 @@
   overscroll-behavior-inline: contain;
   scroll-snap-type: var(--filter-snap, inline mandatory);
 }
-.row::-webkit-scrollbar { display: none; }
+.row::-webkit-scrollbar {
+  display: none;
+}
 
-.row > * { scroll-snap-align: start; }
+.row > * {
+  scroll-snap-align: start;
+}
 
 /* Given room, stop scrolling and wrap instead (§9.1, 768px and up). */
 @container (min-width: 40rem) {
@@ -60,17 +66,24 @@
 }
 
 @media (hover: hover) {
-  .chip:hover { border-color: var(--border-strong); color: var(--fg-primary); }
+  .chip:hover {
+    border-color: var(--border-strong);
+    color: var(--fg-primary);
+  }
 }
-.chip:active { scale: var(--press-scale); }
+.chip:active {
+  scale: var(--press-scale);
+}
 
-.chip[aria-pressed="true"] {
+.chip[aria-pressed='true'] {
   color: var(--fg-onAccent);
   background-color: var(--accent);
   border-color: var(--accent);
 }
 
-.group { display: contents; }
+.group {
+  display: contents;
+}
 
 .groupLabel {
   flex: none;
@@ -82,5 +95,7 @@
 }
 
 @media (forced-colors: active) {
-  .chip[aria-pressed="true"] { outline: 2px solid Highlight; }
+  .chip[aria-pressed='true'] {
+    outline: 2px solid Highlight;
+  }
 }

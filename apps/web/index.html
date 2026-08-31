@@ -2,9 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
     <title>Kapka</title>
-    <meta name="description" content="Urgent blood donation matching — find compatible, eligible donors nearby in seconds." />
+    <meta
+      name="description"
+      content="Urgent blood donation matching — find compatible, eligible donors nearby in seconds."
+    />
 
     <!-- Set the theme before first paint so a dark-mode user never gets a
          white flash. Mirrors the storage key in src/lib/theme.tsx. -->
@@ -15,7 +21,9 @@
           if (stored === 'light' || stored === 'dark') {
             document.documentElement.setAttribute('data-theme', stored);
           }
-        } catch (e) { /* no stored preference — fall through to the OS setting */ }
+        } catch (e) {
+          /* no stored preference — fall through to the OS setting */
+        }
       })();
     </script>
 

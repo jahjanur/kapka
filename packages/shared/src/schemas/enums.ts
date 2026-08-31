@@ -2,7 +2,10 @@ import { z } from 'zod';
 import { BLOOD_TYPES } from '../bloodType';
 import { CITIES } from '../cities';
 import {
-  NOTIFICATION_STATUSES, REQUEST_STATUSES, URGENCIES, USER_ROLES,
+  NOTIFICATION_STATUSES,
+  REQUEST_STATUSES,
+  URGENCIES,
+  USER_ROLES,
 } from '../domain';
 
 /**

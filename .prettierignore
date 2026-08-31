@@ -1,0 +1,14 @@
+node_modules
+dist
+coverage
+playwright-report
+test-results
+package-lock.json
+
+# The token scales are column-aligned on purpose: you read down the lightness
+# and chroma columns to check the steps are perceptually even (§6.2). Prettier
+# strips the trailing zeros that make that possible — 0.590 0.020 becomes
+# 0.59 0.02 — and drops the alignment. These two files are read far more often
+# than they are edited, so legibility wins over uniformity here.
+packages/tokens/src/tokens.css
+packages/tokens/src/scale.css

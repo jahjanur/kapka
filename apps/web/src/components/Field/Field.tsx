@@ -24,19 +24,29 @@ interface FieldProps {
  * this (§8 Tier 1).
  */
 export function Field({
-  label, children, help, error, required = false, optional = false, className,
+  label,
+  children,
+  help,
+  error,
+  required = false,
+  optional = false,
+  className,
 }: FieldProps) {
   const controlId = useId();
   const helpId = `${controlId}-help`;
   const errorId = `${controlId}-error`;
 
-  const context = useMemo<FieldContextValue>(() => ({
-    controlId,
-    describedBy: [help ? helpId : null, error ? errorId : null]
-      .filter(Boolean).join(' ') || undefined,
-    invalid: Boolean(error),
-    required,
-  }), [controlId, helpId, errorId, help, error, required]);
+  const context = useMemo<FieldContextValue>(
+    () => ({
+      controlId,
+      describedBy:
+        [help ? helpId : null, error ? errorId : null].filter(Boolean).join(' ') ||
+        undefined,
+      invalid: Boolean(error),
+      required,
+    }),
+    [controlId, helpId, errorId, help, error, required],
+  );
 
   return (
     <div className={cx(styles.field, className)}>
@@ -44,7 +54,9 @@ export function Field({
         {label}
         {required && (
           <>
-            <span className={styles.required} aria-hidden="true">*</span>
+            <span className={styles.required} aria-hidden="true">
+              *
+            </span>
             <span className="visually-hidden">(required)</span>
           </>
         )}
@@ -53,7 +65,11 @@ export function Field({
 
       <FieldContext.Provider value={context}>{children}</FieldContext.Provider>
 
-      {help && <p id={helpId} className={styles.help}>{help}</p>}
+      {help && (
+        <p id={helpId} className={styles.help}>
+          {help}
+        </p>
+      )}
 
       {/* Always mounted so the error is announced when it appears, not only
           when focus happens to land back on the control. */}

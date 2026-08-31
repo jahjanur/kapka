@@ -34,9 +34,7 @@ export interface ApiErrorBody {
   };
 }
 
-export function apiError(
-  code: ErrorCode, message: string, field?: string,
-): ApiErrorBody {
+export function apiError(code: ErrorCode, message: string, field?: string): ApiErrorBody {
   return { error: field ? { code, message, field } : { code, message } };
 }
 

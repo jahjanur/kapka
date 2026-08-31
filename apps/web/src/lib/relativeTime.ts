@@ -14,7 +14,7 @@ const UNITS = [
 const formatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
 
 export function timeAgo(iso: string, now: number = Date.now()): string {
-  const delta = new Date(iso).getTime() - now;   // negative in the past
+  const delta = new Date(iso).getTime() - now; // negative in the past
   for (const [unit, ms] of UNITS) {
     if (Math.abs(delta) >= ms) return formatter.format(Math.round(delta / ms), unit);
   }

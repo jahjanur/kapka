@@ -12,10 +12,12 @@ export function createApp(): Express {
 
   // §12: helmet, a strict CORS allow-list, and a real CSP.
   app.use(helmet());
-  app.use(cors({
-    origin: env.corsOrigins,
-    credentials: true,   // the refresh token rides in an httpOnly cookie
-  }));
+  app.use(
+    cors({
+      origin: env.corsOrigins,
+      credentials: true, // the refresh token rides in an httpOnly cookie
+    }),
+  );
 
   // A blood request is a handful of short fields; nothing here needs a
   // megabyte of JSON, and a small cap is free protection.

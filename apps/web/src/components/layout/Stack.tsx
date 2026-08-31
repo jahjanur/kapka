@@ -17,7 +17,13 @@ interface StackProps extends HTMLAttributes<HTMLElement> {
  * so a Stack composes into any parent without margin surprises (§8 rule 3).
  */
 export function Stack({
-  gap = 4, fill = false, as: Tag = 'div', className, style, children, ...rest
+  gap = 4,
+  fill = false,
+  as: Tag = 'div',
+  className,
+  style,
+  children,
+  ...rest
 }: StackProps) {
   return (
     <Tag
@@ -29,6 +35,3 @@ export function Stack({
     </Tag>
   );
 }
-
-/** Inside a `fill` Stack, pushes itself and everything after it to the end. */
-export const stackPushEnd = styles.pushEnd;

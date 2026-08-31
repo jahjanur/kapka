@@ -15,15 +15,23 @@ export const requestsRouter: Router = Router();
  */
 
 requestsRouter.get('/requests', validateQuery(requestFilterSchema), (_req, res) => {
-  res.status(501).json(apiError(
-    'NOT_IMPLEMENTED',
-    'The public feed is not connected to the database yet.',
-  ));
+  res
+    .status(501)
+    .json(
+      apiError(
+        'NOT_IMPLEMENTED',
+        'The public feed is not connected to the database yet.',
+      ),
+    );
 });
 
 requestsRouter.post('/requests', validateBody(createRequestSchema), (_req, res) => {
-  res.status(501).json(apiError(
-    'NOT_IMPLEMENTED',
-    'Creating a request is not connected to the database yet.',
-  ));
+  res
+    .status(501)
+    .json(
+      apiError(
+        'NOT_IMPLEMENTED',
+        'Creating a request is not connected to the database yet.',
+      ),
+    );
 });

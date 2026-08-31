@@ -35,7 +35,9 @@ export function Button({
     <button
       type={type}
       className={cx(
-        styles.button, styles[variant], styles[size],
+        styles.button,
+        styles[variant],
+        styles[size],
         fullWidth && styles.fullWidth,
         loading && styles.loading,
         className,

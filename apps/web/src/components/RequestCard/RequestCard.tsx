@@ -8,9 +8,8 @@ import type { PublicBloodRequest } from '@kapka/shared';
 import styles from './RequestCard.module.css';
 
 export function RequestCard({ request }: { request: PublicBloodRequest }) {
-  const {
-    id, bloodType, unitsNeeded, urgency, hospitalName, city, note, createdAt,
-  } = request;
+  const { id, bloodType, unitsNeeded, urgency, hospitalName, city, note, createdAt } =
+    request;
 
   return (
     <div className={styles.shell}>

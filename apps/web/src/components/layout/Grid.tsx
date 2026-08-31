@@ -16,7 +16,13 @@ interface GridProps extends HTMLAttributes<HTMLElement> {
  * the feed does not need one (§9.1).
  */
 export function Grid({
-  minColumn = '18rem', gap = 4, as: Tag = 'div', className, style, children, ...rest
+  minColumn = '18rem',
+  gap = 4,
+  as: Tag = 'div',
+  className,
+  style,
+  children,
+  ...rest
 }: GridProps) {
   return (
     <Tag

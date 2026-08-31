@@ -13,15 +13,22 @@ interface ContainerProps extends HTMLAttributes<HTMLElement> {
 }
 
 export function Container({
-  width = 'wide', as: Tag = 'div', className, style, children, ...rest
+  width = 'wide',
+  as: Tag = 'div',
+  className,
+  style,
+  children,
+  ...rest
 }: ContainerProps) {
   return (
     <Tag
       className={cx(styles.container, className)}
-      style={{
-        '--container-width': width === 'text' ? '48rem' : 'var(--container-max)',
-        ...style,
-      } as CSSProperties}
+      style={
+        {
+          '--container-width': width === 'text' ? '48rem' : 'var(--container-max)',
+          ...style,
+        } as CSSProperties
+      }
       {...rest}
     >
       {children}

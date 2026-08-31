@@ -31,16 +31,23 @@
 }
 
 @media (hover: hover) {
-  .option:hover { color: var(--fg-primary); background-color: var(--bg-inset); }
+  .option:hover {
+    color: var(--fg-primary);
+    background-color: var(--bg-inset);
+  }
 }
-.option:active { scale: var(--press-scale); }
+.option:active {
+  scale: var(--press-scale);
+}
 
-.option[aria-checked="true"] {
+.option[aria-checked='true'] {
   background-color: var(--bg-surface);
   color: var(--accent-ink);
   box-shadow: var(--elevation-1);
 }
 
 @media (forced-colors: active) {
-  .option[aria-checked="true"] { outline: 2px solid Highlight; }
+  .option[aria-checked='true'] {
+    outline: 2px solid Highlight;
+  }
 }

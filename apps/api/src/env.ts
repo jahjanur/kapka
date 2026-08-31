@@ -24,6 +24,8 @@ if (!parsed.success) {
 export const env = {
   ...parsed.data,
   /** Strict allow-list, never a wildcard (§12). */
-  corsOrigins: parsed.data.CORS_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean),
+  corsOrigins: parsed.data.CORS_ORIGINS.split(',')
+    .map((o) => o.trim())
+    .filter(Boolean),
   isProduction: parsed.data.NODE_ENV === 'production',
 };

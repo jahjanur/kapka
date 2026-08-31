@@ -20,18 +20,27 @@ interface WithSidebarProps extends HTMLAttributes<HTMLElement> {
  * feed's filter rail (§9.1) and the donor dashboard (§9.5).
  */
 export function WithSidebar({
-  sidebar, side = 'start', sidebarWidth = '16rem', mainMin = '32rem',
-  gap = 6, className, style, children, ...rest
+  sidebar,
+  side = 'start',
+  sidebarWidth = '16rem',
+  mainMin = '32rem',
+  gap = 6,
+  className,
+  style,
+  children,
+  ...rest
 }: WithSidebarProps) {
   return (
     <div
       className={cx(styles.withSidebar, className)}
-      style={{
-        '--gap': space(gap),
-        '--sidebar-basis': sidebarWidth,
-        '--main-min': mainMin,
-        ...style,
-      } as CSSProperties}
+      style={
+        {
+          '--gap': space(gap),
+          '--sidebar-basis': sidebarWidth,
+          '--main-min': mainMin,
+          ...style,
+        } as CSSProperties
+      }
       {...rest}
     >
       <div className={cx(styles.sidebar, side === 'end' && styles.sidebarLast)}>

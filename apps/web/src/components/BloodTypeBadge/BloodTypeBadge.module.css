@@ -30,29 +30,41 @@
 }
 
 /* ── ABO group selects the hue set ───────────────────────────────────────── */
-.badge[data-group="O"] {
-  --bt-solid-bg: var(--bt-o-solid-bg);  --bt-solid-fg: var(--bt-o-solid-fg);
-  --bt-ink: var(--bt-o-ink); --bt-border: var(--bt-o-border); --bt-surface: var(--bt-o-surface);
+.badge[data-group='O'] {
+  --bt-solid-bg: var(--bt-o-solid-bg);
+  --bt-solid-fg: var(--bt-o-solid-fg);
+  --bt-ink: var(--bt-o-ink);
+  --bt-border: var(--bt-o-border);
+  --bt-surface: var(--bt-o-surface);
 }
-.badge[data-group="A"] {
-  --bt-solid-bg: var(--bt-a-solid-bg);  --bt-solid-fg: var(--bt-a-solid-fg);
-  --bt-ink: var(--bt-a-ink); --bt-border: var(--bt-a-border); --bt-surface: var(--bt-a-surface);
+.badge[data-group='A'] {
+  --bt-solid-bg: var(--bt-a-solid-bg);
+  --bt-solid-fg: var(--bt-a-solid-fg);
+  --bt-ink: var(--bt-a-ink);
+  --bt-border: var(--bt-a-border);
+  --bt-surface: var(--bt-a-surface);
 }
-.badge[data-group="B"] {
-  --bt-solid-bg: var(--bt-b-solid-bg);  --bt-solid-fg: var(--bt-b-solid-fg);
-  --bt-ink: var(--bt-b-ink); --bt-border: var(--bt-b-border); --bt-surface: var(--bt-b-surface);
+.badge[data-group='B'] {
+  --bt-solid-bg: var(--bt-b-solid-bg);
+  --bt-solid-fg: var(--bt-b-solid-fg);
+  --bt-ink: var(--bt-b-ink);
+  --bt-border: var(--bt-b-border);
+  --bt-surface: var(--bt-b-surface);
 }
-.badge[data-group="AB"] {
-  --bt-solid-bg: var(--bt-ab-solid-bg); --bt-solid-fg: var(--bt-ab-solid-fg);
-  --bt-ink: var(--bt-ab-ink); --bt-border: var(--bt-ab-border); --bt-surface: var(--bt-ab-surface);
+.badge[data-group='AB'] {
+  --bt-solid-bg: var(--bt-ab-solid-bg);
+  --bt-solid-fg: var(--bt-ab-solid-fg);
+  --bt-ink: var(--bt-ab-ink);
+  --bt-border: var(--bt-ab-border);
+  --bt-surface: var(--bt-ab-surface);
 }
 
 /* ── Rh sign selects fill vs outline ─────────────────────────────────────── */
-.badge[data-rh="positive"] {
+.badge[data-rh='positive'] {
   background-color: var(--bt-solid-bg);
   color: var(--bt-solid-fg);
 }
-.badge[data-rh="negative"] {
+.badge[data-rh='negative'] {
   background-color: var(--bt-surface);
   color: var(--bt-ink);
   border-color: var(--bt-border);
@@ -81,5 +93,7 @@
 /* Forced colours strip our palette — the outline must survive so Rh sign is
    still distinguishable (§10). */
 @media (forced-colors: active) {
-  .badge { border-color: currentColor; }
+  .badge {
+    border-color: currentColor;
+  }
 }

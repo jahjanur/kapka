@@ -27,13 +27,22 @@
   text-decoration: none;
 }
 
-.mark { color: var(--accent); font-size: var(--text-xl); }
+.mark {
+  color: var(--accent);
+  font-size: var(--text-xl);
+}
 
-.nav { display: none; }
+.nav {
+  display: none;
+}
 
 /* Page-level layout change, so this one is a media query by design (§7.2). */
 @media (min-width: 48rem) {
-  .nav { display: flex; align-items: center; gap: var(--space-2); }
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
 }
 
 .navLink {
@@ -48,24 +57,41 @@
   border-radius: var(--radius-sm);
 }
 @media (hover: hover) {
-  .navLink:hover { color: var(--fg-primary); background-color: var(--bg-surface-alt); }
+  .navLink:hover {
+    color: var(--fg-primary);
+    background-color: var(--bg-surface-alt);
+  }
 }
 
-.actions { display: flex; align-items: center; gap: var(--space-2); }
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
 
 /* §9.1: on a phone the header is the wordmark plus ONE action. The theme
    toggle is a preference control, not a task, so it waits for the room —
    putting it here at 360px pushed the header past the viewport. */
-.themeToggle { display: none; }
+.themeToggle {
+  display: none;
+}
 
 @media (min-width: 48rem) {
-  .themeToggle { display: block; }
+  .themeToggle {
+    display: block;
+  }
 }
 
 /* Short label on a phone; the hero carries the full "Register as donor". */
-.registerLong { display: none; }
+.registerLong {
+  display: none;
+}
 
 @media (min-width: 30rem) {
-  .registerShort { display: none; }
-  .registerLong { display: inline; }
+  .registerShort {
+    display: none;
+  }
+  .registerLong {
+    display: inline;
+  }
 }

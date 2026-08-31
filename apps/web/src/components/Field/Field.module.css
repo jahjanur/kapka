@@ -1,4 +1,6 @@
-.field { display: block; }
+.field {
+  display: block;
+}
 
 .label {
   display: block;
@@ -41,6 +43,6 @@
 }
 
 .errorIcon {
-  margin-block-start: 0.1em;   /* optical alignment with the first text line */
+  margin-block-start: 0.1em; /* optical alignment with the first text line */
   color: var(--danger);
 }

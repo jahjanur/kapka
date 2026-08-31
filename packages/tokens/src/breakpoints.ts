@@ -8,10 +8,10 @@
  * Mobile-first: these are min-widths. We only ever scale UP.
  */
 export const BREAKPOINTS = {
-  sm: 480,   // large phones      — 30rem
-  md: 768,   // tablets           — 48rem
-  lg: 1024,  // laptops           — 64rem
-  xl: 1280,  // desktops          — 80rem
+  sm: 480, // large phones      — 30rem
+  md: 768, // tablets           — 48rem
+  lg: 1024, // laptops           — 64rem
+  xl: 1280, // desktops          — 80rem
   '2xl': 1536, // large desktops  — 96rem
 } as const;
 

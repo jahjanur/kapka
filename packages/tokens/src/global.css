@@ -3,14 +3,21 @@
    Imported once, after tokens.css and scale.css. Uses tokens only.
    ========================================================================= */
 
-*, *::before, *::after { box-sizing: border-box; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
 /* Reset the margins we will re-apply deliberately via layout primitives.
    §8 ground rule 3: no component sets its own outer margin. */
 :where(body, h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd, ul, ol) {
   margin: 0;
 }
-:where(ul, ol):where([class]) { padding-inline-start: 0; list-style: none; }
+:where(ul, ol):where([class]) {
+  padding-inline-start: 0;
+  list-style: none;
+}
 
 html {
   /* Never below 16px — iOS Safari zooms on focus of any smaller input and the
@@ -21,7 +28,7 @@ html {
 }
 
 body {
-  min-block-size: 100dvh;   /* dvh, not vh — the mobile URL bar (§7.4) */
+  min-block-size: 100dvh; /* dvh, not vh — the mobile URL bar (§7.4) */
   margin: 0;
   background-color: var(--bg-canvas);
   color: var(--fg-primary);
@@ -42,14 +49,26 @@ body {
   line-height: var(--leading-tight);
   text-wrap: balance;
 }
-:where(h1) { font-size: var(--text-3xl); letter-spacing: var(--tracking-tight); }
-:where(h2) { font-size: var(--text-2xl); letter-spacing: var(--tracking-tight); }
-:where(h3) { font-size: var(--text-xl); }
-:where(h4) { font-size: var(--text-lg); }
-:where(h5, h6) { font-size: var(--text-base); }
+:where(h1) {
+  font-size: var(--text-3xl);
+  letter-spacing: var(--tracking-tight);
+}
+:where(h2) {
+  font-size: var(--text-2xl);
+  letter-spacing: var(--tracking-tight);
+}
+:where(h3) {
+  font-size: var(--text-xl);
+}
+:where(h4) {
+  font-size: var(--text-lg);
+}
+:where(h5, h6) {
+  font-size: var(--text-base);
+}
 
 :where(p) {
-  max-inline-size: var(--measure);   /* §6.4 rule 2 — long lines look amateur */
+  max-inline-size: var(--measure); /* §6.4 rule 2 — long lines look amateur */
   text-wrap: pretty;
 }
 
@@ -60,7 +79,9 @@ body {
 }
 
 /* Counts and dates must not jitter as they update. */
-:where(time, [data-numeric]) { font-variant-numeric: tabular-nums; }
+:where(time, [data-numeric]) {
+  font-variant-numeric: tabular-nums;
+}
 
 /* ── Media ───────────────────────────────────────────────────────────────── */
 :where(img, svg, video, canvas, picture) {
@@ -75,7 +96,9 @@ body {
   color: inherit;
   letter-spacing: inherit;
 }
-:where(textarea) { resize: vertical; }
+:where(textarea) {
+  resize: vertical;
+}
 
 /* ── Focus (§6.7) ────────────────────────────────────────────────────────── */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
@@ -96,7 +119,9 @@ body {
 
 /* ── Motion (§6.6) ───────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -152,4 +177,6 @@ body {
 
 /* Modals, sheets and any internally scrolling panel — stop scroll chaining
    to the page behind (§7.4). */
-.overscroll-contain { overscroll-behavior: contain; }
+.overscroll-contain {
+  overscroll-behavior: contain;
+}

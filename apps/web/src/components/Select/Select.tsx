@@ -15,18 +15,22 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
  * vs "Битола"), which is a P0 decision in §3.
  */
 export function Select({
-  placeholder, className, children, value, defaultValue, ...rest
+  placeholder,
+  className,
+  children,
+  value,
+  defaultValue,
+  ...rest
 }: SelectProps) {
   const field = useFieldContext();
-  const isPlaceholder =
-    placeholder !== undefined && (value ?? defaultValue ?? '') === '';
+  const isPlaceholder = placeholder !== undefined && (value ?? defaultValue ?? '') === '';
 
   return (
     <span className={styles.wrapper}>
       <select
         id={field?.controlId}
         aria-describedby={field?.describedBy}
-        aria-invalid={field?.invalid || undefined}
+        aria-invalid={field?.invalid === true ? true : undefined}
         required={field?.required}
         data-placeholder={isPlaceholder || undefined}
         className={cx(styles.select, className)}
@@ -35,7 +39,9 @@ export function Select({
         {...rest}
       >
         {placeholder !== undefined && (
-          <option value="" disabled>{placeholder}</option>
+          <option value="" disabled>
+            {placeholder}
+          </option>
         )}
         {children}
       </select>

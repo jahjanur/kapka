@@ -2,8 +2,14 @@ import type { ReactNode } from 'react';
 import { cx } from '../../lib/cx';
 import styles from './FilterBar.module.css';
 
-export function FilterBar({ children, className, label }: {
-  children: ReactNode; className?: string; label: string;
+export function FilterBar({
+  children,
+  className,
+  label,
+}: {
+  children: ReactNode;
+  className?: string;
+  label: string;
 }) {
   return (
     <div className={cx(styles.bar, className)}>

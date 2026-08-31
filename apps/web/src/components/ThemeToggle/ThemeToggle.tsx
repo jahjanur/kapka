@@ -1,8 +1,8 @@
-import { useTheme, type ThemePreference } from '../../lib/theme';
+import { useTheme, type ThemePreference } from '../../lib/themeContext';
 import { Icon, type IconName } from '../Icon/Icon';
 import styles from './ThemeToggle.module.css';
 
-const OPTIONS: Array<{ value: ThemePreference; icon: IconName; label: string }> = [
+const OPTIONS: { value: ThemePreference; icon: IconName; label: string }[] = [
   { value: 'system', icon: 'monitor', label: 'Match system' },
   { value: 'light', icon: 'sun', label: 'Light' },
   { value: 'dark', icon: 'moon', label: 'Dark' },

@@ -21,9 +21,8 @@ export default function KitchenSink() {
                 <h1>Kitchen sink</h1>
               </div>
               <p className={styles.note}>
-                Every Tier&nbsp;1 component and every token. Switch the theme and
-                re-read the page — dark is built alongside light, not bolted on
-                afterwards.
+                Every Tier&nbsp;1 component and every token. Switch the theme and re-read
+                the page — dark is built alongside light, not bolted on afterwards.
               </p>
               <ThemeToggle />
             </Stack>
@@ -36,9 +35,8 @@ export default function KitchenSink() {
               <div className={styles.sectionHead}>
                 <h2 id="frames-heading">On a phone</h2>
                 <p className={styles.note}>
-                  A real iframe at a real width, at 1:1, so media queries behave
-                  the way they will on the device. You are already looking at the
-                  desktop view.
+                  A real iframe at a real width, at 1:1, so media queries behave the way
+                  they will on the device. You are already looking at the desktop view.
                 </p>
               </div>
               <ViewportFrame src="/kitchen-sink/frame" />

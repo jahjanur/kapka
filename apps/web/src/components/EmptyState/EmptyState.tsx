@@ -11,10 +11,17 @@ interface EmptyStateProps {
   action?: ReactNode;
 }
 
-export function EmptyState({ icon = 'droplet', headline, body, action }: EmptyStateProps) {
+export function EmptyState({
+  icon = 'droplet',
+  headline,
+  body,
+  action,
+}: EmptyStateProps) {
   return (
     <div className={styles.empty}>
-      <span className={styles.art}><Icon name={icon} /></span>
+      <span className={styles.art}>
+        <Icon name={icon} />
+      </span>
       <h2 className={styles.headline}>{headline}</h2>
       {body && <p className={styles.body}>{body}</p>}
       {action}

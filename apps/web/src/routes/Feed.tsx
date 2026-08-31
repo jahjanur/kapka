@@ -1,11 +1,27 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  AppHeader, Button, Container, EmptyState, Field, FilterBar, FilterChip,
-  FilterGroupLabel, Icon, IconSprite, RequestCard, Select, Skeleton, Stack,
+  AppHeader,
+  Button,
+  Container,
+  EmptyState,
+  Field,
+  FilterBar,
+  FilterChip,
+  FilterGroupLabel,
+  Icon,
+  IconSprite,
+  RequestCard,
+  Select,
+  Skeleton,
+  Stack,
   WithSidebar,
 } from '../components';
 import {
-  BLOOD_TYPES, CITIES, formatBloodType, type BloodType, type Urgency,
+  BLOOD_TYPES,
+  CITIES,
+  formatBloodType,
+  type BloodType,
+  type Urgency,
 } from '@kapka/shared';
 import { useRequests } from '../lib/useRequests';
 import styles from './Feed.module.css';
@@ -43,14 +59,23 @@ export default function Feed() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const filtered = useMemo(() => (data ?? []).filter((request) => (
-    (!urgency || request.urgency === urgency)
-    && (!bloodType || request.bloodType === bloodType)
-    && (!city || request.city === city)
-  )), [data, urgency, bloodType, city]);
+  const filtered = useMemo(
+    () =>
+      (data ?? []).filter(
+        (request) =>
+          (!urgency || request.urgency === urgency) &&
+          (!bloodType || request.bloodType === bloodType) &&
+          (!city || request.city === city),
+      ),
+    [data, urgency, bloodType, city],
+  );
 
-  const hasFilters = Boolean(urgency || bloodType || city);
-  const clearFilters = () => { setUrgency(null); setBloodType(null); setCity(''); };
+  const hasFilters = urgency !== null || bloodType !== null || city !== '';
+  const clearFilters = () => {
+    setUrgency(null);
+    setBloodType(null);
+    setCity('');
+  };
 
   const filters = (
     <div className={styles.filters}>
@@ -63,7 +88,8 @@ export default function Feed() {
               selected={urgency === level}
               onClick={() => setUrgency(urgency === level ? null : level)}
             >
-              {level[0]?.toUpperCase()}{level.slice(1)}
+              {level[0]?.toUpperCase()}
+              {level.slice(1)}
             </FilterChip>
           ))}
         </FilterBar>
@@ -88,7 +114,11 @@ export default function Feed() {
               value={city}
               onChange={(event) => setCity(event.target.value)}
             >
-              {CITIES.map((name) => <option key={name} value={name}>{name}</option>)}
+              {CITIES.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
             </Select>
           </Field>
         </div>
@@ -116,8 +146,8 @@ export default function Feed() {
           <div className={styles.hero}>
             <h1 className={styles.heroTitle}>Someone nearby needs blood.</h1>
             <p className={styles.heroLead}>
-              Register once with your blood type and city. When a matching
-              request is approved, we email you — no searching, no phone tree.
+              Register once with your blood type and city. When a matching request is
+              approved, we email you — no searching, no phone tree.
             </p>
             <div className={styles.heroActions}>
               <Button size="lg">Register as donor</Button>
@@ -134,7 +164,9 @@ export default function Feed() {
 
               {isLoading && (
                 <div className={styles.list}>
-                  {Array.from({ length: 4 }, (_, index) => <SkeletonCard key={index} />)}
+                  {Array.from({ length: 4 }, (_, index) => (
+                    <SkeletonCard key={index} />
+                  ))}
                 </div>
               )}
 
@@ -147,8 +179,10 @@ export default function Feed() {
                 />
               )}
 
-              {!isLoading && !error && filtered.length === 0 && (
-                hasFilters ? (
+              {!isLoading &&
+                !error &&
+                filtered.length === 0 &&
+                (hasFilters ? (
                   <EmptyState
                     icon="filter"
                     headline="No requests match these filters"
@@ -165,8 +199,7 @@ export default function Feed() {
                     body="That is good news. Register as a donor and we will email you the moment someone with your blood type needs help."
                     action={<Button>Register as donor</Button>}
                   />
-                )
-              )}
+                ))}
 
               {!isLoading && !error && filtered.length > 0 && (
                 <div className={styles.list}>
@@ -182,7 +215,9 @@ export default function Feed() {
 
       {/* Thumb zone: the primary action follows you down the page on a phone. */}
       <div className={`${styles.mobileCta} ${scrolled ? styles.mobileCtaVisible : ''}`}>
-        <Button fullWidth size="lg">Register as donor</Button>
+        <Button fullWidth size="lg">
+          Register as donor
+        </Button>
       </div>
     </>
   );

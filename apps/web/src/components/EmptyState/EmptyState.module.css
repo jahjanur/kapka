@@ -20,7 +20,9 @@
   border-radius: var(--radius-full);
 }
 
-.headline { font-size: var(--text-xl); }
+.headline {
+  font-size: var(--text-xl);
+}
 
 .body {
   max-inline-size: 40ch;

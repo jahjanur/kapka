@@ -13,10 +13,28 @@
   white-space: nowrap;
 }
 
-.routine  { background-color: var(--info-surface);    color: var(--info-ink);    border-color: var(--info); }
-.urgent   { background-color: var(--warning-surface); color: var(--warning-ink); border-color: var(--warning); }
-.critical { background-color: var(--danger-surface);  color: var(--danger-ink);  border-color: var(--danger); }
+.routine {
+  background-color: var(--info-surface);
+  color: var(--info-ink);
+  border-color: var(--info);
+}
+.urgent {
+  background-color: var(--warning-surface);
+  color: var(--warning-ink);
+  border-color: var(--warning);
+}
+.critical {
+  background-color: var(--danger-surface);
+  color: var(--danger-ink);
+  border-color: var(--danger);
+}
 
-.icon { font-size: 1em; }
+.icon {
+  font-size: 1em;
+}
 
-@media (forced-colors: active) { .pill { border-color: currentColor; } }
+@media (forced-colors: active) {
+  .pill {
+    border-color: currentColor;
+  }
+}

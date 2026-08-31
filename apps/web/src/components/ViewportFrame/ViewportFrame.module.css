@@ -1,9 +1,18 @@
 /* A phone-width preview of a route, at 1:1.
    Desktop needs no frame — the page you are reading IS the desktop view. */
 
-.wrap { display: grid; gap: var(--space-3); justify-items: start; }
+.wrap {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+}
 
-.controls { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
 
 .caption {
   font-size: var(--text-sm);

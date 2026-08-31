@@ -23,10 +23,10 @@ export const registerSchema = z
     lastDonationDate: dateOnlySchema.nullable().optional(),
     phone: phoneSchema.optional(),
   })
-  .refine(
-    (value) => !value.lastDonationDate || value.lastDonationDate <= today(),
-    { path: ['lastDonationDate'], error: 'That date is in the future.' },
-  );
+  .refine((value) => !value.lastDonationDate || value.lastDonationDate <= today(), {
+    path: ['lastDonationDate'],
+    error: 'That date is in the future.',
+  });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 

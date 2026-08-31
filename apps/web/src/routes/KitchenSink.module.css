@@ -1,4 +1,6 @@
-.page { padding-block: var(--space-8) var(--space-24); }
+.page {
+  padding-block: var(--space-8) var(--space-24);
+}
 
 .header {
   position: sticky;
@@ -19,7 +21,9 @@
   color: var(--fg-muted);
 }
 
-.section { scroll-margin-block-start: var(--space-20); }
+.section {
+  scroll-margin-block-start: var(--space-20);
+}
 
 .sectionHead {
   padding-block-end: var(--space-3);
@@ -70,11 +74,20 @@
   padding-block: var(--space-3);
   border-block-end: 1px solid var(--border-subtle);
 }
-.typeSample { overflow-wrap: anywhere; }
-.typeBig { letter-spacing: var(--tracking-tight); font-weight: var(--weight-semibold); }
+.typeSample {
+  overflow-wrap: anywhere;
+}
+.typeBig {
+  letter-spacing: var(--tracking-tight);
+  font-weight: var(--weight-semibold);
+}
 
 /* ── Spacing ruler ───────────────────────────────────────────────────────── */
-.spaceRow { display: flex; align-items: center; gap: var(--space-4); }
+.spaceRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
 .spaceBar {
   block-size: var(--space-4);
   background-color: var(--accent);
@@ -118,7 +131,10 @@
   border-radius: var(--radius-md);
   overflow-wrap: anywhere;
 }
-.iconGlyph { font-size: var(--text-xl); color: var(--fg-primary); }
+.iconGlyph {
+  font-size: var(--text-xl);
+  color: var(--fg-primary);
+}
 
 /* ── Layout demo blocks ──────────────────────────────────────────────────── */
 .demoBlock {
@@ -135,4 +151,6 @@
 /* ── Frame mode ──────────────────────────────────────────────────────────── */
 /* When the gallery is rendered inside a ViewportFrame it drops the page chrome
    so the specimens themselves get the full width. */
-.frameMode { padding-block: var(--space-4) var(--space-8); }
+.frameMode {
+  padding-block: var(--space-4) var(--space-8);
+}

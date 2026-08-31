@@ -4,12 +4,18 @@ import { Icon, type IconName } from '../Icon/Icon';
 import styles from './UrgencyPill.module.css';
 
 const URGENCY: Record<Urgency, { label: string; icon: IconName }> = {
-  routine:  { label: 'Routine',  icon: 'clock' },
-  urgent:   { label: 'Urgent',   icon: 'alertCircle' },
+  routine: { label: 'Routine', icon: 'clock' },
+  urgent: { label: 'Urgent', icon: 'alertCircle' },
   critical: { label: 'Critical', icon: 'alertTriangle' },
 };
 
-export function UrgencyPill({ urgency, className }: { urgency: Urgency; className?: string }) {
+export function UrgencyPill({
+  urgency,
+  className,
+}: {
+  urgency: Urgency;
+  className?: string;
+}) {
   const { label, icon } = URGENCY[urgency];
   return (
     <span className={cx(styles.pill, styles[urgency], className)}>

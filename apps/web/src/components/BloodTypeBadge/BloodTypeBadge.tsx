@@ -1,7 +1,10 @@
 import type { HTMLAttributes } from 'react';
 import { cx } from '../../lib/cx';
 import {
-  announceBloodType, formatBloodType, parseBloodType, type BloodType,
+  announceBloodType,
+  formatBloodType,
+  parseBloodType,
+  type BloodType,
 } from '@kapka/shared';
 import styles from './BloodTypeBadge.module.css';
 
@@ -16,7 +19,10 @@ interface BloodTypeBadgeProps extends HTMLAttributes<HTMLSpanElement> {
  * there, and the screen reader hears "O negative", not "O minus" (§6.3, §10).
  */
 export function BloodTypeBadge({
-  type, size = 'md', className, ...rest
+  type,
+  size = 'md',
+  className,
+  ...rest
 }: BloodTypeBadgeProps) {
   const { group, rh } = parseBloodType(type);
   return (

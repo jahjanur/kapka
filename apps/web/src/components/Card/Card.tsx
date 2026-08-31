@@ -20,8 +20,13 @@ interface CardProps extends HTMLAttributes<HTMLElement> {
  * keeps layouts composable (§8 ground rule 3).
  */
 export function Card({
-  padding = 'default', tone = 'surface', interactive = false,
-  as: Tag = 'div', className, children, ...rest
+  padding = 'default',
+  tone = 'surface',
+  interactive = false,
+  as: Tag = 'div',
+  className,
+  children,
+  ...rest
 }: CardProps) {
   return (
     <Tag

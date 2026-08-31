@@ -5,7 +5,7 @@
 
 .control {
   inline-size: 100%;
-  min-block-size: var(--hit-min);          /* 44px touch target (§6.7) */
+  min-block-size: var(--hit-min); /* 44px touch target (§6.7) */
   padding-block: var(--space-3);
   padding-inline: var(--space-4);
 
@@ -28,11 +28,11 @@
 
 .control::placeholder {
   color: var(--fg-muted);
-  opacity: 1;   /* Firefox dims placeholders by default; we control contrast */
+  opacity: 1; /* Firefox dims placeholders by default; we control contrast */
 }
 
 @media (hover: hover) {
-  .control:hover:not(:disabled):not([aria-invalid="true"]) {
+  .control:hover:not(:disabled):not([aria-invalid='true']) {
     border-color: var(--border-strong);
   }
 }
@@ -42,7 +42,7 @@
   border-color: var(--accent);
 }
 
-.control[aria-invalid="true"] {
+.control[aria-invalid='true'] {
   border-color: var(--danger);
   background-color: var(--danger-surface);
 }

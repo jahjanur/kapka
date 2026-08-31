@@ -11,9 +11,26 @@
  * schema is in schemas/enums.
  */
 export const CITIES = [
-  'Skopje', 'Bitola', 'Kumanovo', 'Prilep', 'Tetovo', 'Veles', 'Ohrid',
-  'Gostivar', 'Štip', 'Strumica', 'Kavadarci', 'Kočani', 'Kičevo', 'Struga',
-  'Radoviš', 'Gevgelija', 'Debar', 'Kriva Palanka', 'Sveti Nikole', 'Negotino',
+  'Skopje',
+  'Bitola',
+  'Kumanovo',
+  'Prilep',
+  'Tetovo',
+  'Veles',
+  'Ohrid',
+  'Gostivar',
+  'Štip',
+  'Strumica',
+  'Kavadarci',
+  'Kočani',
+  'Kičevo',
+  'Struga',
+  'Radoviš',
+  'Gevgelija',
+  'Debar',
+  'Kriva Palanka',
+  'Sveti Nikole',
+  'Negotino',
 ] as const;
 
 export type City = (typeof CITIES)[number];

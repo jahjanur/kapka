@@ -5,9 +5,14 @@
    nearest ancestor, so the card stays portable.
    ========================================================================= */
 
-.shell { container-type: inline-size; }
+.shell {
+  container-type: inline-size;
+}
 
-.card { display: grid; gap: var(--space-4); }
+.card {
+  display: grid;
+  gap: var(--space-4);
+}
 
 .top {
   display: flex;
@@ -16,7 +21,11 @@
   gap: var(--space-2);
 }
 
-.body { display: grid; gap: var(--space-2); min-inline-size: 0; }
+.body {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
 
 .hospital {
   font-size: var(--text-lg);
@@ -35,7 +44,11 @@
   color: var(--fg-secondary);
 }
 
-.metaItem { display: inline-flex; align-items: center; gap: var(--space-1); }
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
 
 .note {
   max-inline-size: var(--measure);
@@ -49,7 +62,10 @@
   overflow: hidden;
 }
 
-.actions { display: grid; gap: var(--space-2); }
+.actions {
+  display: grid;
+  gap: var(--space-2);
+}
 
 /* ── Wide enough for a horizontal arrangement ────────────────────────────── */
 @container (min-width: 30rem) {
@@ -58,6 +74,12 @@
     align-items: center;
     column-gap: var(--space-5);
   }
-  .top { flex-direction: column; align-items: flex-start; gap: var(--space-2); }
-  .actions { justify-items: end; }
+  .top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+  .actions {
+    justify-items: end;
+  }
 }

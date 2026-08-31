@@ -20,12 +20,18 @@ export function AppHeader() {
           </Link>
 
           <nav className={styles.nav} aria-label="Main">
-            <Link to="/" className={styles.navLink}>Requests</Link>
-            <Link to="/kitchen-sink" className={styles.navLink}>Design system</Link>
+            <Link to="/" className={styles.navLink}>
+              Requests
+            </Link>
+            <Link to="/kitchen-sink" className={styles.navLink}>
+              Design system
+            </Link>
           </nav>
 
           <div className={styles.actions}>
-            <span className={styles.themeToggle}><ThemeToggle /></span>
+            <span className={styles.themeToggle}>
+              <ThemeToggle />
+            </span>
             <Button size="sm">
               <span className={styles.registerShort}>Register</span>
               <span className={styles.registerLong}>Register as donor</span>

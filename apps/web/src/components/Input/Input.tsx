@@ -16,7 +16,7 @@ export function Input({ className, ...rest }: InputProps) {
     <input
       id={field?.controlId}
       aria-describedby={field?.describedBy}
-      aria-invalid={field?.invalid || undefined}
+      aria-invalid={field?.invalid === true ? true : undefined}
       required={field?.required}
       className={cx(styles.input, className)}
       {...rest}

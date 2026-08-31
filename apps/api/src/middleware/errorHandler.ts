@@ -12,14 +12,21 @@ export function notFound(_req: Request, res: Response): void {
  * to the client, and never logs credentials or tokens (§12).
  */
 export function errorHandler(
-  error: unknown, _req: Request, res: Response, _next: NextFunction,
+  error: unknown,
+  _req: Request,
+  res: Response,
+  _next: NextFunction,
 ): void {
   console.error('[api] unhandled error:', error);
   if (res.headersSent) return;
-  res.status(500).json(apiError(
-    'INTERNAL',
-    env.isProduction
-      ? 'Something went wrong on our side.'
-      : `Something went wrong on our side: ${String(error)}`,
-  ));
+  res
+    .status(500)
+    .json(
+      apiError(
+        'INTERNAL',
+        env.isProduction
+          ? 'Something went wrong on our side.'
+          : `Something went wrong on our side: ${String(error)}`,
+      ),
+    );
 }

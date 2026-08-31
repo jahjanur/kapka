@@ -1,0 +1,14 @@
+# Block the commit if anything here fails. A broken main blocks the whole
+# team, so these run in full — not just over staged files — which catches a
+# staged change that breaks something it does not touch.
+#
+# Full lint ~3s, full typecheck ~1.5s. Cheap enough to always be honest.
+
+# 1. Format and auto-fix what is being committed, and restage it.
+npx lint-staged || exit 1
+
+# 2. Lint everything. Zero warnings allowed.
+npm run lint || exit 1
+
+# 3. Typecheck every workspace.
+npm run typecheck || exit 1

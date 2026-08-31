@@ -12,28 +12,42 @@ interface ClusterProps extends HTMLAttributes<HTMLElement> {
 }
 
 const ALIGN = {
-  start: 'flex-start', center: 'center', end: 'flex-end',
-  baseline: 'baseline', stretch: 'stretch',
+  start: 'flex-start',
+  center: 'center',
+  end: 'flex-end',
+  baseline: 'baseline',
+  stretch: 'stretch',
 } as const;
 
 const JUSTIFY = {
-  start: 'flex-start', center: 'center', end: 'flex-end', between: 'space-between',
+  start: 'flex-start',
+  center: 'center',
+  end: 'flex-end',
+  between: 'space-between',
 } as const;
 
 /** A wrapping row — filter chips, tag lists, button groups. Wraps, never scrolls. */
 export function Cluster({
-  gap = 2, align = 'center', justify = 'start',
-  as: Tag = 'div', className, style, children, ...rest
+  gap = 2,
+  align = 'center',
+  justify = 'start',
+  as: Tag = 'div',
+  className,
+  style,
+  children,
+  ...rest
 }: ClusterProps) {
   return (
     <Tag
       className={cx(styles.cluster, className)}
-      style={{
-        '--gap': space(gap),
-        '--align': ALIGN[align],
-        '--justify': JUSTIFY[justify],
-        ...style,
-      } as CSSProperties}
+      style={
+        {
+          '--gap': space(gap),
+          '--align': ALIGN[align],
+          '--justify': JUSTIFY[justify],
+          ...style,
+        } as CSSProperties
+      }
       {...rest}
     >
       {children}

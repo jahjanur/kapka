@@ -7,14 +7,27 @@
   animation: pulse 1.4s var(--ease-in-out) infinite;
 }
 
-.text { block-size: 0.85em; border-radius: var(--radius-xs); }
-.circle { border-radius: var(--radius-full); }
+.text {
+  block-size: 0.85em;
+  border-radius: var(--radius-xs);
+}
+.circle {
+  border-radius: var(--radius-full);
+}
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.45; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .skeleton { animation: none; opacity: 0.7; }
+  .skeleton {
+    animation: none;
+    opacity: 0.7;
+  }
 }

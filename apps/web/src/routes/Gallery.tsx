@@ -1,7 +1,18 @@
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
-  BloodTypeBadge, Button, Card, Cluster, Field, Grid, Icon, ICON_NAMES,
-  Input, Select, Stack, Textarea, WithSidebar,
+  BloodTypeBadge,
+  Button,
+  Card,
+  Cluster,
+  Field,
+  Grid,
+  Icon,
+  ICON_NAMES,
+  Input,
+  Select,
+  Stack,
+  Textarea,
+  WithSidebar,
 } from '../components';
 import { BLOOD_TYPES } from '@kapka/shared';
 import { cx } from '../lib/cx';
@@ -9,8 +20,16 @@ import styles from './KitchenSink.module.css';
 
 /* ── Small local helpers, only used by this page ───────────────────────── */
 
-function Section({ id, title, note, children }: {
-  id: string; title: string; note?: ReactNode; children: ReactNode;
+function Section({
+  id,
+  title,
+  note,
+  children,
+}: {
+  id: string;
+  title: string;
+  note?: ReactNode;
+  children: ReactNode;
 }) {
   return (
     <section id={id} className={styles.section} aria-labelledby={`${id}-heading`}>
@@ -42,15 +61,32 @@ function Swatch({ token }: { token: string }) {
 }
 
 const SEMANTIC_TOKENS = [
-  '--bg-canvas', '--bg-surface', '--bg-surface-alt', '--bg-inset',
-  '--fg-primary', '--fg-secondary', '--fg-muted',
-  '--border-subtle', '--border-default', '--border-strong',
-  '--accent', '--accent-hover', '--accent-active', '--accent-surface', '--accent-border',
+  '--bg-canvas',
+  '--bg-surface',
+  '--bg-surface-alt',
+  '--bg-inset',
+  '--fg-primary',
+  '--fg-secondary',
+  '--fg-muted',
+  '--border-subtle',
+  '--border-default',
+  '--border-strong',
+  '--accent',
+  '--accent-hover',
+  '--accent-active',
+  '--accent-surface',
+  '--accent-border',
 ];
 
 const STATUS_TOKENS = [
-  '--success', '--success-surface', '--warning', '--warning-surface',
-  '--danger', '--danger-surface', '--info', '--info-surface',
+  '--success',
+  '--success-surface',
+  '--warning',
+  '--warning-surface',
+  '--danger',
+  '--danger-surface',
+  '--info',
+  '--info-surface',
 ];
 
 const TYPE_STEPS = [
@@ -78,11 +114,10 @@ export function Gallery({ frameMode = false }: { frameMode?: boolean }) {
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const NOTE_LIMIT = 500;   // matches the CHECK constraint on blood_requests.note
+  const NOTE_LIMIT = 500; // matches the CHECK constraint on blood_requests.note
 
   return (
     <Stack gap={16} className={cx(frameMode && styles.frameMode)}>
-
       <Section
         id="colour"
         title="Colour"
@@ -91,14 +126,24 @@ export function Gallery({ frameMode = false }: { frameMode?: boolean }) {
         <Stack gap={6}>
           <div>
             <h3>Semantic</h3>
-            <div className={styles.swatchGrid} style={{ marginBlockStart: 'var(--space-4)' }}>
-              {SEMANTIC_TOKENS.map((token) => <Swatch key={token} token={token} />)}
+            <div
+              className={styles.swatchGrid}
+              style={{ marginBlockStart: 'var(--space-4)' }}
+            >
+              {SEMANTIC_TOKENS.map((token) => (
+                <Swatch key={token} token={token} />
+              ))}
             </div>
           </div>
           <div>
             <h3>Status</h3>
-            <div className={styles.swatchGrid} style={{ marginBlockStart: 'var(--space-4)' }}>
-              {STATUS_TOKENS.map((token) => <Swatch key={token} token={token} />)}
+            <div
+              className={styles.swatchGrid}
+              style={{ marginBlockStart: 'var(--space-4)' }}
+            >
+              {STATUS_TOKENS.map((token) => (
+                <Swatch key={token} token={token} />
+              ))}
             </div>
           </div>
         </Stack>
@@ -152,7 +197,10 @@ export function Gallery({ frameMode = false }: { frameMode?: boolean }) {
           {SPACE_STEPS.map((step) => (
             <div key={step} className={styles.spaceRow}>
               <code className={styles.specimenLabel}>--space-{step}</code>
-              <div className={styles.spaceBar} style={{ inlineSize: `var(--space-${step})` }} />
+              <div
+                className={styles.spaceBar}
+                style={{ inlineSize: `var(--space-${step})` }}
+              />
             </div>
           ))}
         </Stack>
@@ -166,7 +214,10 @@ export function Gallery({ frameMode = false }: { frameMode?: boolean }) {
         <Stack gap={6}>
           <div>
             <h3>Radius</h3>
-            <div className={styles.tileGrid} style={{ marginBlockStart: 'var(--space-4)' }}>
+            <div
+              className={styles.tileGrid}
+              style={{ marginBlockStart: 'var(--space-4)' }}
+            >
               {RADII.map((radius) => (
                 <div
                   key={radius}
@@ -183,7 +234,10 @@ export function Gallery({ frameMode = false }: { frameMode?: boolean }) {
           </div>
           <div>
             <h3>Elevation</h3>
-            <div className={styles.tileGrid} style={{ marginBlockStart: 'var(--space-4)' }}>
+            <div
+              className={styles.tileGrid}
+              style={{ marginBlockStart: 'var(--space-4)' }}
+            >
               {ELEVATIONS.map((level) => (
                 <div
                   key={level}
@@ -219,26 +273,39 @@ export function Gallery({ frameMode = false }: { frameMode?: boolean }) {
 
           <Specimen label="disabled">
             {BUTTON_VARIANTS.map((variant) => (
-              <Button key={variant} variant={variant} disabled>Post request</Button>
+              <Button key={variant} variant={variant} disabled>
+                Post request
+              </Button>
             ))}
           </Specimen>
 
           <Specimen label="loading">
             {BUTTON_VARIANTS.map((variant) => (
-              <Button key={variant} variant={variant} loading>Post request</Button>
+              <Button key={variant} variant={variant} loading>
+                Post request
+              </Button>
             ))}
           </Specimen>
 
           <Specimen label="with icon">
-            <Button><Icon name="droplet" />Donate</Button>
-            <Button variant="secondary">Directions<Icon name="arrowRight" /></Button>
-            <Button variant="ghost"><Icon name="filter" />Filters</Button>
+            <Button>
+              <Icon name="droplet" />
+              Donate
+            </Button>
+            <Button variant="secondary">
+              Directions
+              <Icon name="arrowRight" />
+            </Button>
+            <Button variant="ghost">
+              <Icon name="filter" />
+              Filters
+            </Button>
           </Specimen>
 
           <div>
             <p className={styles.note}>
-              The loading state keeps the button’s width, so nothing around it
-              shifts mid-action. Press this one:
+              The loading state keeps the button’s width, so nothing around it shifts
+              mid-action. Press this one:
             </p>
             <div style={{ marginBlockStart: 'var(--space-3)', maxInlineSize: '22rem' }}>
               <Button
@@ -276,8 +343,17 @@ export function Gallery({ frameMode = false }: { frameMode?: boolean }) {
               <Input type="email" autoComplete="email" placeholder="ana@example.com" />
             </Field>
 
-            <Field label="Phone" optional help="Shown to no one. Used only if you respond to a request.">
-              <Input type="tel" autoComplete="tel" inputMode="tel" placeholder="+389 7X XXX XXX" />
+            <Field
+              label="Phone"
+              optional
+              help="Shown to no one. Used only if you respond to a request."
+            >
+              <Input
+                type="tel"
+                autoComplete="tel"
+                inputMode="tel"
+                placeholder="+389 7X XXX XXX"
+              />
             </Field>
 
             <Field
@@ -286,7 +362,10 @@ export function Gallery({ frameMode = false }: { frameMode?: boolean }) {
               error="Password must be at least 10 characters."
             >
               <Cluster gap={2} align="stretch" style={{ flexWrap: 'nowrap' }}>
-                <Input type={showPassword ? 'text' : 'password'} autoComplete="new-password" />
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
+                />
                 <Button
                   variant="secondary"
                   onClick={() => setShowPassword((shown) => !shown)}
@@ -305,7 +384,9 @@ export function Gallery({ frameMode = false }: { frameMode?: boolean }) {
             <Field label="Blood type" required>
               <Select placeholder="Select a blood type" defaultValue="">
                 {BLOOD_TYPES.map((type) => (
-                  <option key={type} value={type}>{type}</option>
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
                 ))}
               </Select>
             </Field>
@@ -316,13 +397,21 @@ export function Gallery({ frameMode = false }: { frameMode?: boolean }) {
               help="A fixed list, never free text — “bitola ” and “Битола” would silently never match."
             >
               <Select placeholder="Select a city" defaultValue="">
-                {['Skopje', 'Bitola', 'Kumanovo', 'Prilep', 'Tetovo', 'Ohrid'].map((city) => (
-                  <option key={city} value={city}>{city}</option>
-                ))}
+                {['Skopje', 'Bitola', 'Kumanovo', 'Prilep', 'Tetovo', 'Ohrid'].map(
+                  (city) => (
+                    <option key={city} value={city}>
+                      {city}
+                    </option>
+                  ),
+                )}
               </Select>
             </Field>
 
-            <Field label="Last donation date" optional help="Leave empty if you have never donated.">
+            <Field
+              label="Last donation date"
+              optional
+              help="Leave empty if you have never donated."
+            >
               <Input type="date" />
             </Field>
 
@@ -334,12 +423,18 @@ export function Gallery({ frameMode = false }: { frameMode?: boolean }) {
                 onChange={(event) => setNote(event.target.value)}
                 placeholder="Anything that helps a donor decide quickly."
               />
-              <p className={styles.note} style={{ marginBlockStart: 'var(--space-1)', textAlign: 'end' }}>
+              <p
+                className={styles.note}
+                style={{ marginBlockStart: 'var(--space-1)', textAlign: 'end' }}
+              >
                 <span data-numeric>{note.length}</span> / {NOTE_LIMIT}
               </p>
             </Field>
 
-            <Field label="Disabled control" help="Shown for completeness — state five of five.">
+            <Field
+              label="Disabled control"
+              help="Shown for completeness — state five of five."
+            >
               <Input type="text" defaultValue="Skopje" disabled />
             </Field>
           </Stack>
@@ -377,8 +472,8 @@ export function Gallery({ frameMode = false }: { frameMode?: boolean }) {
               </Cluster>
               <h3 style={{ textAlign: 'start' }}>Interactive card</h3>
               <p className={styles.note} style={{ textAlign: 'start' }}>
-                Hover and press me. Rendered as a real button, so it is
-                keyboard reachable and announces as one.
+                Hover and press me. Rendered as a real button, so it is keyboard reachable
+                and announces as one.
               </p>
             </Stack>
           </Card>
@@ -417,9 +512,15 @@ export function Gallery({ frameMode = false }: { frameMode?: boolean }) {
         <Stack gap={8}>
           <div>
             <h3>Grid — auto-fitting columns</h3>
-            <Grid minColumn="12rem" gap={3} style={{ marginBlockStart: 'var(--space-4)' }}>
+            <Grid
+              minColumn="12rem"
+              gap={3}
+              style={{ marginBlockStart: 'var(--space-4)' }}
+            >
               {Array.from({ length: 6 }, (_, index) => (
-                <div key={index} className={styles.demoBlock}>item {index + 1}</div>
+                <div key={index} className={styles.demoBlock}>
+                  item {index + 1}
+                </div>
               ))}
             </Grid>
           </div>
@@ -432,7 +533,7 @@ export function Gallery({ frameMode = false }: { frameMode?: boolean }) {
                 mainMin="20rem"
                 sidebar={<div className={styles.demoBlock}>sidebar</div>}
               >
-                <div className={styles.demoBlock} style={{ minBlockSize: '6rem' } as CSSProperties}>
+                <div className={styles.demoBlock} style={{ minBlockSize: '6rem' }}>
                   main content
                 </div>
               </WithSidebar>
@@ -442,9 +543,23 @@ export function Gallery({ frameMode = false }: { frameMode?: boolean }) {
           <div>
             <h3>Cluster — wrapping row</h3>
             <Cluster gap={2} style={{ marginBlockStart: 'var(--space-4)' }}>
-              {['All', 'O−', 'O+', 'A−', 'A+', 'B−', 'B+', 'AB−', 'AB+', 'Critical', 'Urgent'].map(
-                (chip) => <span key={chip} className={styles.demoBlock}>{chip}</span>,
-              )}
+              {[
+                'All',
+                'O−',
+                'O+',
+                'A−',
+                'A+',
+                'B−',
+                'B+',
+                'AB−',
+                'AB+',
+                'Critical',
+                'Urgent',
+              ].map((chip) => (
+                <span key={chip} className={styles.demoBlock}>
+                  {chip}
+                </span>
+              ))}
             </Cluster>
           </div>
 
@@ -458,7 +573,6 @@ export function Gallery({ frameMode = false }: { frameMode?: boolean }) {
           </div>
         </Stack>
       </Section>
-
     </Stack>
   );
 }

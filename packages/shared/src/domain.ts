@@ -12,16 +12,18 @@ export const USER_ROLES = ['donor', 'requester', 'admin'] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
 export const REQUEST_STATUSES = [
-  'pending', 'approved', 'rejected', 'fulfilled', 'expired',
+  'pending',
+  'approved',
+  'rejected',
+  'fulfilled',
+  'expired',
 ] as const;
 export type RequestStatus = (typeof REQUEST_STATUSES)[number];
 
 export const URGENCIES = ['routine', 'urgent', 'critical'] as const;
 export type Urgency = (typeof URGENCIES)[number];
 
-export const NOTIFICATION_STATUSES = [
-  'queued', 'sent', 'failed', 'bounced',
-] as const;
+export const NOTIFICATION_STATUSES = ['queued', 'sent', 'failed', 'bounced'] as const;
 export type NotificationStatus = (typeof NOTIFICATION_STATUSES)[number];
 
 /** Days that must pass between donations, per WHO guidance (§5.2). */

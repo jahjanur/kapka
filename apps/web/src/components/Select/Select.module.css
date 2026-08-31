@@ -5,7 +5,10 @@
    the element stays native and only its shell is ours.
    ========================================================================= */
 
-.wrapper { position: relative; display: block; }
+.wrapper {
+  position: relative;
+  display: block;
+}
 
 .select {
   composes: control from '../Field/Control.module.css';
@@ -13,13 +16,18 @@
   padding-inline-end: var(--space-10);
   appearance: none;
   cursor: pointer;
-  text-overflow: ellipsis;   /* a long city name must not push the chevron */
+  text-overflow: ellipsis; /* a long city name must not push the chevron */
 }
 
-.select:disabled { cursor: not-allowed; }
+.select:disabled {
+  cursor: not-allowed;
+}
 
 /* Placeholder option selected — dim it like a placeholder, not like a value. */
-.select:invalid, .select[data-placeholder="true"] { color: var(--fg-muted); }
+.select:invalid,
+.select[data-placeholder='true'] {
+  color: var(--fg-muted);
+}
 
 .chevron {
   position: absolute;
@@ -27,7 +35,9 @@
   inset-block-start: 50%;
   translate: 0 -50%;
   color: var(--fg-muted);
-  pointer-events: none;   /* clicks must reach the select underneath */
+  pointer-events: none; /* clicks must reach the select underneath */
 }
 
-.select:disabled ~ .chevron { opacity: 0.55; }
+.select:disabled ~ .chevron {
+  opacity: 0.55;
+}

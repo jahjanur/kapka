@@ -20,11 +20,17 @@
   flex-wrap: wrap;
   gap: var(--gap, var(--space-6));
 }
-.sidebar { flex: 1 1 var(--sidebar-basis, 16rem); }
-.main    { flex: 999 1 var(--main-min, 32rem); }
+.sidebar {
+  flex: 1 1 var(--sidebar-basis, 16rem);
+}
+.main {
+  flex: 999 1 var(--main-min, 32rem);
+}
 
 /* Sidebar on the trailing side instead of the leading side. */
-.sidebarLast { order: 1; }
+.sidebarLast {
+  order: 1;
+}
 
 /* 3. Content-width container with fluid gutters. */
 .container {
@@ -37,11 +43,19 @@
 /* 4. Vertical rhythm without margin-collapsing bugs.
       The owl selector — spacing lives BETWEEN items, so the first and last
       child never introduce edge margin the parent has to strip off.       */
-.stack > * + * { margin-block-start: var(--flow, var(--space-4)); }
+.stack > * + * {
+  margin-block-start: var(--flow, var(--space-4));
+}
 
 /* Push everything after the marked child to the end of a fixed-height stack. */
-.stack > .pushEnd { margin-block-start: auto; }
-.stackFill { display: flex; flex-direction: column; block-size: 100%; }
+.stack > .pushEnd {
+  margin-block-start: auto;
+}
+.stackFill {
+  display: flex;
+  flex-direction: column;
+  block-size: 100%;
+}
 
 /* 5. Cluster — a wrapping row of items (tags, filters, actions). */
 .cluster {

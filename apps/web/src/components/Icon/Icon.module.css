@@ -9,7 +9,7 @@
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
-  vertical-align: -0.125em;   /* optical baseline alignment next to text */
+  vertical-align: -0.125em; /* optical baseline alignment next to text */
 }
 
 .sprite {

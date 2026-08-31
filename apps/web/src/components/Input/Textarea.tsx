@@ -11,7 +11,7 @@ export function Textarea({ className, ...rest }: TextareaProps) {
     <textarea
       id={field?.controlId}
       aria-describedby={field?.describedBy}
-      aria-invalid={field?.invalid || undefined}
+      aria-invalid={field?.invalid === true ? true : undefined}
       required={field?.required}
       className={cx(styles.textarea, className)}
       {...rest}

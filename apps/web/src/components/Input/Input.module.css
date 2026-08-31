@@ -1,4 +1,6 @@
-.input { composes: control from '../Field/Control.module.css'; }
+.input {
+  composes: control from '../Field/Control.module.css';
+}
 
 .textarea {
   composes: control from '../Field/Control.module.css';
@@ -15,4 +17,7 @@
   color: var(--fg-muted);
   text-align: end;
 }
-.counterOver { color: var(--danger-ink); font-weight: var(--weight-semibold); }
+.counterOver {
+  color: var(--danger-ink);
+  font-weight: var(--weight-semibold);
+}

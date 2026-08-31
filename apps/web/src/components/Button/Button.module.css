@@ -40,7 +40,7 @@
    Coarse pointers only — it would swallow hover on a mouse. */
 @media (pointer: coarse) {
   .button::after {
-    content: "";
+    content: '';
     position: absolute;
     inset: 50% 0 auto 0;
     block-size: max(100%, var(--hit-min));
@@ -69,7 +69,9 @@
   --font-size: var(--text-lg);
 }
 
-.fullWidth { inline-size: 100%; }
+.fullWidth {
+  inline-size: 100%;
+}
 
 /* ── Variant: primary ────────────────────────────────────────────────────── */
 .primary {
@@ -78,7 +80,9 @@
   box-shadow: var(--shadow-accent);
 }
 @media (hover: hover) {
-  .primary:hover:not(:disabled) { background-color: var(--accent-hover); }
+  .primary:hover:not(:disabled) {
+    background-color: var(--accent-hover);
+  }
 }
 .primary:active:not(:disabled) {
   background-color: var(--accent-active);
@@ -114,7 +118,9 @@
     color: var(--fg-primary);
   }
 }
-.ghost:active:not(:disabled) { background-color: var(--bg-inset); }
+.ghost:active:not(:disabled) {
+  background-color: var(--bg-inset);
+}
 
 /* ── Variant: danger ─────────────────────────────────────────────────────── */
 .danger {
@@ -122,13 +128,19 @@
   color: var(--slate-0);
 }
 @media (hover: hover) {
-  .danger:hover:not(:disabled) { filter: brightness(0.92); }
+  .danger:hover:not(:disabled) {
+    filter: brightness(0.92);
+  }
 }
-.danger:active:not(:disabled) { filter: brightness(0.85); }
+.danger:active:not(:disabled) {
+  filter: brightness(0.85);
+}
 
 /* ── State: active (all variants) ────────────────────────────────────────── */
 /* The press. Its absence is why many web apps feel "not quite native" (§6.7). */
-.button:active:not(:disabled) { scale: var(--press-scale); }
+.button:active:not(:disabled) {
+  scale: var(--press-scale);
+}
 
 /* ── State: disabled ─────────────────────────────────────────────────────── */
 .button:disabled {
@@ -140,9 +152,17 @@
 /* ── State: loading ──────────────────────────────────────────────────────── */
 /* The label keeps its box so the button never changes width mid-action and
    shoves the layout around it (§8 Tier 1). */
-.loading { cursor: progress; }
-.label { display: inline-flex; align-items: center; gap: var(--space-2); }
-.loading .label { visibility: hidden; }
+.loading {
+  cursor: progress;
+}
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.loading .label {
+  visibility: hidden;
+}
 
 .spinner {
   position: absolute;
@@ -159,10 +179,17 @@
   animation: spin var(--dur-slow) linear infinite;
 }
 
-@keyframes spin { to { rotate: 360deg; } }
+@keyframes spin {
+  to {
+    rotate: 360deg;
+  }
+}
 
 /* Reduced motion: a static ring still reads as "working" — see global.css,
    which clamps the duration, so pair it with an opacity cue. */
 @media (prefers-reduced-motion: reduce) {
-  .spinnerTrack { opacity: 0.6; border-block-start-color: currentColor; }
+  .spinnerTrack {
+    opacity: 0.6;
+    border-block-start-color: currentColor;
+  }
 }

@@ -57,12 +57,12 @@ npm run dev:api      # api on http://localhost:4000 (second terminal)
 
 Copy `apps/api/.env.example` to `apps/api/.env` before starting the API.
 
-| Script (from the root) | What it does |
-|---|---|
-| `npm run dev` | Vite dev server for the web app |
-| `npm run dev:api` | Express API with watch |
-| `npm run build` | Builds every workspace |
-| `npm run typecheck` | Typechecks every workspace |
+| Script (from the root) | What it does                    |
+| ---------------------- | ------------------------------- |
+| `npm run dev`          | Vite dev server for the web app |
+| `npm run dev:api`      | Express API with watch          |
+| `npm run build`        | Builds every workspace          |
+| `npm run typecheck`    | Typechecks every workspace      |
 
 **`/kitchen-sink`** is the component gallery: every token and every Tier 1
 component, in both themes, with the whole gallery embedded at 360px and 1280px

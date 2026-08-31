@@ -3,14 +3,37 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
+
+    /* ── Strictness ──────────────────────────────────────────────────────
+       Blood type unions and role checks are exactly what a type system is
+       for (§2), so nothing here is optional. Every flag below is on for
+       every workspace; a package may not loosen them.                     */
     "strict": true,
     "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+
+    /* ── Module discipline ───────────────────────────────────────────── */
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+    "noUncheckedSideEffectImports": true,
     "resolveJsonModule": true,
+
+    /* Deliberately NOT enabled: noPropertyAccessFromIndexSignature.
+       Vite types a CSS module as Record<string, string>, so it would force
+       styles['button'] everywhere for zero safety — a typo returns undefined
+       either way. Re-enable it if we ever generate exact per-module
+       declarations, which would make a typo'd class a real type error.      */
+
+    /* Third-party .d.ts files are not ours to fix, and checking them is
+       slow and noisy. Our own code is checked in full. */
     "skipLibCheck": true,
     "noEmit": true
   }
