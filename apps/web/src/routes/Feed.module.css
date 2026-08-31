@@ -75,17 +75,8 @@
 }
 
 /* ── List ────────────────────────────────────────────────────────────────── */
-.list {
-  display: grid;
-  gap: var(--space-4);
-}
-
-/* Cards keep a readable width instead of stretching across a wide screen. */
-@media (min-width: 48rem) {
-  .list {
-    grid-template-columns: repeat(auto-fit, minmax(min(24rem, 100%), 1fr));
-  }
-}
+/* The card list is a <Grid> — see Feed.tsx. It reflows from one column to
+   several on its own, so the media query that used to live here is gone. */
 
 /* ── Skeleton card, shape-matched to RequestCard ─────────────────────────── */
 .skeletonCard {

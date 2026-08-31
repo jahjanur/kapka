@@ -197,6 +197,29 @@ Four values were untokenised when the check was first written:
 | `--blur-chrome` / `--tint-chrome` | Sticky bars used `blur(10px)`/90% and `blur(8px)`/88%, reading as different materials                                               |
 | `--dur-pulse`                     | The skeleton animation's `1.4s`                                                                                                     |
 
+### Layout primitives
+
+`Container`, `Stack`, `Cluster`, `Grid` and `WithSidebar` live in
+[apps/web/src/components/layout](apps/web/src/components/layout). They
+reflow without any breakpoint, which is what keeps the media-query count low.
+
+The app has 22 `@media` rules. Only **five** are about width:
+
+| Query                   | Why it is a media query                                        |
+| ----------------------- | -------------------------------------------------------------- |
+| `AppHeader` ×2 at 48rem | Nav collapse — page-level, which §7.2 assigns to media queries |
+| `AppHeader` at 30rem    | Short vs long button label                                     |
+| `Feed` at 64rem         | Filters become a sticky rail                                   |
+| `Feed` at 48rem         | Hides the mobile CTA bar                                       |
+
+The other 17 are capability queries — `hover: hover`, `pointer: coarse`,
+`prefers-reduced-motion`, `forced-colors` — which detect the device, not the
+width. No primitive can or should remove those.
+
+Component-internal reflow uses **container** queries instead: `RequestCard`
+rearranges from its own width, so the same card works full-width in the feed
+and narrow in a rail with no breakpoint anywhere.
+
 ### Fonts
 
 Inter, self-hosted and subsetted (§6.4, a P1 performance requirement). Two

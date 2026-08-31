@@ -8,6 +8,7 @@ import {
   FilterBar,
   FilterChip,
   FilterGroupLabel,
+  Grid,
   Icon,
   IconSprite,
   RequestCard,
@@ -163,11 +164,11 @@ export default function Feed() {
               </p>
 
               {isLoading && (
-                <div className={styles.list}>
+                <Grid minColumn="24rem" gap={4}>
                   {Array.from({ length: 4 }, (_, index) => (
                     <SkeletonCard key={index} />
                   ))}
-                </div>
+                </Grid>
               )}
 
               {error && (
@@ -202,11 +203,11 @@ export default function Feed() {
                 ))}
 
               {!isLoading && !error && filtered.length > 0 && (
-                <div className={styles.list}>
+                <Grid minColumn="24rem" gap={4}>
                   {filtered.map((request) => (
                     <RequestCard key={request.id} request={request} />
                   ))}
-                </div>
+                </Grid>
               )}
             </Stack>
           </WithSidebar>
