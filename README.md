@@ -106,6 +106,33 @@ Supporting conventions, all enforced in the components already here:
 survive a refresh on the static host. Verify it applies on Render before the
 first deploy.
 
+## Tests and CI
+
+```bash
+npm test              # everything, ~0.7s
+npm run test:watch    # while working
+npm run test:coverage
+```
+
+Vitest runs as three projects so each gets the environment it needs: `shared`
+and `api` in Node, `web` in jsdom. 54 tests covering the schema contract
+(unknown-key rejection, canonical cities, unit and note bounds, future
+donation dates), the blood-type vocabulary and its screen-reader announcement,
+the §4 error envelope, and the API routes end to end via supertest.
+
+`.github/workflows/ci.yml` runs on every push and pull request: install from
+the lockfile, then lint, formatting, typecheck, test with coverage, and build.
+Cheapest checks first so a trivial mistake fails in seconds. The whole run is
+a few seconds of actual work.
+
+CI and the pre-commit hook run the same commands, so a green commit locally is
+a green CI run — the hook is the fast feedback, CI is the thing that cannot be
+skipped with `--no-verify`.
+
+**After pulling, run `npm install` once at the root.** That triggers the
+`prepare` script that installs the git hooks. Without it the pre-commit checks
+silently do not run for you.
+
 ## Known gaps
 
 - **Inter is not self-hosted yet.** §6.4 makes that a P1 performance
@@ -116,6 +143,13 @@ first deploy.
   12–13px; §7.6 says no text anywhere below 14px. The tokens follow §6.4 as
   written. Decide which wins before §9 screens start using `--text-xs` for real
   content — right now it is only used in kitchen-sink chrome.
-- No tests yet. The unit tests in §13 are backend-side; visual regression (§13,
-  P2) should point Playwright at `/kitchen-sink/frame`, which is built to be
-  screenshotted at a fixed width.
+- **The P0 compatibility tests do not exist yet.** §13 wants all 64
+  (recipient, donor) pairs asserted — 27 valid, 37 invalid. That matrix lives
+  in the database by design (§3), not in JS conditionals, so those tests land
+  with the schema and the §5.1 matching query. This is the one piece of logic
+  where a bug has real-world consequences, so it should not slip.
+- No E2E tests. §13 wants two Playwright flows at 390px and 1280px. Visual
+  regression (P2) should point Playwright at `/kitchen-sink/frame`, which is
+  built to be screenshotted at a fixed width.
+- No Lighthouse CI. §11 wants the build to fail when a performance budget is
+  exceeded; the budgets are written down but nothing enforces them yet.

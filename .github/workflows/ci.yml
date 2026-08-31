@@ -1,0 +1,68 @@
+name: CI
+
+# Everything goes straight to main, so CI on push is the safety net rather
+# than a pull-request gate. Runs on every branch anyway, in case one is used.
+on:
+  push:
+  pull_request:
+
+# A second push supersedes the first — no point finishing a run for a commit
+# that is already old. Never cancel on main, where the result is the record.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Lint, typecheck, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      # Skip git hook installation. The hooks are for developer machines; CI
+      # runs the same checks directly and does not commit anything.
+      HUSKY: 0
+      CI: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # ci, not install — installs exactly the lockfile and fails if
+      # package.json and the lock have drifted apart.
+      - name: Install
+        run: npm ci
+
+      # Cheapest checks first, so a trivial mistake fails in seconds.
+      - name: Lint
+        run: npm run lint
+
+      - name: Formatting
+        run: npm run format:check
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm run test:coverage
+
+      # Last, because a broken build is the slowest thing to discover and the
+      # rarest to hit once the checks above pass.
+      - name: Build
+        run: npm run build
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+          if-no-files-found: ignore
