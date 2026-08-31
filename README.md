@@ -7,38 +7,62 @@ The build spec is the **Blood Donor Finder — Development Plan**. Section numbe
 referenced in code comments (§6.3, §7.4, …) point at it. Read it before writing
 code.
 
-## What is in the repo right now
+## Layout
 
-Frontend only — no API and no database yet. The public feed (§9.1) runs against
-seed data in `src/lib/requests.ts`.
+An npm-workspaces monorepo. The frontend and backend share one set of Zod
+schemas, so validation cannot drift between them.
 
 ```
-web/
-  src/styles/tokens.css   colour tokens, light + dark, blood-type coding
-  src/styles/scale.css    type, spacing, radius, elevation, motion, breakpoints
-  src/styles/global.css   reset and base layer
-  src/components/         Tier 1 primitives, Tier 2 composites, layout primitives
-  src/lib/                blood-type vocabulary, seed data, the query hook
-  src/routes/Feed.tsx     the public feed — §9.1
-  src/routes/KitchenSink  the component gallery
+apps/
+  web/                 React + Vite SPA
+  api/                 Node + Express API
+packages/
+  shared/              domain vocabulary + Zod schemas — used by BOTH sides
+  tokens/              design tokens (CSS) + the JS mirrors of the scales
 ```
 
-`useRequests()` is deliberately shaped like the TanStack Query hook that will
-wrap `GET /api/requests`, so swapping in the real call touches that one file.
+**`@kapka/shared`** is the point of the monorepo. One schema per form, imported
+by the React form and by the Express route that receives it, so the two can
+never disagree about what is valid. It is split deliberately:
+
+- `bloodType.ts`, `cities.ts`, `domain.ts` — plain data and types, **no Zod**.
+- `schemas/` — the Zod schemas, built from those same const arrays.
+
+That split is load-bearing, not tidiness: the feed imports `CITIES` to fill a
+dropdown, and if that pulled Zod along it would add ~14KB gzipped to the
+initial bundle for nothing. Keep new vocabulary out of the schema modules.
+
+**`@kapka/tokens`** holds `tokens.css`, `scale.css` and `global.css` plus the
+JS mirrors of the breakpoint and spacing scales. Import the CSS by path:
+
+```ts
+import '@kapka/tokens/tokens.css';
+```
+
+Both packages export TypeScript source directly — there is no build step, so
+there is no stale `dist/` to get out of sync. Vite and tsx compile them as part
+of the consuming app.
+
+Nothing is connected to Postgres yet. The feed runs on seed data in
+`apps/web/src/lib/seedRequests.ts`, and the request endpoints validate against
+the shared schemas but return `501 NOT_IMPLEMENTED`.
 
 ## Running it
 
 ```bash
-cd web
-npm install
-npm run dev        # then open /kitchen-sink
+npm install          # once, at the root — it installs every workspace
+npm run dev          # web on http://localhost:5173
+npm run dev:api      # api on http://localhost:4000 (second terminal)
 ```
 
-| Script | What it does |
+Copy `apps/api/.env.example` to `apps/api/.env` before starting the API.
+
+| Script (from the root) | What it does |
 |---|---|
-| `npm run dev` | Vite dev server |
-| `npm run build` | Typecheck, then production build |
-| `npm run typecheck` | Types only |
+| `npm run dev` | Vite dev server for the web app |
+| `npm run dev:api` | Express API with watch |
+| `npm run build` | Builds every workspace |
+| `npm run typecheck` | Typechecks every workspace |
 
 **`/kitchen-sink`** is the component gallery: every token and every Tier 1
 component, in both themes, with the whole gallery embedded at 360px and 1280px
