@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { apiError } from '@kapka/shared';
 import { env } from '../env';
+import { redact } from '../redact';
 
 /** Every unmatched path gets the same envelope as everything else. */
 export function notFound(_req: Request, res: Response): void {
@@ -17,7 +18,10 @@ export function errorHandler(
   res: Response,
   _next: NextFunction,
 ): void {
-  console.error('[api] unhandled error:', error);
+  // Redacted, because an error thrown near a connection string, an
+  // Authorization header or a user record would otherwise put the secret
+  // straight into the log (§12).
+  console.error('[api] unhandled error:', redact(error));
   if (res.headersSent) return;
   res
     .status(500)
@@ -26,7 +30,7 @@ export function errorHandler(
         'INTERNAL',
         env.isProduction
           ? 'Something went wrong on our side.'
-          : `Something went wrong on our side: ${String(error)}`,
+          : `Something went wrong on our side: ${redact(error)}`,
       ),
     );
 }

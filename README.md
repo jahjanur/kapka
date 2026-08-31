@@ -293,6 +293,38 @@ Badge outlines are deliberately **not** held to 3:1. The Rh sign is carried by
 the badge text, which does clear 4.5:1; the outline is redundant
 reinforcement, not the only channel.
 
+### Configuration and secrets
+
+`apps/api/.env.example` documents every variable the API reads — what it does,
+whether it is required, and its default. `.env` has been gitignored since the
+first commit, and no `.env` has ever been committed in any commit on any
+branch.
+
+Three checks in `apps/api/src/secrets.test.ts`, because each of these only
+shows up once it has already gone wrong:
+
+- **The schema and the example agree, in both directions.** A variable added to
+  `env.ts` without documenting it means a teammate pulls, starts the API, and
+  gets a validation error naming something they have never heard of. One left
+  in the example but not the schema is dead configuration people keep setting.
+- **Every variable has a comment and a stated default.** A name and a value
+  tell nobody whether it is required.
+- **No `.env` is tracked, ignored, or present in history.** A `.env` deleted
+  later is still in the history, and the keys in it are still compromised.
+
+**`apps/web/.env.example` is a different kind of file and says so.** Vite
+inlines every `VITE_`-prefixed variable into the JavaScript it serves to
+browsers — it is not hidden, and it looks exactly like a server-side variable,
+which is what makes putting a key there an easy mistake rather than a careless
+one. A test fails if any `VITE_` name looks secret-shaped.
+
+**Logs are redacted** (§12: never log passwords, tokens or full email
+addresses). `redact()` strips connection-string passwords, bearer tokens, JWTs,
+bcrypt hashes and provider keys, and masks emails to `a***@example.com` — which
+domain and roughly which account is usually what the log was for. The error
+handler runs everything through it before logging, and before putting it in a
+development response body.
+
 ### Cities
 
 City is a controlled list and never free text, because §5.1 matches on an
@@ -357,6 +389,38 @@ development key, so nothing signed with it could be mistaken for a secret.
 
 `20260831130000000_refresh-tokens.sql` adds the table. §3 has none, because
 §3 does not describe rotation.
+
+### Configuration and secrets
+
+`apps/api/.env.example` documents every variable the API reads — what it does,
+whether it is required, and its default. `.env` has been gitignored since the
+first commit, and no `.env` has ever been committed in any commit on any
+branch.
+
+Three checks in `apps/api/src/secrets.test.ts`, because each of these only
+shows up once it has already gone wrong:
+
+- **The schema and the example agree, in both directions.** A variable added to
+  `env.ts` without documenting it means a teammate pulls, starts the API, and
+  gets a validation error naming something they have never heard of. One left
+  in the example but not the schema is dead configuration people keep setting.
+- **Every variable has a comment and a stated default.** A name and a value
+  tell nobody whether it is required.
+- **No `.env` is tracked, ignored, or present in history.** A `.env` deleted
+  later is still in the history, and the keys in it are still compromised.
+
+**`apps/web/.env.example` is a different kind of file and says so.** Vite
+inlines every `VITE_`-prefixed variable into the JavaScript it serves to
+browsers — it is not hidden, and it looks exactly like a server-side variable,
+which is what makes putting a key there an easy mistake rather than a careless
+one. A test fails if any `VITE_` name looks secret-shaped.
+
+**Logs are redacted** (§12: never log passwords, tokens or full email
+addresses). `redact()` strips connection-string passwords, bearer tokens, JWTs,
+bcrypt hashes and provider keys, and masks emails to `a***@example.com` — which
+domain and roughly which account is usually what the log was for. The error
+handler runs everything through it before logging, and before putting it in a
+development response body.
 
 ### Cities
 
