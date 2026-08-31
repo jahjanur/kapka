@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   AppHeader,
+  BloodTypeLabel,
   Button,
   Container,
   EmptyState,
@@ -17,13 +18,7 @@ import {
   Stack,
   WithSidebar,
 } from '../components';
-import {
-  BLOOD_TYPES,
-  CITIES,
-  formatBloodType,
-  type BloodType,
-  type Urgency,
-} from '@kapka/shared';
+import { BLOOD_TYPES, CITIES, type BloodType, type Urgency } from '@kapka/shared';
 import { useRequests } from '../lib/useRequests';
 import styles from './Feed.module.css';
 
@@ -103,7 +98,7 @@ export default function Feed() {
               selected={bloodType === type}
               onClick={() => setBloodType(bloodType === type ? null : type)}
             >
-              {formatBloodType(type)}
+              <BloodTypeLabel type={type} />
             </FilterChip>
           ))}
         </FilterBar>

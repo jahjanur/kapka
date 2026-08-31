@@ -1,5 +1,6 @@
 import { Button } from '../Button/Button';
 import { BloodTypeBadge } from '../BloodTypeBadge/BloodTypeBadge';
+import { announceBloodType } from '@kapka/shared';
 import { Card } from '../Card/Card';
 import { Icon } from '../Icon/Icon';
 import { UrgencyPill } from '../UrgencyPill/UrgencyPill';
@@ -48,7 +49,7 @@ export function RequestCard({ request }: { request: PublicBloodRequest }) {
             {/* Gives the button an accessible name that says WHICH request,
                 so a screen reader does not hear seven identical buttons. */}
             <span id={`req-${id}-label`} className="visually-hidden">
-              {`${bloodType} at ${hospitalName}, ${city}`}
+              {`${announceBloodType(bloodType)} at ${hospitalName}, ${city}`}
             </span>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { BLOOD_TYPES, MINUS } from '@kapka/shared';
-import { BloodTypeBadge } from './BloodTypeBadge';
+import { BloodTypeBadge, BloodTypeLabel } from './BloodTypeBadge';
 
 describe('BloodTypeBadge', () => {
   it('always shows the literal type, so colour is never the only channel (§10)', () => {
@@ -35,5 +35,34 @@ describe('BloodTypeBadge', () => {
       expect(visible?.textContent).not.toContain('-');
       unmount();
     }
+  });
+});
+
+describe('sizes', () => {
+  it.each(['sm', 'md', 'lg'] as const)('renders at %s while keeping the text', (size) => {
+    const { container, unmount } = render(<BloodTypeBadge type="A+" size={size} />);
+    expect(container.textContent).toContain('A+');
+    expect(container.firstElementChild).toHaveAttribute('data-group', 'A');
+    unmount();
+  });
+});
+
+describe('BloodTypeLabel', () => {
+  it('announces the words, not the glyph', () => {
+    render(<BloodTypeLabel type="B-" />);
+    expect(screen.getByText('B negative')).toBeInTheDocument();
+  });
+
+  it('hides the glyph from assistive technology, so it is not read twice', () => {
+    const { container } = render(<BloodTypeLabel type="B-" />);
+    const glyph = container.querySelector('[aria-hidden="true"]');
+    expect(glyph?.textContent).toBe(`B${MINUS}`);
+  });
+
+  it.each(BLOOD_TYPES)('gives %s an accessible name that is words', (type) => {
+    const { container, unmount } = render(<BloodTypeLabel type={type} />);
+    const spoken = container.querySelector('.visually-hidden')?.textContent ?? '';
+    expect(spoken).toMatch(/^(O|A|B|A B) (positive|negative)$/);
+    unmount();
   });
 });

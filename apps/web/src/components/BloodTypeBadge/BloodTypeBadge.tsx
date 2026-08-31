@@ -8,6 +8,23 @@ import {
 } from '@kapka/shared';
 import styles from './BloodTypeBadge.module.css';
 
+/**
+ * A blood type as text: the glyph a sighted reader sees, and the words a
+ * screen reader says.
+ *
+ * Use this anywhere a blood type is shown, not only in the badge. Rendering
+ * the stored value gives "O hyphen"; rendering the display form gives
+ * "O minus". Neither is what the type is called (§6.3, §10).
+ */
+export function BloodTypeLabel({ type }: { type: BloodType }) {
+  return (
+    <>
+      <span aria-hidden="true">{formatBloodType(type)}</span>
+      <span className="visually-hidden">{announceBloodType(type)}</span>
+    </>
+  );
+}
+
 interface BloodTypeBadgeProps extends HTMLAttributes<HTMLSpanElement> {
   type: BloodType;
   size?: 'sm' | 'md' | 'lg';
@@ -32,8 +49,7 @@ export function BloodTypeBadge({
       data-rh={rh}
       {...rest}
     >
-      <span aria-hidden="true">{formatBloodType(type)}</span>
-      <span className="visually-hidden">{announceBloodType(type)}</span>
+      <BloodTypeLabel type={type} />
     </span>
   );
 }
