@@ -4,15 +4,27 @@ import { apiError, rejectRequestSchema, type RejectRequestInput } from '@kapka/s
 import { getAuth } from '../auth/context';
 import { requireRole } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
+import type { DispatchResult } from '../notify/dispatch';
 import type { AdminRepository, ModerationOutcome } from '../admin/repository';
 import type { AuthRepository } from '../auth/repository';
+
+/**
+ * Emails the donors an approved request matched. Injected rather than imported
+ * so a test can supply one bound to its own database and a mailer that never
+ * touches a network.
+ */
+export type Dispatch = (requestId: string) => Promise<DispatchResult>;
 
 /**
  * Admin moderation (§4). Approving a request is what releases it to donors,
  * so both of these are admin-only, checked against the database rather than
  * the token's role claim — see requireRole.
  */
-export function createAdminRouter(auth: AuthRepository, admin: AdminRepository): Router {
+export function createAdminRouter(
+  auth: AuthRepository,
+  admin: AdminRepository,
+  dispatch: Dispatch,
+): Router {
   const router = Router();
 
   /** Shared by both endpoints: the answers that are not a success. */
@@ -60,17 +72,27 @@ export function createAdminRouter(auth: AuthRepository, admin: AdminRepository):
       if (outcome.kind !== 'approved') return;
 
       /*
-       * The donors are counted, not emailed. Dispatch (§5.3) is the next piece:
-       * the notification_log insert, the SendGrid call, the batch cap and the
-       * daily ceiling. Returning the count now is what §9.6 needs in front of
-       * the admin, and makes it obvious when dispatch is wired that the number
-       * should match what was sent.
+       * Dispatch runs AFTER the approval has committed, never inside it. §5.3
+       * is explicit that a provider failure must not roll back the approval —
+       * and it cannot, because by this point there is nothing left to roll
+       * back. dispatchNotifications does not throw for a delivery problem
+       * either; it records failures against their own rows.
+       *
+       * §9.6 wants the outcome reported rather than a bare success toast:
+       * sent, failed, and skipped-as-duplicate.
        */
+      const delivery = await dispatch(id);
+
       res.json({
         status: 'approved',
         matchedDonors: outcome.matchedDonors.length,
-        notificationsSent: 0,
-        dispatchPending: true,
+        sent: delivery.sent,
+        failed: delivery.failed,
+        skipped: delivery.skipped,
+        queued: delivery.queued,
+        // The admin has to know when the daily budget stopped us short —
+        // silently dropping emails is the worst failure mode here (§5.3).
+        budgetExhausted: delivery.budgetExhausted,
       });
     },
   );

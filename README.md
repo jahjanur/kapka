@@ -325,6 +325,39 @@ domain and roughly which account is usually what the log was for. The error
 handler runs everything through it before logging, and before putting it in a
 development response body.
 
+### Notification dispatch
+
+`apps/api/src/notify/dispatch.ts` is §5.3 — what turns an approval into email.
+
+**The notification row is written and committed before the provider is
+called.** That ordering is the whole guarantee. The worst case becomes a row
+saying `queued` for a message that never went, which a retry can fix — rather
+than a message that went with nothing recorded, which sends again on the next
+approval. Holding the transaction open across the network call would
+reintroduce exactly that.
+
+A unique violation on `(request_id, donor_id)` means **already notified**, so
+it is skipped silently. That is the guarantee working, not a failure.
+
+|               |                                                                                                            |
+| ------------- | ---------------------------------------------------------------------------------------------------------- |
+| Batch cap     | 50 per approval — §5.3 rules out blocking an HTTP response on hundreds of sequential API calls             |
+| Daily ceiling | 100, SendGrid's free tier. When it is spent the remainder is **queued, never dropped**                     |
+| Order         | By time since last donation, never-donated first, so a cap takes the donors most likely to be able to come |
+| Failures      | Recorded against their own row and reported. A provider outage never rolls back an approval                |
+
+Dispatch runs **after** the approval transaction commits, so a delivery
+problem cannot undo the approval — there is nothing left to roll back. The
+response carries sent, failed, skipped-as-duplicate, queued and
+`budgetExhausted`, because §9.6 asks for the outcome rather than a success
+toast, and silently dropping emails is the worst failure mode available here.
+
+Every one of those is mutation-tested. Sending before writing the row fails 8
+tests; letting a delivery failure escape fails 5; ignoring the daily ceiling
+fails 1; and removing the unique-violation skip fails the test written
+specifically for it — which was needed because the matching query already
+excludes notified donors, so the ordinary path never reaches that branch.
+
 ### Request endpoints
 
 |                         |                                                                                                          |
@@ -573,6 +606,39 @@ bcrypt hashes and provider keys, and masks emails to `a***@example.com` — whic
 domain and roughly which account is usually what the log was for. The error
 handler runs everything through it before logging, and before putting it in a
 development response body.
+
+### Notification dispatch
+
+`apps/api/src/notify/dispatch.ts` is §5.3 — what turns an approval into email.
+
+**The notification row is written and committed before the provider is
+called.** That ordering is the whole guarantee. The worst case becomes a row
+saying `queued` for a message that never went, which a retry can fix — rather
+than a message that went with nothing recorded, which sends again on the next
+approval. Holding the transaction open across the network call would
+reintroduce exactly that.
+
+A unique violation on `(request_id, donor_id)` means **already notified**, so
+it is skipped silently. That is the guarantee working, not a failure.
+
+|               |                                                                                                            |
+| ------------- | ---------------------------------------------------------------------------------------------------------- |
+| Batch cap     | 50 per approval — §5.3 rules out blocking an HTTP response on hundreds of sequential API calls             |
+| Daily ceiling | 100, SendGrid's free tier. When it is spent the remainder is **queued, never dropped**                     |
+| Order         | By time since last donation, never-donated first, so a cap takes the donors most likely to be able to come |
+| Failures      | Recorded against their own row and reported. A provider outage never rolls back an approval                |
+
+Dispatch runs **after** the approval transaction commits, so a delivery
+problem cannot undo the approval — there is nothing left to roll back. The
+response carries sent, failed, skipped-as-duplicate, queued and
+`budgetExhausted`, because §9.6 asks for the outcome rather than a success
+toast, and silently dropping emails is the worst failure mode available here.
+
+Every one of those is mutation-tested. Sending before writing the row fails 8
+tests; letting a delivery failure escape fails 5; ignoring the daily ceiling
+fails 1; and removing the unique-violation skip fails the test written
+specifically for it — which was needed because the matching query already
+excludes notified donors, so the ordinary path never reaches that branch.
 
 ### Request endpoints
 

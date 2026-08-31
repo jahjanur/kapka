@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { serverFor } from './test/http';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { CITIES, ERROR_CODES } from '@kapka/shared';
@@ -17,7 +18,7 @@ async function bearer(): Promise<string> {
     email,
     passwordHash: await hashPassword('a-long-enough-password'),
   });
-  const response = await request(app)
+  const response = await request(serverFor(app))
     .post('/api/auth/login')
     .send({ email, password: 'a-long-enough-password' });
   const body = z.object({ accessToken: z.string() }).parse(response.body);
@@ -55,7 +56,7 @@ function expectErrorBody(body: unknown): ErrorEnvelope {
 
 describe('GET /api/health', () => {
   it('answers without touching anything downstream', async () => {
-    const response = await request(app).get('/api/health');
+    const response = await request(serverFor(app)).get('/api/health');
     expect(response.status).toBe(200);
     const body = z.object({ status: z.string() }).parse(response.body);
     expect(body.status).toBe('ok');
@@ -66,7 +67,7 @@ describe('GET /api/cities', () => {
   it('serves exactly the canonical list from @kapka/shared', async () => {
     // The dropdown and the validator read the same constant. If this ever
     // drifts, a donor silently stops matching requests in their own city.
-    const response = await request(app).get('/api/cities');
+    const response = await request(serverFor(app)).get('/api/cities');
     expect(response.status).toBe(200);
     const body = z.object({ cities: z.array(z.string()) }).parse(response.body);
     expect(body.cities).toEqual([...CITIES]);
@@ -82,13 +83,13 @@ describe('POST /api/requests authorisation', () => {
   };
 
   it('refuses an anonymous caller', async () => {
-    const response = await request(app).post('/api/requests').send(valid);
+    const response = await request(serverFor(app)).post('/api/requests').send(valid);
     expect(response.status).toBe(401);
     expect(expectErrorBody(response.body).error.code).toBe('UNAUTHENTICATED');
   });
 
   it('refuses a made-up token', async () => {
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post('/api/requests')
       .set('Authorization', 'Bearer not-a-real-token')
       .send(valid);
@@ -97,7 +98,9 @@ describe('POST /api/requests authorisation', () => {
 
   it('checks authorisation before validating the body', async () => {
     // An unauthorised caller should not learn which fields the schema wants.
-    const response = await request(app).post('/api/requests').send({ nonsense: true });
+    const response = await request(serverFor(app))
+      .post('/api/requests')
+      .send({ nonsense: true });
     expect(response.status).toBe(401);
   });
 });
@@ -111,7 +114,7 @@ describe('POST /api/requests validation', () => {
   };
 
   it('rejects a blood type outside the eight, naming the field', async () => {
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post('/api/requests')
       .set('Authorization', await bearer())
       .send({ ...valid, bloodType: 'Z+' });
@@ -124,7 +127,7 @@ describe('POST /api/requests validation', () => {
   it('rejects an unknown key rather than ignoring it', async () => {
     // The mass-assignment guard: a client cannot smuggle in a field the
     // schema does not declare.
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post('/api/requests')
       .set('Authorization', await bearer())
       .send({ ...valid, isAdmin: true });
@@ -135,7 +138,7 @@ describe('POST /api/requests validation', () => {
   it('normalises a city rather than rejecting a different spelling', async () => {
     // "bitola " and "Битола" are the same city. §3 asks for them to be
     // normalised at write time, not refused.
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post('/api/requests')
       .set('Authorization', await bearer())
       .send({ ...valid, city: 'bitola ' });
@@ -143,7 +146,7 @@ describe('POST /api/requests validation', () => {
   });
 
   it('rejects a city that is not on the list at all', async () => {
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post('/api/requests')
       .set('Authorization', await bearer())
       .send({ ...valid, city: 'Atlantis' });
@@ -152,7 +155,7 @@ describe('POST /api/requests validation', () => {
   });
 
   it('lets a valid body through to the handler', async () => {
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post('/api/requests')
       .set('Authorization', await bearer())
       .send(valid);
@@ -162,14 +165,14 @@ describe('POST /api/requests validation', () => {
 
 describe('error envelope consistency (§4)', () => {
   it('uses the same shape for an unknown path', async () => {
-    const response = await request(app).get('/api/definitely-not-a-route');
+    const response = await request(serverFor(app)).get('/api/definitely-not-a-route');
     expect(response.status).toBe(404);
     expect(expectErrorBody(response.body).error.code).toBe('NOT_FOUND');
   });
 
   it('never returns a bare string or an unwrapped error', async () => {
     for (const path of ['/api/definitely-not-a-route', '/api/requests']) {
-      const response = await request(app).get(path);
+      const response = await request(serverFor(app)).get(path);
       if (response.status >= 400) expectErrorBody(response.body);
     }
   });

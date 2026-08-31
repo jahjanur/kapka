@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { serverFor } from '../test/http';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '../app';
@@ -53,7 +54,7 @@ beforeEach(async () => {
 /** Registers a real account and returns an Authorization header for it. */
 async function bearer(bloodType = 'O-'): Promise<string> {
   callers += 1;
-  const response = await request(app)
+  const response = await request(serverFor(app))
     .post('/api/auth/register')
     .send({
       fullName: 'Test Caller',
@@ -101,7 +102,7 @@ const detailSchema = z.object({ request: z.object({ id: z.string() }).loose() })
 
 describe('POST /api/requests', () => {
   it('stores the request and returns it', async () => {
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post('/api/requests')
       .set('Authorization', await bearer())
       .send(newRequest);
@@ -114,7 +115,7 @@ describe('POST /api/requests', () => {
   });
 
   it('lands as pending, so nothing reaches a donor before moderation (§4)', async () => {
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post('/api/requests')
       .set('Authorization', await bearer())
       .send(newRequest);
@@ -125,7 +126,7 @@ describe('POST /api/requests', () => {
     // createRequestSchema has no status field and rejects unknown keys, so
     // asking to be approved is a validation error rather than a shortcut past
     // the whole moderation step.
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post('/api/requests')
       .set('Authorization', await bearer())
       .send({ ...newRequest, status: 'approved' });
@@ -133,13 +134,16 @@ describe('POST /api/requests', () => {
   });
 
   it('refuses an anonymous caller', async () => {
-    const response = await request(app).post('/api/requests').send(newRequest);
+    const response = await request(serverFor(app)).post('/api/requests').send(newRequest);
     expect(response.status).toBe(401);
   });
 
   it('records who posted it', async () => {
     const token = await bearer();
-    await request(app).post('/api/requests').set('Authorization', token).send(newRequest);
+    await request(serverFor(app))
+      .post('/api/requests')
+      .set('Authorization', token)
+      .send(newRequest);
     const { rows } = await db.pool.query<{ count: string }>(
       'SELECT count(*)::text AS count FROM blood_requests WHERE requester_id IS NOT NULL',
     );
@@ -159,7 +163,7 @@ describe('GET /api/requests — hiding contact details', () => {
      * absent rather than empty — an empty string still tells a scraper the
      * shape of what it is missing, and a serialisation change could fill it.
      */
-    const response = await request(app).get('/api/requests');
+    const response = await request(serverFor(app)).get('/api/requests');
     expect(response.status).toBe(200);
     const [first] = listSchema.parse(response.body).requests;
     expect(first).toBeDefined();
@@ -168,7 +172,7 @@ describe('GET /api/requests — hiding contact details', () => {
   });
 
   it('gives a signed-in caller the contact phone', async () => {
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .get('/api/requests')
       .set('Authorization', await bearer());
     const [first] = listSchema.parse(response.body).requests;
@@ -177,7 +181,7 @@ describe('GET /api/requests — hiding contact details', () => {
 
   it('treats an invalid token as anonymous rather than failing', async () => {
     // A stale token in someone's browser must not break a public page.
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .get('/api/requests')
       .set('Authorization', 'Bearer rubbish');
     expect(response.status).toBe(200);
@@ -237,7 +241,7 @@ describe('GET /api/requests — what the feed shows', () => {
     for (const status of ['pending', 'rejected', 'fulfilled', 'expired']) {
       await seedRequest({ status });
     }
-    const response = await request(app).get('/api/requests');
+    const response = await request(serverFor(app)).get('/api/requests');
     expect(listSchema.parse(response.body).requests).toHaveLength(1);
   });
 
@@ -249,7 +253,8 @@ describe('GET /api/requests — what the feed shows', () => {
       [id],
     );
     expect(
-      listSchema.parse((await request(app).get('/api/requests')).body).requests,
+      listSchema.parse((await request(serverFor(app)).get('/api/requests')).body)
+        .requests,
     ).toEqual([]);
   });
 
@@ -260,7 +265,7 @@ describe('GET /api/requests — what the feed shows', () => {
   ])('filters by %s', async (_label, query, matching) => {
     await seedRequest(matching);
     await seedRequest({ city: 'Ohrid', bloodType: 'B-', urgency: 'routine' });
-    const response = await request(app).get(`/api/requests?${query}`);
+    const response = await request(serverFor(app)).get(`/api/requests?${query}`);
     expect(listSchema.parse(response.body).requests).toHaveLength(1);
   });
 
@@ -271,7 +276,9 @@ describe('GET /api/requests — what the feed shows', () => {
       [older],
     );
     const newer = await seedRequest({ city: 'Ohrid' });
-    const { requests } = listSchema.parse((await request(app).get('/api/requests')).body);
+    const { requests } = listSchema.parse(
+      (await request(serverFor(app)).get('/api/requests')).body,
+    );
     expect(requests[0]?.id).toBe(newer);
   });
 });
@@ -282,7 +289,7 @@ describe('GET /api/requests?compatibleWithMe', () => {
 
   it('shows an O− donor every request, because O− can give to anyone', async () => {
     for (const bloodType of ['O-', 'A+', 'B-', 'AB+']) await seedRequest({ bloodType });
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .get('/api/requests?compatibleWithMe=true')
       .set('Authorization', await signInAsDonorWithType('O-'));
     expect(listSchema.parse(response.body).requests).toHaveLength(4);
@@ -292,7 +299,7 @@ describe('GET /api/requests?compatibleWithMe', () => {
     // The mirror case. Reversing the compatibility join would swap these two
     // results exactly, and both would still look plausible.
     for (const bloodType of ['O-', 'A+', 'B-', 'AB+']) await seedRequest({ bloodType });
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .get('/api/requests?compatibleWithMe=true')
       .set('Authorization', await signInAsDonorWithType('AB+'));
     const { requests } = listSchema.parse(response.body);
@@ -302,7 +309,9 @@ describe('GET /api/requests?compatibleWithMe', () => {
 
   it('refuses the filter to an anonymous caller, who has no blood type', async () => {
     await seedRequest();
-    const response = await request(app).get('/api/requests?compatibleWithMe=true');
+    const response = await request(serverFor(app)).get(
+      '/api/requests?compatibleWithMe=true',
+    );
     expect(response.status).toBe(401);
   });
 });
@@ -310,7 +319,7 @@ describe('GET /api/requests?compatibleWithMe', () => {
 describe('GET /api/requests/:id', () => {
   it('returns the request with its hospital coordinates (§9.4)', async () => {
     const token = await bearer();
-    const created = await request(app)
+    const created = await request(serverFor(app))
       .post('/api/requests')
       .set('Authorization', token)
       .send(newRequest);
@@ -319,7 +328,7 @@ describe('GET /api/requests/:id', () => {
       id,
     ]);
 
-    const response = await request(app).get(`/api/requests/${id}`);
+    const response = await request(serverFor(app)).get(`/api/requests/${id}`);
     expect(response.status).toBe(200);
     const body = detailSchema.parse(response.body);
     expect(body.request.hospitalLat).toBe(41.9981);
@@ -328,14 +337,14 @@ describe('GET /api/requests/:id', () => {
 
   it('hides the contact phone from an anonymous caller here too', async () => {
     const id = await seedRequest();
-    const response = await request(app).get(`/api/requests/${id}`);
+    const response = await request(serverFor(app)).get(`/api/requests/${id}`);
     expect(detailSchema.parse(response.body).request).not.toHaveProperty('contactPhone');
     expect(JSON.stringify(response.body)).not.toContain('389 70 123 456');
   });
 
   it('gives it to a signed-in caller', async () => {
     const id = await seedRequest();
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .get(`/api/requests/${id}`)
       .set('Authorization', await bearer());
     expect(detailSchema.parse(response.body).request.contactPhone).toBe(CONTACT);
@@ -345,8 +354,8 @@ describe('GET /api/requests/:id', () => {
     // A pending request is not public, and a different answer would confirm
     // that it exists.
     const pending = await seedRequest({ status: 'pending' });
-    const real = await request(app).get(`/api/requests/${pending}`);
-    const missing = await request(app).get(
+    const real = await request(serverFor(app)).get(`/api/requests/${pending}`);
+    const missing = await request(serverFor(app)).get(
       '/api/requests/00000000-0000-4000-8000-000000000000',
     );
     expect(real.status).toBe(404);
@@ -356,7 +365,7 @@ describe('GET /api/requests/:id', () => {
   it('treats a malformed id as not found rather than erroring', async () => {
     // blood_requests.id is a uuid column; handing Postgres a bad one raises,
     // which would surface as a 500 for what is really a bad link.
-    const response = await request(app).get('/api/requests/not-a-uuid');
+    const response = await request(serverFor(app)).get('/api/requests/not-a-uuid');
     expect(response.status).toBe(404);
   });
 });

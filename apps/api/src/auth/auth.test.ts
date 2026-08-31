@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { serverFor } from '../test/http';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '../app';
@@ -67,7 +68,9 @@ function refreshCookieHeader(response: request.Response): string {
 
 describe('POST /api/auth/register', () => {
   it('creates the account and starts a session', async () => {
-    const response = await request(app).post('/api/auth/register').send(registration);
+    const response = await request(serverFor(app))
+      .post('/api/auth/register')
+      .send(registration);
     expect(response.status).toBe(201);
     const body = session(response);
     expect(body.user.email).toBe('ana@example.com');
@@ -75,7 +78,9 @@ describe('POST /api/auth/register', () => {
   });
 
   it('returns an access token that verifies and carries the role', async () => {
-    const response = await request(app).post('/api/auth/register').send(registration);
+    const response = await request(serverFor(app))
+      .post('/api/auth/register')
+      .send(registration);
     const body = session(response);
     const claims = await verifyAccessToken(body.accessToken);
     expect(claims?.sub).toBe(body.user.id);
@@ -83,33 +88,41 @@ describe('POST /api/auth/register', () => {
   });
 
   it('signs the access token for 15 minutes (§12)', async () => {
-    const response = await request(app).post('/api/auth/register').send(registration);
+    const response = await request(serverFor(app))
+      .post('/api/auth/register')
+      .send(registration);
     const claims = await verifyAccessToken(session(response).accessToken);
     expect((claims?.exp ?? 0) - (claims?.iat ?? 0)).toBe(15 * 60);
   });
 
   it('never returns the password hash', async () => {
-    const response = await request(app).post('/api/auth/register').send(registration);
+    const response = await request(serverFor(app))
+      .post('/api/auth/register')
+      .send(registration);
     expect(JSON.stringify(response.body)).not.toMatch(
       /passwordHash|password_hash|\$2[aby]\$/,
     );
   });
 
   it('starts unverified — verification gates notifications, not sign-in (§12)', async () => {
-    const response = await request(app).post('/api/auth/register').send(registration);
+    const response = await request(serverFor(app))
+      .post('/api/auth/register')
+      .send(registration);
     expect(session(response).user.emailVerified).toBe(false);
   });
 
   it('rejects a duplicate email', async () => {
-    await request(app).post('/api/auth/register').send(registration);
-    const second = await request(app).post('/api/auth/register').send(registration);
+    await request(serverFor(app)).post('/api/auth/register').send(registration);
+    const second = await request(serverFor(app))
+      .post('/api/auth/register')
+      .send(registration);
     expect(second.status).toBe(409);
     expect(errorBody(second).error.code).toBe('EMAIL_TAKEN');
     expect(errorBody(second).error.field).toBe('email');
   });
 
   it('validates against the shared schema before touching a handler', async () => {
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post('/api/auth/register')
       .send({ ...registration, city: 'Atlantis' });
     expect(response.status).toBe(400);
@@ -117,7 +130,7 @@ describe('POST /api/auth/register', () => {
   });
 
   it('rejects an unknown key rather than storing it', async () => {
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post('/api/auth/register')
       .send({ ...registration, role: 'admin' });
     expect(response.status).toBe(400);
@@ -133,7 +146,7 @@ describe('POST /api/auth/login', () => {
   });
 
   it('returns a session for the right password', async () => {
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post('/api/auth/login')
       .send({ email: 'ana@example.com', password: PASSWORD });
     expect(response.status).toBe(200);
@@ -141,7 +154,7 @@ describe('POST /api/auth/login', () => {
   });
 
   it('matches the email case-insensitively, as CITEXT does', async () => {
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post('/api/auth/login')
       .send({ email: 'ANA@Example.com', password: PASSWORD });
     expect(response.status).toBe(200);
@@ -156,13 +169,13 @@ describe('POST /api/auth/login', () => {
       isActive: false,
     });
 
-    const wrongPassword = await request(app)
+    const wrongPassword = await request(serverFor(app))
       .post('/api/auth/login')
       .send({ email: 'ana@example.com', password: 'not-the-password' });
-    const unknownEmail = await request(app)
+    const unknownEmail = await request(serverFor(app))
       .post('/api/auth/login')
       .send({ email: 'nobody@example.com', password: PASSWORD });
-    const disabled = await request(app)
+    const disabled = await request(serverFor(app))
       .post('/api/auth/login')
       .send({ email: 'gone@example.com', password: PASSWORD });
 
@@ -174,7 +187,7 @@ describe('POST /api/auth/login', () => {
 
   it('does not enforce the registration password policy on login', async () => {
     // Rejecting a short password here would reveal the rule to anyone probing.
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post('/api/auth/login')
       .send({ email: 'ana@example.com', password: 'x' });
     expect(response.status).toBe(401);
@@ -184,7 +197,9 @@ describe('POST /api/auth/login', () => {
 
 describe('the refresh cookie', () => {
   it('is httpOnly, SameSite=Strict and scoped to the auth routes (§12)', async () => {
-    const response = await request(app).post('/api/auth/register').send(registration);
+    const response = await request(serverFor(app))
+      .post('/api/auth/register')
+      .send(registration);
     const header = setCookies(response).find((c) => c.startsWith(REFRESH_COOKIE));
     expect(header).toMatch(/HttpOnly/i);
     expect(header).toMatch(/SameSite=Strict/i);
@@ -194,14 +209,18 @@ describe('the refresh cookie', () => {
   it('carries the token itself, which never reaches the response body', async () => {
     // §12: never store a JWT in localStorage. The client cannot read this
     // cookie at all, which is the point.
-    const response = await request(app).post('/api/auth/register').send(registration);
+    const response = await request(serverFor(app))
+      .post('/api/auth/register')
+      .send(registration);
     const token = refreshCookieFrom(response);
     expect(token).toBeTruthy();
     expect(JSON.stringify(response.body)).not.toContain(token ?? 'unset');
   });
 
   it('stores only a hash of the token, never the token', async () => {
-    const response = await request(app).post('/api/auth/register').send(registration);
+    const response = await request(serverFor(app))
+      .post('/api/auth/register')
+      .send(registration);
     const token = refreshCookieFrom(response) ?? '';
     const stored = [...repository.tokens.values()].map((t) => t.tokenHash);
     expect(stored).toHaveLength(1);
@@ -212,10 +231,12 @@ describe('the refresh cookie', () => {
 
 describe('POST /api/auth/refresh', () => {
   it('issues a new access token and rotates the refresh token', async () => {
-    const registered = await request(app).post('/api/auth/register').send(registration);
+    const registered = await request(serverFor(app))
+      .post('/api/auth/register')
+      .send(registration);
     const first = refreshCookieFrom(registered);
 
-    const refreshed = await request(app)
+    const refreshed = await request(serverFor(app))
       .post('/api/auth/refresh')
       .set('Cookie', refreshCookieHeader(registered));
 
@@ -225,11 +246,15 @@ describe('POST /api/auth/refresh', () => {
   });
 
   it('stops accepting the token it just replaced', async () => {
-    const registered = await request(app).post('/api/auth/register').send(registration);
+    const registered = await request(serverFor(app))
+      .post('/api/auth/register')
+      .send(registration);
     const oldCookie = refreshCookieHeader(registered);
-    await request(app).post('/api/auth/refresh').set('Cookie', oldCookie);
+    await request(serverFor(app)).post('/api/auth/refresh').set('Cookie', oldCookie);
 
-    const replay = await request(app).post('/api/auth/refresh').set('Cookie', oldCookie);
+    const replay = await request(serverFor(app))
+      .post('/api/auth/refresh')
+      .set('Cookie', oldCookie);
     expect(replay.status).toBe(401);
   });
 
@@ -239,13 +264,17 @@ describe('POST /api/auth/refresh', () => {
      * copied it or is replaying — either way the session is not trustworthy,
      * so the whole family goes and everyone signs in again.
      */
-    const registered = await request(app).post('/api/auth/register').send(registration);
+    const registered = await request(serverFor(app))
+      .post('/api/auth/register')
+      .send(registration);
     const oldCookie = refreshCookieHeader(registered);
-    const rotated = await request(app).post('/api/auth/refresh').set('Cookie', oldCookie);
+    const rotated = await request(serverFor(app))
+      .post('/api/auth/refresh')
+      .set('Cookie', oldCookie);
 
-    await request(app).post('/api/auth/refresh').set('Cookie', oldCookie);
+    await request(serverFor(app)).post('/api/auth/refresh').set('Cookie', oldCookie);
 
-    const currentStillWorks = await request(app)
+    const currentStillWorks = await request(serverFor(app))
       .post('/api/auth/refresh')
       .set('Cookie', refreshCookieHeader(rotated));
     expect(currentStillWorks.status).toBe(401);
@@ -253,24 +282,26 @@ describe('POST /api/auth/refresh', () => {
   });
 
   it('refuses without a cookie', async () => {
-    const response = await request(app).post('/api/auth/refresh');
+    const response = await request(serverFor(app)).post('/api/auth/refresh');
     expect(response.status).toBe(401);
     expect(errorBody(response).error.code).toBe('UNAUTHENTICATED');
   });
 
   it('refuses a token that is not in the database', async () => {
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post('/api/auth/refresh')
       .set('Cookie', `${REFRESH_COOKIE}=made-up`);
     expect(response.status).toBe(401);
   });
 
   it('refuses an expired token and revokes it', async () => {
-    const registered = await request(app).post('/api/auth/register').send(registration);
+    const registered = await request(serverFor(app))
+      .post('/api/auth/register')
+      .send(registration);
     for (const record of repository.tokens.values()) {
       record.expiresAt = new Date(Date.now() - 1000);
     }
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post('/api/auth/refresh')
       .set('Cookie', refreshCookieHeader(registered));
     expect(response.status).toBe(401);
@@ -278,10 +309,12 @@ describe('POST /api/auth/refresh', () => {
   });
 
   it('refuses once the account is deactivated, without waiting for expiry', async () => {
-    const registered = await request(app).post('/api/auth/register').send(registration);
+    const registered = await request(serverFor(app))
+      .post('/api/auth/register')
+      .send(registration);
     for (const user of repository.users.values()) user.isActive = false;
 
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post('/api/auth/refresh')
       .set('Cookie', refreshCookieHeader(registered));
     expect(response.status).toBe(401);
@@ -290,8 +323,10 @@ describe('POST /api/auth/refresh', () => {
 
 describe('POST /api/auth/logout', () => {
   it('revokes the session and clears the cookie', async () => {
-    const registered = await request(app).post('/api/auth/register').send(registration);
-    const response = await request(app)
+    const registered = await request(serverFor(app))
+      .post('/api/auth/register')
+      .send(registration);
+    const response = await request(serverFor(app))
       .post('/api/auth/logout')
       .set('Cookie', refreshCookieHeader(registered));
 
@@ -302,16 +337,20 @@ describe('POST /api/auth/logout', () => {
   });
 
   it('makes the refresh token unusable afterwards', async () => {
-    const registered = await request(app).post('/api/auth/register').send(registration);
+    const registered = await request(serverFor(app))
+      .post('/api/auth/register')
+      .send(registration);
     const cookie = refreshCookieHeader(registered);
-    await request(app).post('/api/auth/logout').set('Cookie', cookie);
+    await request(serverFor(app)).post('/api/auth/logout').set('Cookie', cookie);
 
-    const response = await request(app).post('/api/auth/refresh').set('Cookie', cookie);
+    const response = await request(serverFor(app))
+      .post('/api/auth/refresh')
+      .set('Cookie', cookie);
     expect(response.status).toBe(401);
   });
 
   it('succeeds with no session, and says nothing about whether there was one', async () => {
-    const response = await request(app).post('/api/auth/logout');
+    const response = await request(serverFor(app)).post('/api/auth/logout');
     expect(response.status).toBe(204);
   });
 });

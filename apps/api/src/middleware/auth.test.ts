@@ -1,5 +1,6 @@
 import express from 'express';
 import request from 'supertest';
+import { serverFor } from '../test/http';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '../app';
@@ -42,7 +43,7 @@ describe('requireAuth', () => {
     ],
   ])('refuses %s', async (_label, header) => {
     const app = appWith(requireAuth(repository));
-    const call = request(app).get('/probe');
+    const call = request(serverFor(app)).get('/probe');
     if (header) void call.set('Authorization', header);
     const response = await call;
     expect(response.status).toBe(401);
@@ -55,7 +56,7 @@ describe('requireAuth', () => {
     });
     const token = await signAccessToken(user.id, 'donor');
 
-    const response = await request(appWith(requireAuth(repository)))
+    const response = await request(serverFor(appWith(requireAuth(repository))))
       .get('/probe')
       .set('Authorization', `Bearer ${token}`);
 
@@ -72,7 +73,7 @@ describe('requireAuth', () => {
     });
     const token = await signAccessToken(user.id, 'donor');
 
-    const response = await request(appWith(requireAuth(repository)))
+    const response = await request(serverFor(appWith(requireAuth(repository))))
       .get('/probe')
       .set('Authorization', `Bearer ${token}`);
     expect(response.status).toBe(401);
@@ -80,7 +81,7 @@ describe('requireAuth', () => {
 
   it('refuses a token for a user that no longer exists', async () => {
     const token = await signAccessToken('deleted-user', 'donor');
-    const response = await request(appWith(requireAuth(repository)))
+    const response = await request(serverFor(appWith(requireAuth(repository))))
       .get('/probe')
       .set('Authorization', `Bearer ${token}`);
     expect(response.status).toBe(401);
@@ -102,7 +103,7 @@ describe('requireRole', () => {
     });
     const token = await signAccessToken(admin.id, 'admin');
 
-    const response = await request(appWith(requireRole(repository, 'admin')))
+    const response = await request(serverFor(appWith(requireRole(repository, 'admin'))))
       .get('/probe')
       .set('Authorization', `Bearer ${token}`);
     expect(response.status).toBe(200);
@@ -113,7 +114,7 @@ describe('requireRole', () => {
     const donor = repository.addUser({ email: 'd@example.test', passwordHash: 'x' });
     const token = await signAccessToken(donor.id, 'donor');
 
-    const response = await request(appWith(requireRole(repository, 'admin')))
+    const response = await request(serverFor(appWith(requireRole(repository, 'admin'))))
       .get('/probe')
       .set('Authorization', `Bearer ${token}`);
     expect(response.status).toBe(403);
@@ -136,14 +137,14 @@ describe('requireRole', () => {
     });
     const adminToken = await signAccessToken(user.id, 'admin');
 
-    const before = await request(appWith(requireRole(repository, 'admin')))
+    const before = await request(serverFor(appWith(requireRole(repository, 'admin'))))
       .get('/probe')
       .set('Authorization', `Bearer ${adminToken}`);
     expect(before.status).toBe(200);
 
     user.role = 'donor';
 
-    const after = await request(appWith(requireRole(repository, 'admin')))
+    const after = await request(serverFor(appWith(requireRole(repository, 'admin'))))
       .get('/probe')
       .set('Authorization', `Bearer ${adminToken}`);
     expect(after.status).toBe(403);
@@ -158,7 +159,7 @@ describe('requireRole', () => {
     // Token minted while they were a donor; the database says admin now.
     const staleToken = await signAccessToken(user.id, 'donor');
 
-    const response = await request(appWith(requireRole(repository, 'admin')))
+    const response = await request(serverFor(appWith(requireRole(repository, 'admin'))))
       .get('/probe')
       .set('Authorization', `Bearer ${staleToken}`);
     expect(response.status).toBe(200);
@@ -173,7 +174,9 @@ describe('requireRole', () => {
     });
     const token = await signAccessToken(requester.id, 'requester');
 
-    const response = await request(appWith(requireRole(repository, 'requester', 'admin')))
+    const response = await request(
+      serverFor(appWith(requireRole(repository, 'requester', 'admin'))),
+    )
       .get('/probe')
       .set('Authorization', `Bearer ${token}`);
     expect(response.status).toBe(200);
@@ -182,7 +185,7 @@ describe('requireRole', () => {
 
 describe('optionalAuth', () => {
   it('lets an anonymous caller through', async () => {
-    const response = await request(appWith(optionalAuth())).get('/probe');
+    const response = await request(serverFor(appWith(optionalAuth()))).get('/probe');
     expect(response.status).toBe(200);
     expect(bodySchema.parse(response.body).auth).toBeNull();
   });
@@ -190,7 +193,7 @@ describe('optionalAuth', () => {
   it('treats a bad token as no token rather than an error', async () => {
     // This runs on the public feed. A stale token in a browser must not turn
     // a public page into a failure.
-    const response = await request(appWith(optionalAuth()))
+    const response = await request(serverFor(appWith(optionalAuth())))
       .get('/probe')
       .set('Authorization', 'Bearer rubbish');
     expect(response.status).toBe(200);
@@ -200,7 +203,7 @@ describe('optionalAuth', () => {
   it('attaches the caller when the token is good', async () => {
     const user = repository.addUser({ email: 'a@example.test', passwordHash: 'x' });
     const token = await signAccessToken(user.id, 'donor');
-    const response = await request(appWith(optionalAuth()))
+    const response = await request(serverFor(appWith(optionalAuth())))
       .get('/probe')
       .set('Authorization', `Bearer ${token}`);
     expect(bodySchema.parse(response.body).auth?.userId).toBe(user.id);
@@ -217,18 +220,20 @@ describe('GET /api/me', () => {
   };
 
   it('refuses an anonymous caller', async () => {
-    const response = await request(createApp(repository)).get('/api/me');
+    const response = await request(serverFor(createApp(repository))).get('/api/me');
     expect(response.status).toBe(401);
   });
 
   it('returns the user and their donor profile', async () => {
     const app = createApp(repository);
-    const registered = await request(app).post('/api/auth/register').send(registration);
+    const registered = await request(serverFor(app))
+      .post('/api/auth/register')
+      .send(registration);
     const token = z
       .object({ accessToken: z.string() })
       .parse(registered.body).accessToken;
 
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .get('/api/me')
       .set('Authorization', `Bearer ${token}`);
     const body = z
@@ -250,11 +255,13 @@ describe('GET /api/me', () => {
 
   it('never returns the password hash', async () => {
     const app = createApp(repository);
-    const registered = await request(app).post('/api/auth/register').send(registration);
+    const registered = await request(serverFor(app))
+      .post('/api/auth/register')
+      .send(registration);
     const token = z
       .object({ accessToken: z.string() })
       .parse(registered.body).accessToken;
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .get('/api/me')
       .set('Authorization', `Bearer ${token}`);
     expect(JSON.stringify(response.body)).not.toMatch(
@@ -269,7 +276,7 @@ describe('GET /api/me', () => {
       role: 'admin',
     });
     const token = await signAccessToken(admin.id, 'admin');
-    const response = await request(createApp(repository))
+    const response = await request(serverFor(createApp(repository)))
       .get('/api/me')
       .set('Authorization', `Bearer ${token}`);
     expect(

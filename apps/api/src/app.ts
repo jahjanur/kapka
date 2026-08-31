@@ -9,6 +9,9 @@ import {
 } from './requests/repository';
 import { createPgAdminRepository, type AdminRepository } from './admin/repository';
 import { createAdminRouter } from './routes/admin';
+import { dispatchNotifications } from './notify/dispatch';
+import { createMailer } from './notify/mailer';
+import type { Dispatch } from './routes/admin';
 import { createAuthRouter } from './routes/auth';
 import { createMeRouter } from './routes/me';
 import { generalRateLimit } from './middleware/rateLimit';
@@ -26,6 +29,8 @@ export function createApp(
   repository: AuthRepository = createPgAuthRepository(),
   requests: RequestsRepository = createPgRequestsRepository(),
   admin: AdminRepository = createPgAdminRepository(),
+  dispatch: Dispatch = (requestId) =>
+    dispatchNotifications(requestId, { mailer: createMailer() }),
 ): Express {
   const app = express();
 
@@ -52,7 +57,7 @@ export function createApp(
   app.use('/api', createMeRouter(repository));
   app.use('/api', citiesRouter);
   app.use('/api', createRequestsRouter(repository, requests));
-  app.use('/api', createAdminRouter(repository, admin));
+  app.use('/api', createAdminRouter(repository, admin, dispatch));
 
   app.use(notFound);
   app.use(errorHandler);

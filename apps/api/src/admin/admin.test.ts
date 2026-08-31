@@ -1,10 +1,13 @@
 import request from 'supertest';
+import { serverFor } from '../test/http';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '../app';
 import { createPgAuthRepository } from '../auth/repository';
 import { createPgRequestsRepository } from '../requests/repository';
 import { startTestDatabase, type TestDatabase } from '../test/database';
+import { dispatchNotifications } from '../notify/dispatch';
+import type { Mailer, OutgoingEmail } from '../notify/mailer';
 import { createPgAdminRepository } from './repository';
 
 /**
@@ -16,6 +19,21 @@ import { createPgAdminRepository } from './repository';
 let db: TestDatabase;
 let app: ReturnType<typeof createApp>;
 let people = 0;
+let mailer: Mailer & { sent: OutgoingEmail[]; failNext: boolean };
+
+/** Records what was sent, and can be told to fail like a provider outage. */
+function testMailer(): Mailer & { sent: OutgoingEmail[]; failNext: boolean } {
+  const sent: OutgoingEmail[] = [];
+  return {
+    sent,
+    failNext: false,
+    send(email) {
+      if (this.failNext) return Promise.reject(new Error('SendGrid responded 503'));
+      sent.push(email);
+      return Promise.resolve({ providerId: `msg-${String(sent.length)}` });
+    },
+  };
+}
 
 const PASSWORD = 'a-long-enough-password';
 
@@ -30,10 +48,14 @@ afterAll(async () => {
 beforeEach(async () => {
   await db.reset();
   people = 0;
+  mailer = testMailer();
   app = createApp(
     createPgAuthRepository(db.pool),
     createPgRequestsRepository(db.pool),
     createPgAdminRepository(db.pool),
+    // The real dispatcher, bound to this test's database and a mailer that
+    // never opens a socket. Approving genuinely emails, in other words.
+    (requestId) => dispatchNotifications(requestId, { db: db.pool, mailer }),
   );
 });
 
@@ -43,7 +65,7 @@ async function signIn(
 ): Promise<{ id: string; header: string }> {
   people += 1;
   const email = `person-${String(people)}@example.test`;
-  const response = await request(app).post('/api/auth/register').send({
+  const response = await request(serverFor(app)).post('/api/auth/register').send({
     fullName: 'Test Person',
     email,
     password: PASSWORD,
@@ -90,8 +112,11 @@ async function eligibleDonor(bloodType = 'O-'): Promise<void> {
 const approveSchema = z.object({
   status: z.string(),
   matchedDonors: z.number(),
-  notificationsSent: z.number(),
-  dispatchPending: z.boolean(),
+  sent: z.number(),
+  failed: z.number(),
+  skipped: z.number(),
+  queued: z.number(),
+  budgetExhausted: z.boolean(),
 });
 const errorSchema = z.object({
   error: z.object({ code: z.string(), message: z.string() }),
@@ -111,9 +136,9 @@ async function auditRows(): Promise<
 describe('who may moderate', () => {
   it('refuses an anonymous caller', async () => {
     const id = await pendingRequest();
-    expect((await request(app).post(`/api/admin/requests/${id}/approve`)).status).toBe(
-      401,
-    );
+    expect(
+      (await request(serverFor(app)).post(`/api/admin/requests/${id}/approve`)).status,
+    ).toBe(401);
   });
 
   it('refuses a signed-in donor with 403', async () => {
@@ -121,7 +146,7 @@ describe('who may moderate', () => {
     // control (§12).
     const id = await pendingRequest();
     const donor = await signIn('donor');
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post(`/api/admin/requests/${id}/approve`)
       .set('Authorization', donor.header);
     expect(response.status).toBe(403);
@@ -132,7 +157,7 @@ describe('who may moderate', () => {
     const id = await pendingRequest();
     const admin = await signIn('admin');
     await db.pool.query(`UPDATE users SET role = 'donor' WHERE id = $1`, [admin.id]);
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post(`/api/admin/requests/${id}/approve`)
       .set('Authorization', admin.header);
     expect(response.status).toBe(403);
@@ -141,7 +166,7 @@ describe('who may moderate', () => {
   it('writes no audit row for a refused attempt', async () => {
     const id = await pendingRequest();
     const donor = await signIn('donor');
-    await request(app)
+    await request(serverFor(app))
       .post(`/api/admin/requests/${id}/approve`)
       .set('Authorization', donor.header);
     expect(await auditRows()).toEqual([]);
@@ -152,7 +177,7 @@ describe('approving', () => {
   it('moves the request to approved and records who did it', async () => {
     const id = await pendingRequest();
     const admin = await signIn('admin');
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post(`/api/admin/requests/${id}/approve`)
       .set('Authorization', admin.header);
 
@@ -177,33 +202,84 @@ describe('approving', () => {
     const id = await pendingRequest('O-');
     const admin = await signIn('admin');
 
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post(`/api/admin/requests/${id}/approve`)
       .set('Authorization', admin.header);
     expect(approveSchema.parse(response.body).matchedDonors).toBe(2);
   });
 
-  it('is honest that nothing has been emailed yet', async () => {
-    // Dispatch (§5.3) is not built. Reporting a send that did not happen is
-    // the worst possible failure mode here.
-    const id = await pendingRequest();
+  it('emails the matched donors and reports the outcome (§9.6)', async () => {
+    // Not a bare success toast: sent, failed and skipped-as-duplicate.
+    await eligibleDonor('O-');
+    await eligibleDonor('O-');
+    const id = await pendingRequest('O-');
     const admin = await signIn('admin');
+
     const body = approveSchema.parse(
       (
-        await request(app)
+        await request(serverFor(app))
           .post(`/api/admin/requests/${id}/approve`)
           .set('Authorization', admin.header)
       ).body,
     );
-    expect(body.notificationsSent).toBe(0);
-    expect(body.dispatchPending).toBe(true);
+    expect(body.sent).toBe(2);
+    expect(body.failed).toBe(0);
+    expect(mailer.sent).toHaveLength(2);
+  });
+
+  it('keeps the approval when every email fails (§5.3)', async () => {
+    /*
+     * A provider outage must not roll back the approval. Dispatch runs after
+     * the transaction has committed, so there is nothing left to roll back —
+     * the request stays approved and the failures are recorded against their
+     * own notification rows for a retry.
+     */
+    await eligibleDonor('O-');
+    const id = await pendingRequest('O-');
+    const admin = await signIn('admin');
+    mailer.failNext = true;
+
+    const response = await request(serverFor(app))
+      .post(`/api/admin/requests/${id}/approve`)
+      .set('Authorization', admin.header);
+
+    expect(response.status).toBe(200);
+    expect(approveSchema.parse(response.body).failed).toBe(1);
+
+    const { rows } = await db.pool.query<{ status: string }>(
+      'SELECT status FROM blood_requests WHERE id = $1',
+      [id],
+    );
+    expect(rows[0]?.status).toBe('approved');
+
+    const { rows: log } = await db.pool.query<{ status: string }>(
+      'SELECT status FROM notification_log',
+    );
+    expect(log[0]?.status).toBe('failed');
+  });
+
+  it('does not email anyone twice if approve is somehow reached again', async () => {
+    await eligibleDonor('O-');
+    const id = await pendingRequest('O-');
+    const admin = await signIn('admin');
+
+    await request(serverFor(app))
+      .post(`/api/admin/requests/${id}/approve`)
+      .set('Authorization', admin.header);
+    // The second attempt is refused as already-moderated, so nothing is sent —
+    // and even if it were reached, the unique index would stop it.
+    await request(serverFor(app))
+      .post(`/api/admin/requests/${id}/approve`)
+      .set('Authorization', admin.header);
+
+    expect(mailer.sent).toHaveLength(1);
   });
 
   it('writes one audit row, naming the admin and the count', async () => {
     await eligibleDonor('O-');
     const id = await pendingRequest();
     const admin = await signIn('admin');
-    await request(app)
+    await request(serverFor(app))
       .post(`/api/admin/requests/${id}/approve`)
       .set('Authorization', admin.header);
 
@@ -218,7 +294,7 @@ describe('approving', () => {
     await eligibleDonor('O-');
     const id = await pendingRequest();
     const admin = await signIn('admin');
-    await request(app)
+    await request(serverFor(app))
       .post(`/api/admin/requests/${id}/approve`)
       .set('Authorization', admin.header);
     expect(JSON.stringify(await auditRows())).not.toContain('@seed.test');
@@ -229,7 +305,7 @@ describe('rejecting', () => {
   it('records the reason', async () => {
     const id = await pendingRequest();
     const admin = await signIn('admin');
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post(`/api/admin/requests/${id}/reject`)
       .set('Authorization', admin.header)
       .send({ reason: 'Hospital could not be verified.' });
@@ -246,7 +322,7 @@ describe('rejecting', () => {
   it('demands a reason the requester can act on', async () => {
     const id = await pendingRequest();
     const admin = await signIn('admin');
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post(`/api/admin/requests/${id}/reject`)
       .set('Authorization', admin.header)
       .send({ reason: 'no' });
@@ -256,7 +332,7 @@ describe('rejecting', () => {
   it('writes an audit row carrying the reason', async () => {
     const id = await pendingRequest();
     const admin = await signIn('admin');
-    await request(app)
+    await request(serverFor(app))
       .post(`/api/admin/requests/${id}/reject`)
       .set('Authorization', admin.header)
       .send({ reason: 'Hospital could not be verified.' });
@@ -270,12 +346,12 @@ describe('rejecting', () => {
   it('keeps a rejected request off the public feed', async () => {
     const id = await pendingRequest();
     const admin = await signIn('admin');
-    await request(app)
+    await request(serverFor(app))
       .post(`/api/admin/requests/${id}/reject`)
       .set('Authorization', admin.header)
       .send({ reason: 'Hospital could not be verified.' });
 
-    const feed = await request(app).get('/api/requests');
+    const feed = await request(serverFor(app)).get('/api/requests');
     expect(
       z.object({ requests: z.array(z.unknown()) }).parse(feed.body).requests,
     ).toEqual([]);
@@ -291,10 +367,10 @@ describe('moderating twice', () => {
      */
     const id = await pendingRequest();
     const admin = await signIn('admin');
-    const first = await request(app)
+    const first = await request(serverFor(app))
       .post(`/api/admin/requests/${id}/approve`)
       .set('Authorization', admin.header);
-    const second = await request(app)
+    const second = await request(serverFor(app))
       .post(`/api/admin/requests/${id}/approve`)
       .set('Authorization', admin.header);
 
@@ -306,10 +382,10 @@ describe('moderating twice', () => {
   it('leaves exactly one audit row behind', async () => {
     const id = await pendingRequest();
     const admin = await signIn('admin');
-    await request(app)
+    await request(serverFor(app))
       .post(`/api/admin/requests/${id}/approve`)
       .set('Authorization', admin.header);
-    await request(app)
+    await request(serverFor(app))
       .post(`/api/admin/requests/${id}/approve`)
       .set('Authorization', admin.header);
     expect(await auditRows()).toHaveLength(1);
@@ -318,10 +394,10 @@ describe('moderating twice', () => {
   it('refuses to reject something already approved', async () => {
     const id = await pendingRequest();
     const admin = await signIn('admin');
-    await request(app)
+    await request(serverFor(app))
       .post(`/api/admin/requests/${id}/approve`)
       .set('Authorization', admin.header);
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post(`/api/admin/requests/${id}/reject`)
       .set('Authorization', admin.header)
       .send({ reason: 'Changed my mind about this one.' });
@@ -334,10 +410,10 @@ describe('moderating twice', () => {
     const id = await pendingRequest();
     const admin = await signIn('admin');
     const [a, b] = await Promise.all([
-      request(app)
+      request(serverFor(app))
         .post(`/api/admin/requests/${id}/approve`)
         .set('Authorization', admin.header),
-      request(app)
+      request(serverFor(app))
         .post(`/api/admin/requests/${id}/approve`)
         .set('Authorization', admin.header),
     ]);
@@ -349,7 +425,7 @@ describe('moderating twice', () => {
 describe('requests that are not there', () => {
   it('answers 404 for an id that does not exist', async () => {
     const admin = await signIn('admin');
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post('/api/admin/requests/00000000-0000-4000-8000-000000000000/approve')
       .set('Authorization', admin.header);
     expect(response.status).toBe(404);
@@ -357,7 +433,7 @@ describe('requests that are not there', () => {
 
   it('answers 404 for a malformed id rather than erroring', async () => {
     const admin = await signIn('admin');
-    const response = await request(app)
+    const response = await request(serverFor(app))
       .post('/api/admin/requests/not-a-uuid/approve')
       .set('Authorization', admin.header);
     expect(response.status).toBe(404);
