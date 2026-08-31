@@ -19,14 +19,14 @@ export function AppHeader() {
             Kapka
           </Link>
 
-          <nav className={styles.nav} aria-label="Main">
-            <Link to="/" className={styles.navLink}>
-              Requests
-            </Link>
-            <Link to="/kitchen-sink" className={styles.navLink}>
-              Design system
-            </Link>
-          </nav>
+          {/*
+            No nav yet. The only screen that exists is this one, and the logo
+            already goes there — a nav listing where you already are is noise.
+            It comes back when §9.2–§9.6 give it somewhere to point.
+
+            Nothing developer-facing belongs here. Someone reading this header
+            is looking for blood or offering to give it.
+          */}
 
           <div className={styles.actions}>
             <span className={styles.themeToggle}>

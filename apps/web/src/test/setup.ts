@@ -11,3 +11,26 @@ import { afterEach } from 'vitest';
 afterEach(() => {
   cleanup();
 });
+
+/**
+ * jsdom does not implement matchMedia, so anything reading a media query —
+ * ThemeProvider asking for prefers-color-scheme — throws on render. This is a
+ * jsdom gap rather than a defect in the component, so it is filled here rather
+ * than defended against in the code.
+ *
+ * Defaults to "no match", i.e. the light theme, which is the neutral answer.
+ *
+ * Assigned unconditionally: TypeScript's DOM types say matchMedia always
+ * exists, so guarding on it is dead code the linter rightly rejects.
+ */
+window.matchMedia = (query: string): MediaQueryList =>
+  ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+    addListener: () => undefined,
+    removeListener: () => undefined,
+    dispatchEvent: () => false,
+  }) as MediaQueryList;
