@@ -29,7 +29,8 @@
     "migrate": "npm run migrate:up --workspace @kapka/api",
     "migrate:down": "npm run migrate:down --workspace @kapka/api",
     "migrate:create": "npm run migrate:create --workspace @kapka/api --",
-    "migrate:status": "npm run migrate:status --workspace @kapka/api"
+    "migrate:status": "npm run migrate:status --workspace @kapka/api",
+    "seed": "npm run seed --workspace @kapka/api"
   },
   "engines": {
     "node": ">=20"

@@ -54,6 +54,7 @@ npm install          # once, at the root — it installs every workspace
 cp apps/api/.env.example apps/api/.env
 npm run db:up        # Postgres + Mailpit in Docker
 npm run migrate      # apply the schema
+npm run seed         # synthetic donors, an admin, sample requests
 npm run dev          # web on http://localhost:5173
 npm run dev:api      # api on http://localhost:4000 (second terminal)
 ```
@@ -169,6 +170,36 @@ plan used to build this was truncated partway through §13, so its appendix was
 never seen. The 27 pairs come from the ABO/Rh rule and match the three
 reference points in §5.1, but they have not been diffed against the plan's own
 table. Do that before going live.
+
+### Seed data
+
+`npm run seed` loads synthetic data: donors covering all eight blood types
+across six cities, one admin, two requesters, and seven requests spanning
+every status and urgency. Every account's password is printed when it runs.
+
+It is **destructive** — it truncates `users`, `donor_profiles`,
+`blood_requests`, `notification_log` and `audit_log` first, so running it twice
+gives the same database rather than duplicates. `blood_compatibility` is never
+touched; that is reference data owned by a migration, and the read-only trigger
+would reject the write anyway. The script asserts all 27 pairs are still there
+when it finishes.
+
+Two refusals, because this truncates tables:
+
+- `NODE_ENV=production` — refused outright.
+- A `DATABASE_URL` host that is not local — refused unless you set
+  `SEED_ALLOW_REMOTE=yes-i-am-sure`.
+
+Emails use the `.test` TLD, which RFC 2606 reserves so it can never resolve.
+If a message somehow escapes Mailpit, it has nowhere to go.
+
+The donor set is built to exercise the §5.1 matching query rather than just to
+look populated. In Skopje, as O−, there is a donor for each reason to be
+_excluded_ — paused availability, email notifications off, unverified email,
+deactivated account, and one donated a day short of the 56-day interval — plus
+one at exactly 56 days, who is eligible. One O− request in Skopje therefore
+hits every branch of that query. Without those rows, a query that forgot a
+filter would still look correct.
 
 ### Nobody sends real email by accident
 

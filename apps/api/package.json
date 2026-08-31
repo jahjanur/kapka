@@ -11,10 +11,12 @@
     "migrate:up": "node-pg-migrate up --envPath .env -m migrations",
     "migrate:down": "node-pg-migrate down --envPath .env -m migrations",
     "migrate:create": "node-pg-migrate create --envPath .env -m migrations -j sql",
-    "migrate:status": "node-pg-migrate up --envPath .env -m migrations --dry-run"
+    "migrate:status": "node-pg-migrate up --envPath .env -m migrations --dry-run",
+    "seed": "tsx src/seed/run.ts"
   },
   "dependencies": {
     "@kapka/shared": "*",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
