@@ -23,8 +23,16 @@ export type Queryable = Pick<pg.PoolClient, 'query'>;
  */
 export async function withTransaction<T>(
   work: (client: pg.PoolClient) => Promise<T>,
+  /*
+   * Which pool to borrow from. Defaulting to the module-level one is right in
+   * production, where there is only ever one — but it silently ignored an
+   * injected pool, so a repository pointed at a test database still wrote to
+   * the configured one for every transactional operation. Registration and
+   * token rotation, in other words.
+   */
+  source: pg.Pool = pool,
 ): Promise<T> {
-  const client = await pool.connect();
+  const client = await source.connect();
   try {
     await client.query('BEGIN');
     const result = await work(client);

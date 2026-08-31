@@ -1,5 +1,6 @@
 import type { BloodType, UserRole } from '@kapka/shared';
-import { pool, withTransaction, type Queryable } from '../db';
+import type pg from 'pg';
+import { pool, withTransaction } from '../db';
 
 export interface UserRecord {
   id: string;
@@ -87,8 +88,13 @@ const toUser = (row: UserRow): UserRecord => ({
 const USER_COLUMNS =
   'id, email, password_hash, role, full_name, is_active, email_verified';
 
-/** Every query below is parameterised. No string-built SQL, no exceptions (§12). */
-export function createPgAuthRepository(db: Queryable = pool): AuthRepository {
+/**
+ * Every query below is parameterised. No string-built SQL, no exceptions (§12).
+ *
+ * Takes a Pool rather than any queryable, because two of these need a
+ * transaction and a transaction needs a connection of its own.
+ */
+export function createPgAuthRepository(db: pg.Pool = pool): AuthRepository {
   return {
     async findUserByEmail(email) {
       // email is CITEXT, so this is already case-insensitive in the database.
@@ -150,7 +156,7 @@ export function createPgAuthRepository(db: Queryable = pool): AuthRepository {
           [row.id, input.bloodType, input.city, input.lastDonationDate],
         );
         return toUser(row);
-      });
+      }, db);
     },
 
     async storeRefreshToken(userId, tokenHash, expiresAt) {
@@ -203,7 +209,7 @@ export function createPgAuthRepository(db: Queryable = pool): AuthRepository {
           [oldId, id],
         );
         return id;
-      });
+      }, db);
     },
 
     async revokeRefreshToken(id) {

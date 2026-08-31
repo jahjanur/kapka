@@ -3,6 +3,10 @@ import cors from 'cors';
 import express, { type Express } from 'express';
 import helmet from 'helmet';
 import { createPgAuthRepository, type AuthRepository } from './auth/repository';
+import {
+  createPgRequestsRepository,
+  type RequestsRepository,
+} from './requests/repository';
 import { createAuthRouter } from './routes/auth';
 import { createMeRouter } from './routes/me';
 import { generalRateLimit } from './middleware/rateLimit';
@@ -18,6 +22,7 @@ import { createRequestsRouter } from './routes/requests';
  */
 export function createApp(
   repository: AuthRepository = createPgAuthRepository(),
+  requests: RequestsRepository = createPgRequestsRepository(),
 ): Express {
   const app = express();
 
@@ -43,7 +48,7 @@ export function createApp(
   app.use('/api', createAuthRouter(repository));
   app.use('/api', createMeRouter(repository));
   app.use('/api', citiesRouter);
-  app.use('/api', createRequestsRouter(repository));
+  app.use('/api', createRequestsRouter(repository, requests));
 
   app.use(notFound);
   app.use(errorHandler);

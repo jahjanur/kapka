@@ -325,6 +325,41 @@ domain and roughly which account is usually what the log was for. The error
 handler runs everything through it before logging, and before putting it in a
 development response body.
 
+### Request endpoints
+
+|                         |                                                                                                          |
+| ----------------------- | -------------------------------------------------------------------------------------------------------- |
+| `POST /api/requests`    | Signed in. Lands as `pending` — nothing reaches a donor before an admin approves it                      |
+| `GET /api/requests`     | Public feed. Approved and unexpired only, filterable by city, blood type, urgency and `compatibleWithMe` |
+| `GET /api/requests/:id` | Detail, including hospital coordinates (§9.4)                                                            |
+
+**The requester's phone number is not in a public response** (§4, §12), and the
+guarantee is made in the SQL rather than after it: without a viewer the column
+is not selected at all. A field that was never fetched cannot be leaked by a
+serialisation change later.
+
+That is worth stating precisely, because there are two layers here and only
+one of them is obvious. The mapper builds the public shape without the field
+regardless — so a test that only checks the response passes even if the SQL
+changes. Three separate tests assert the query itself, by recording the SQL
+the repository issues.
+
+Other rules the tests pin down:
+
+- A client cannot choose its own status. `createRequestSchema` has no status
+  field and rejects unknown keys, so asking to be `approved` is a validation
+  error rather than a way past moderation entirely.
+- A pending request answers **exactly** as a missing one does. A different
+  answer would confirm it exists.
+- A malformed id is a 404, not a 500. `blood_requests.id` is a `uuid` column
+  and Postgres raises on a bad one, which would turn a stale link into a
+  server error.
+- An invalid token on the feed is treated as no token. A stale token in
+  someone's browser must not break a public page.
+- `compatibleWithMe` joins the matrix in the same direction as §5.1 — tested
+  by asserting an O− donor sees every request and an AB+ donor sees only the
+  AB+ one, which is the pair that swaps if the join is reversed.
+
 ### The matching query
 
 `apps/api/src/matching/repository.ts` holds §5.1 — the query that decides who
@@ -538,6 +573,41 @@ bcrypt hashes and provider keys, and masks emails to `a***@example.com` — whic
 domain and roughly which account is usually what the log was for. The error
 handler runs everything through it before logging, and before putting it in a
 development response body.
+
+### Request endpoints
+
+|                         |                                                                                                          |
+| ----------------------- | -------------------------------------------------------------------------------------------------------- |
+| `POST /api/requests`    | Signed in. Lands as `pending` — nothing reaches a donor before an admin approves it                      |
+| `GET /api/requests`     | Public feed. Approved and unexpired only, filterable by city, blood type, urgency and `compatibleWithMe` |
+| `GET /api/requests/:id` | Detail, including hospital coordinates (§9.4)                                                            |
+
+**The requester's phone number is not in a public response** (§4, §12), and the
+guarantee is made in the SQL rather than after it: without a viewer the column
+is not selected at all. A field that was never fetched cannot be leaked by a
+serialisation change later.
+
+That is worth stating precisely, because there are two layers here and only
+one of them is obvious. The mapper builds the public shape without the field
+regardless — so a test that only checks the response passes even if the SQL
+changes. Three separate tests assert the query itself, by recording the SQL
+the repository issues.
+
+Other rules the tests pin down:
+
+- A client cannot choose its own status. `createRequestSchema` has no status
+  field and rejects unknown keys, so asking to be `approved` is a validation
+  error rather than a way past moderation entirely.
+- A pending request answers **exactly** as a missing one does. A different
+  answer would confirm it exists.
+- A malformed id is a 404, not a 500. `blood_requests.id` is a `uuid` column
+  and Postgres raises on a bad one, which would turn a stale link into a
+  server error.
+- An invalid token on the feed is treated as no token. A stale token in
+  someone's browser must not break a public page.
+- `compatibleWithMe` joins the matrix in the same direction as §5.1 — tested
+  by asserting an O− donor sees every request and an AB+ donor sees only the
+  AB+ one, which is the pair that swaps if the join is reversed.
 
 ### The matching query
 

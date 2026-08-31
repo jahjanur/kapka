@@ -4,10 +4,11 @@ import { z } from 'zod';
 import { CITIES, ERROR_CODES } from '@kapka/shared';
 import { createApp } from './app';
 import { createFakeAuthRepository } from './auth/fakeRepository';
+import { createFakeRequestsRepository } from './requests/fakeRepository';
 import { hashPassword } from './auth/passwords';
 
 const repository = createFakeAuthRepository();
-const app = createApp(repository);
+const app = createApp(repository, createFakeRequestsRepository());
 
 /** Signs in and returns an Authorization header value. */
 async function bearer(): Promise<string> {
@@ -138,7 +139,7 @@ describe('POST /api/requests validation', () => {
       .post('/api/requests')
       .set('Authorization', await bearer())
       .send({ ...valid, city: 'bitola ' });
-    expect(response.status).toBe(501);
+    expect(response.status).toBe(201);
   });
 
   it('rejects a city that is not on the list at all', async () => {
@@ -151,14 +152,11 @@ describe('POST /api/requests validation', () => {
   });
 
   it('lets a valid body through to the handler', async () => {
-    // 501 until the database exists — the point is that validation passed and
-    // the request reached the route, not that anything was stored.
     const response = await request(app)
       .post('/api/requests')
       .set('Authorization', await bearer())
       .send(valid);
-    expect(response.status).toBe(501);
-    expect(expectErrorBody(response.body).error.code).toBe('NOT_IMPLEMENTED');
+    expect(response.status).toBe(201);
   });
 });
 
