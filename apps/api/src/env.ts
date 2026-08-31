@@ -18,6 +18,12 @@ const envSchema = z.object({
    * 'smtp' points at Mailpit locally. 'sendgrid' is the only setting that can
    * reach a real inbox, and it is refused outside production below.
    */
+  /**
+   * Signs access tokens. Required in production — see the guard below.
+   * Generate with: openssl rand -base64 48
+   */
+  JWT_ACCESS_SECRET: z.string().default(''),
+
   MAIL_TRANSPORT: z.enum(['smtp', 'sendgrid']).default('smtp'),
   SMTP_HOST: z.string().default('localhost'),
   SMTP_PORT: z.coerce.number().int().positive().default(1025),
@@ -69,6 +75,16 @@ export function parseEnv(source: NodeJS.ProcessEnv = process.env): Env {
     );
   }
 
+  /* A signing key that anyone can guess means anyone can mint an admin token.
+     Refused outright in production rather than defaulted to something
+     convenient, which is how convenient defaults reach production. */
+  if (isProduction && data.JWT_ACCESS_SECRET.length < 32) {
+    throw new Error(
+      'JWT_ACCESS_SECRET must be set to at least 32 characters in production.\n' +
+        'Generate one with: openssl rand -base64 48',
+    );
+  }
+
   /* The mirror of the rule above: production must not silently post real
      notifications into a mail catcher nobody reads. */
   if (
@@ -81,6 +97,12 @@ export function parseEnv(source: NodeJS.ProcessEnv = process.env): Env {
 
   return {
     ...data,
+    /* Outside production a fixed development key keeps local runs and tests
+       working without setup. It is obviously not a secret, which is the
+       point — nothing signed with it should ever be trusted. */
+    JWT_ACCESS_SECRET:
+      data.JWT_ACCESS_SECRET ||
+      (isProduction ? '' : 'kapka-development-only-signing-key-not-a-secret'),
     corsOrigins: data.CORS_ORIGINS.split(',')
       .map((origin) => origin.trim())
       .filter(Boolean),

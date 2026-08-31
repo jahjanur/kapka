@@ -25,6 +25,22 @@ describe('environment defaults', () => {
   });
 });
 
+describe('the access token signing key', () => {
+  it('is refused in production when missing or too short', () => {
+    // A guessable signing key means anyone can mint an admin token.
+    expect(() => parseEnv({ NODE_ENV: 'production' })).toThrow(/JWT_ACCESS_SECRET/);
+    expect(() =>
+      parseEnv({ NODE_ENV: 'production', JWT_ACCESS_SECRET: 'short' }),
+    ).toThrow(/at least 32 characters/);
+  });
+
+  it('falls back to an obviously fake key outside production', () => {
+    // Local runs and tests work with no setup, and nothing signed with it
+    // could be mistaken for a real secret.
+    expect(parseEnv(base).JWT_ACCESS_SECRET).toContain('not-a-secret');
+  });
+});
+
 describe('nobody sends real email by accident (§2)', () => {
   it.each(['development', 'test'])(
     'refuses to start with a SendGrid key when NODE_ENV=%s',
@@ -57,13 +73,18 @@ describe('nobody sends real email by accident (§2)', () => {
       NODE_ENV: 'production',
       MAIL_TRANSPORT: 'sendgrid',
       SENDGRID_API_KEY: 'SG.x',
+      JWT_ACCESS_SECRET: 'x'.repeat(48),
     });
     expect(env.MAIL_TRANSPORT).toBe('sendgrid');
   });
 
   it('refuses the sendgrid transport in production with no key', () => {
     expect(() =>
-      parseEnv({ NODE_ENV: 'production', MAIL_TRANSPORT: 'sendgrid' }),
+      parseEnv({
+        NODE_ENV: 'production',
+        MAIL_TRANSPORT: 'sendgrid',
+        JWT_ACCESS_SECRET: 'x'.repeat(48),
+      }),
     ).toThrow(/requires SENDGRID_API_KEY/);
   });
 });

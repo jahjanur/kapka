@@ -1,0 +1,39 @@
+import pg from 'pg';
+import { env } from './env';
+
+/**
+ * One pool for the process. Postgres connections are expensive to open, and
+ * Render's managed instances cap them fairly low.
+ */
+export const pool = new pg.Pool({
+  connectionString: env.DATABASE_URL,
+  max: 10,
+  idleTimeoutMillis: 30_000,
+  connectionTimeoutMillis: 5_000,
+});
+
+export type Queryable = Pick<pg.PoolClient, 'query'>;
+
+/**
+ * Runs `work` inside a transaction, rolling back on any throw.
+ *
+ * Registration creates a user and a donor profile and must do both or neither
+ * (§4) — a user with no profile would never match a request and would have no
+ * way to say so.
+ */
+export async function withTransaction<T>(
+  work: (client: pg.PoolClient) => Promise<T>,
+): Promise<T> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await work(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}

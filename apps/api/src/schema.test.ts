@@ -44,6 +44,7 @@ const TABLES = [
   'blood_compatibility',
   'notification_log',
   'audit_log',
+  'refresh_tokens',
 ];
 
 const ENUMS = [
@@ -65,6 +66,10 @@ const INDEXES = [
   'idx_requests_expiry',
   'idx_audit_entity',
   'idx_audit_recent',
+  // Refresh-token rotation (§12)
+  'idx_refresh_lookup',
+  'idx_refresh_user',
+  'idx_refresh_expiry',
 ];
 
 describe('schema manifest', () => {

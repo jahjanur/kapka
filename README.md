@@ -293,6 +293,46 @@ Badge outlines are deliberately **not** held to 3:1. The Rh sign is carried by
 the badge text, which does clear 4.5:1; the outline is redundant
 reinforcement, not the only channel.
 
+### Auth
+
+Four endpoints: `register`, `login`, `refresh`, `logout`.
+
+|               |                                                                              |
+| ------------- | ---------------------------------------------------------------------------- |
+| Access token  | JWT, HS256, **15 minutes**, returned in the response body                    |
+| Refresh token | opaque random bytes in an httpOnly cookie, **30 days**, rotated on every use |
+
+**The refresh token is not a JWT.** A signed refresh token stays valid until it
+expires whatever the server decides, which is the one property rotation and
+logout need it _not_ to have. It is 32 random bytes, stored as a SHA-256 hash —
+a leaked database backup hands over no working sessions, for the same reason
+passwords are hashed. There is no `JWT_REFRESH_SECRET`.
+
+The cookie is `httpOnly`, `SameSite=Strict`, `Secure` outside local
+development, and scoped to `Path=/api/auth` so it is not sent with every API
+request. Because it is `httpOnly` the client cannot read it — which is what
+makes §12's "never store JWTs in localStorage" enforceable rather than a
+convention.
+
+**Rotation and reuse detection.** Each refresh issues a new token and revokes
+the old one, linked by `replaced_by`. Presenting an already-revoked token means
+someone is replaying a copy, so _every_ session for that user is revoked and
+they sign in again. Revoked rows are kept rather than deleted — presenting one
+is how token theft announces itself.
+
+**Login says one thing.** Wrong password, unknown email and disabled account
+all return the same status and the same message, and an unknown email still
+runs a bcrypt comparison against a dummy hash so the timing matches. Without
+that, "no such user" returns in a millisecond and "wrong password" takes a
+hundred, which enumerates accounts however carefully the response is worded.
+
+`JWT_ACCESS_SECRET` is required in production — the API refuses to start
+without at least 32 characters. Locally it falls back to an obviously fake
+development key, so nothing signed with it could be mistaken for a secret.
+
+`20260831130000000_refresh-tokens.sql` adds the table. §3 has none, because
+§3 does not describe rotation.
+
 ### Seed data
 
 `npm run seed` loads synthetic data: donors covering all eight blood types
@@ -419,6 +459,10 @@ silently do not run for you.
   in the database by design (§3), not in JS conditionals, so those tests land
   with the schema and the §5.1 matching query. This is the one piece of logic
   where a bug has real-world consequences, so it should not slip.
+- **Auth is tested but its SQL is not.** The endpoints are exercised over real
+  HTTP against an in-memory repository, so routing, validation, status codes,
+  error envelopes, cookie flags, token contents, rotation and reuse detection
+  are all covered. The queries behind them have never met a Postgres.
 - **`compose.yaml` and the migrations have never been run against a real
   database.** Docker was not installed on the machine they were written on.
   The YAML is validated and internally consistent, and the compatibility data
