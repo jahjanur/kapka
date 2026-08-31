@@ -80,6 +80,7 @@ const PAIRINGS: Pairing[] = [
   ['--info-ink', '--info-surface', 4.5, 'info message'],
 
   // 3:1 — non-text contrast (WCAG 1.4.11).
+  ['--danger', '--danger-surface', 3, 'input border in its error state'],
   ['--border-control', '--bg-surface', 3, 'input border on a card'],
   ['--border-control', '--bg-canvas', 3, 'input border on the page'],
   ['--focus-ring', '--bg-canvas', 3, 'focus ring on the page'],
