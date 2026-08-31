@@ -1,0 +1,59 @@
+# Local development infrastructure only. The web app and the API run on the
+# host (npm run dev / npm run dev:api) — this file exists so nobody has to
+# install Postgres by hand, and so no one can send real email by accident.
+#
+#   docker compose up -d      start Postgres and Mailpit
+#   docker compose down       stop them, keeping the data
+#   docker compose down -v    stop them and delete the database
+
+name: kapka
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    # Pinned to a major version: this one holds data, so an unannounced jump
+    # would mean an incompatible data directory.
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kapka
+      POSTGRES_PASSWORD: kapka
+      POSTGRES_DB: kapka
+      # Deterministic collation, so ORDER BY on city names is identical on
+      # every machine and in CI.
+      POSTGRES_INITDB_ARGS: '--locale=C --encoding=UTF8'
+    ports:
+      # Bound to loopback on purpose. Without the 127.0.0.1 prefix Docker
+      # publishes on every interface, which puts a trust-me-it's-only-dev
+      # database on the coffee shop wifi.
+      - '127.0.0.1:5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Runs once, only when the volume is empty.
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # The API and the migration step wait on this, so it has to mean
+      # "accepting queries", not merely "process started".
+      test: ['CMD-SHELL', 'pg_isready -U kapka -d kapka']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  mailpit:
+    image: axllent/mailpit:latest
+    # Floating tag on purpose: this one is a disposable dev tool that stores
+    # nothing worth keeping, so being current beats being pinned.
+    restart: unless-stopped
+    environment:
+      # Accept whatever credentials the app offers, over a plain connection.
+      # This is a local catcher with no real inbox behind it.
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+      # Keep the mailbox small enough to stay fast.
+      MP_MAX_MESSAGES: 500
+    ports:
+      - '127.0.0.1:1025:1025' # SMTP — where the API sends
+      - '127.0.0.1:8025:8025' # Web UI — http://localhost:8025
+
+volumes:
+  pgdata:

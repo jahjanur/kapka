@@ -19,7 +19,13 @@
     "prepare": "husky",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && docker compose up -d --wait",
+    "db:logs": "docker compose logs -f",
+    "db:psql": "docker compose exec postgres psql -U kapka -d kapka",
+    "mail": "open http://localhost:8025 || xdg-open http://localhost:8025"
   },
   "engines": {
     "node": ">=20"

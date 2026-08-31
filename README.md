@@ -51,11 +51,50 @@ the shared schemas but return `501 NOT_IMPLEMENTED`.
 
 ```bash
 npm install          # once, at the root — it installs every workspace
+cp apps/api/.env.example apps/api/.env
+npm run db:up        # Postgres + Mailpit in Docker
 npm run dev          # web on http://localhost:5173
 npm run dev:api      # api on http://localhost:4000 (second terminal)
 ```
 
-Copy `apps/api/.env.example` to `apps/api/.env` before starting the API.
+Every value in `.env.example` already matches `compose.yaml`, so an empty
+`.env` works for local development.
+
+### Local infrastructure
+
+`compose.yaml` runs Postgres and Mailpit. The apps themselves run on the host,
+not in Docker — this file exists so nobody installs Postgres by hand, and so
+nobody emails a real donor from a laptop.
+
+|              |                                                         |
+| ------------ | ------------------------------------------------------- |
+| Postgres     | `localhost:5432`, user/password/db all `kapka`          |
+| Mailpit SMTP | `localhost:1025` — where the API sends                  |
+| Mailpit UI   | **http://localhost:8025** — where you read what it sent |
+
+| Script             | What it does                                            |
+| ------------------ | ------------------------------------------------------- |
+| `npm run db:up`    | Start both, waiting until Postgres accepts queries      |
+| `npm run db:down`  | Stop them, keeping the data                             |
+| `npm run db:reset` | Stop them and **delete the database**, then start fresh |
+| `npm run db:psql`  | A psql shell in the container                           |
+| `npm run mail`     | Open the Mailpit inbox                                  |
+
+Both services bind to `127.0.0.1`, not `0.0.0.0`. Without that, Docker
+publishes on every interface and a trust-me-it's-only-dev database ends up
+reachable from the café wifi.
+
+`docker/postgres/init/` runs once on an empty volume and creates the `citext`
+extension, which `users.email` needs before any migration can run.
+
+### Nobody sends real email by accident
+
+The API **refuses to start** if `SENDGRID_API_KEY` is set, or if
+`MAIL_TRANSPORT=sendgrid`, while `NODE_ENV` is anything but `production`. The
+realistic accident is a production `.env` copied onto a laptop, so a live key
+is rejected outright rather than merely left unused — unused today is one
+careless line away from used tomorrow. The error names the Mailpit URL so the
+fix is obvious. This is covered by tests, not just convention.
 
 | Script (from the root) | What it does                    |
 | ---------------------- | ------------------------------- |
@@ -148,6 +187,10 @@ silently do not run for you.
   in the database by design (§3), not in JS conditionals, so those tests land
   with the schema and the §5.1 matching query. This is the one piece of logic
   where a bug has real-world consequences, so it should not slip.
+- **`compose.yaml` has never been run.** Docker was not installed on the
+  machine it was written on, so the YAML is validated and internally
+  consistent but unproven. Expect to shake out image tags or a healthcheck on
+  first `npm run db:up`.
 - No E2E tests. §13 wants two Playwright flows at 390px and 1280px. Visual
   regression (P2) should point Playwright at `/kitchen-sink/frame`, which is
   built to be screenshotted at a fixed width.
