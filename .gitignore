@@ -30,3 +30,6 @@ coverage/
 playwright-report/
 test-results/
 .vite/
+
+# Rendered email fixtures — regenerate with npm run email:preview
+apps/api/preview/

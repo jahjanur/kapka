@@ -12,7 +12,8 @@
     "migrate:down": "node-pg-migrate down --envPath .env -m migrations",
     "migrate:create": "node-pg-migrate create --envPath .env -m migrations -j sql",
     "migrate:status": "node-pg-migrate up --envPath .env -m migrations --dry-run",
-    "seed": "tsx src/seed/run.ts"
+    "seed": "tsx src/seed/run.ts",
+    "email:preview": "tsx scripts/email-preview.ts"
   },
   "dependencies": {
     "@kapka/shared": "*",
