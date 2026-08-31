@@ -93,6 +93,9 @@ export function createAdminRouter(
         // The admin has to know when the daily budget stopped us short —
         // silently dropping emails is the worst failure mode here (§5.3).
         budgetExhausted: delivery.budgetExhausted,
+        dailyBudgetRemaining: delivery.dailyBudgetRemaining,
+        // A sentence the dashboard can show as-is, or null.
+        warning: delivery.warning,
       });
     },
   );

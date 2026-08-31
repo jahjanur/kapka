@@ -32,6 +32,14 @@ export interface DispatchResult {
   queued: number;
   /** True when the daily ceiling stopped us short. */
   budgetExhausted: boolean;
+  /** How many more emails today's free tier allows, after this batch. */
+  dailyBudgetRemaining: number;
+  /**
+   * A sentence for the admin, or null. §5.3 wants a clear warning in the
+   * dashboard rather than a flag they have to interpret — the whole point is
+   * that people should not have to notice a silent shortfall.
+   */
+  warning: string | null;
 }
 
 export interface DispatchDeps {
@@ -141,6 +149,8 @@ export async function dispatchNotifications(
     skipped: 0,
     queued: 0,
     budgetExhausted: false,
+    dailyBudgetRemaining: DAILY_EMAIL_LIMIT,
+    warning: null,
   };
   if (!request) return result;
 
@@ -172,6 +182,24 @@ export async function dispatchNotifications(
       continue;
     }
     await deliver(db, notificationId, request, donor, baseUrl, deps.mailer, result);
+  }
+
+  // What is left after this batch — counted from what was actually sent, not
+  // from what we were allowed to send. Those differ whenever the batch was
+  // smaller than the cap, which is most of the time.
+  result.dailyBudgetRemaining = Math.max(0, budget - result.sent);
+
+  if (result.budgetExhausted) {
+    result.warning =
+      `Today's email budget is spent: ${String(DAILY_EMAIL_LIMIT)} of ${String(DAILY_EMAIL_LIMIT)} sent. ` +
+      `${String(result.queued)} ${result.queued === 1 ? 'donor has' : 'donors have'} not been ` +
+      `contacted about this request and ${result.queued === 1 ? 'is' : 'are'} queued for tomorrow. ` +
+      `Reach them another way if this cannot wait.`;
+    // Logged as well as returned: an admin closing the tab is not a reason
+    // for a shortfall to go unrecorded (§5.3).
+    console.warn(
+      `[notify] daily email budget exhausted; ${String(result.queued)} queued`,
+    );
   }
 
   return result;

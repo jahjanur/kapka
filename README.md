@@ -348,9 +348,18 @@ it is skipped silently. That is the guarantee working, not a failure.
 
 Dispatch runs **after** the approval transaction commits, so a delivery
 problem cannot undo the approval — there is nothing left to roll back. The
-response carries sent, failed, skipped-as-duplicate, queued and
-`budgetExhausted`, because §9.6 asks for the outcome rather than a success
-toast, and silently dropping emails is the worst failure mode available here.
+response carries sent, failed, skipped-as-duplicate, queued,
+`dailyBudgetRemaining` and a `warning`.
+
+The warning is a **sentence, not a flag**, because §5.3 asks for a clear
+warning in the dashboard and a boolean is something an admin has to interpret:
+
+> Today's email budget is spent: 100 of 100 sent. 3 donors have not been
+> contacted about this request and are queued for tomorrow. Reach them another
+> way if this cannot wait.
+
+It is also logged server-side — an admin closing the tab is not a reason for a
+shortfall to go unrecorded.
 
 Every one of those is mutation-tested. Sending before writing the row fails 8
 tests; letting a delivery failure escape fails 5; ignoring the daily ceiling
@@ -630,9 +639,18 @@ it is skipped silently. That is the guarantee working, not a failure.
 
 Dispatch runs **after** the approval transaction commits, so a delivery
 problem cannot undo the approval — there is nothing left to roll back. The
-response carries sent, failed, skipped-as-duplicate, queued and
-`budgetExhausted`, because §9.6 asks for the outcome rather than a success
-toast, and silently dropping emails is the worst failure mode available here.
+response carries sent, failed, skipped-as-duplicate, queued,
+`dailyBudgetRemaining` and a `warning`.
+
+The warning is a **sentence, not a flag**, because §5.3 asks for a clear
+warning in the dashboard and a boolean is something an admin has to interpret:
+
+> Today's email budget is spent: 100 of 100 sent. 3 donors have not been
+> contacted about this request and are queued for tomorrow. Reach them another
+> way if this cannot wait.
+
+It is also logged server-side — an admin closing the tab is not a reason for a
+shortfall to go unrecorded.
 
 Every one of those is mutation-tested. Sending before writing the row fails 8
 tests; letting a delivery failure escape fails 5; ignoring the daily ceiling

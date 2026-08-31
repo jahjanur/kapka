@@ -377,6 +377,45 @@ describe('the batch cap and the daily ceiling', () => {
     expect(mailer.sent).toHaveLength(2);
   });
 
+  it('gives the admin a sentence, not a flag, when the budget is spent', async () => {
+    // §5.3 wants a clear warning in the dashboard. A boolean is something an
+    // admin has to interpret; this is something they can read.
+    const spent = DAILY_EMAIL_LIMIT - 1;
+    const filler = await addRequest();
+    for (let i = 0; i < spent; i += 1) {
+      const donorId = await addDonor('O-', 'Bitola');
+      await db.pool.query(
+        `INSERT INTO notification_log (request_id, donor_id, status, sent_at)
+         VALUES ($1, $2, 'sent', now())`,
+        [filler, donorId],
+      );
+    }
+    for (let i = 0; i < 4; i += 1) await addDonor();
+    const requestId = await addRequest();
+
+    const result = await dispatchNotifications(requestId, {
+      db: db.pool,
+      mailer: recordingMailer(),
+    });
+
+    expect(result.budgetExhausted).toBe(true);
+    expect(result.warning).toContain('3 donors have not been contacted');
+    expect(result.warning).toContain('queued for tomorrow');
+    expect(result.dailyBudgetRemaining).toBe(0);
+  });
+
+  it('says nothing when there was nothing to warn about', async () => {
+    await addDonor();
+    const requestId = await addRequest();
+    const result = await dispatchNotifications(requestId, {
+      db: db.pool,
+      mailer: recordingMailer(),
+    });
+    expect(result.warning).toBeNull();
+    expect(result.budgetExhausted).toBe(false);
+    expect(result.dailyBudgetRemaining).toBe(DAILY_EMAIL_LIMIT - 1);
+  });
+
   it('does not count yesterday against today', async () => {
     const filler = await addRequest();
     // In another city, so they do not also match today's request and get
@@ -413,6 +452,8 @@ describe('nothing to do', () => {
       skipped: 0,
       queued: 0,
       budgetExhausted: false,
+      dailyBudgetRemaining: DAILY_EMAIL_LIMIT,
+      warning: null,
     });
     expect(mailer.sent).toHaveLength(0);
   });

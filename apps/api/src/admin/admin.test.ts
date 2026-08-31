@@ -117,6 +117,8 @@ const approveSchema = z.object({
   skipped: z.number(),
   queued: z.number(),
   budgetExhausted: z.boolean(),
+  dailyBudgetRemaining: z.number(),
+  warning: z.string().nullable(),
 });
 const errorSchema = z.object({
   error: z.object({ code: z.string(), message: z.string() }),
@@ -225,6 +227,46 @@ describe('approving', () => {
     expect(body.sent).toBe(2);
     expect(body.failed).toBe(0);
     expect(mailer.sent).toHaveLength(2);
+  });
+
+  it('tells the admin in words when the budget is spent, not just a flag', async () => {
+    // §5.3: warn clearly. The dashboard should have a sentence to show.
+    const filler = await pendingRequest('O-');
+    for (let i = 0; i < 100; i += 1) {
+      people += 1;
+      const { rows } = await db.pool.query<{ id: string }>(
+        `INSERT INTO users (email, password_hash, full_name) VALUES ($1, 'x', 'D') RETURNING id`,
+        [`spent-${String(people)}@seed.test`],
+      );
+      await db.pool.query(
+        `INSERT INTO notification_log (request_id, donor_id, status, sent_at)
+         VALUES ($1, $2, 'sent', now())`,
+        [filler, rows[0]?.id],
+      );
+    }
+
+    await eligibleDonor('O-');
+    const id = await pendingRequest('O-');
+    const admin = await signIn('admin');
+
+    const body = approveSchema.parse(
+      (
+        await request(serverFor(app))
+          .post(`/api/admin/requests/${id}/approve`)
+          .set('Authorization', admin.header)
+      ).body,
+    );
+
+    expect(body.budgetExhausted).toBe(true);
+    expect(body.sent).toBe(0);
+    expect(body.queued).toBe(1);
+    expect(body.warning).toContain('queued for tomorrow');
+    // Nothing was dropped — the donor is recorded for a retry (§5.3).
+    const { rows: log } = await db.pool.query<{ status: string }>(
+      `SELECT status FROM notification_log WHERE request_id = $1`,
+      [id],
+    );
+    expect(log[0]?.status).toBe('queued');
   });
 
   it('keeps the approval when every email fails (§5.3)', async () => {
