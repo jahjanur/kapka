@@ -464,7 +464,7 @@ export function Gallery({ frameMode = false }: { frameMode?: boolean }) {
             </Stack>
           </Card>
 
-          <Card interactive as="button" type="button">
+          <Card interactive>
             <Stack gap={3}>
               <Cluster gap={3} justify="between">
                 <BloodTypeBadge type="AB+" />
