@@ -25,7 +25,11 @@
     "db:reset": "docker compose down -v && docker compose up -d --wait",
     "db:logs": "docker compose logs -f",
     "db:psql": "docker compose exec postgres psql -U kapka -d kapka",
-    "mail": "open http://localhost:8025 || xdg-open http://localhost:8025"
+    "mail": "open http://localhost:8025 || xdg-open http://localhost:8025",
+    "migrate": "npm run migrate:up --workspace @kapka/api",
+    "migrate:down": "npm run migrate:down --workspace @kapka/api",
+    "migrate:create": "npm run migrate:create --workspace @kapka/api --",
+    "migrate:status": "npm run migrate:status --workspace @kapka/api"
   },
   "engines": {
     "node": ">=20"
