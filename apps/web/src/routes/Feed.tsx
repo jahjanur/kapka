@@ -11,7 +11,6 @@ import {
   FilterGroupLabel,
   Grid,
   Icon,
-  IconSprite,
   RequestCard,
   Select,
   Skeleton,
@@ -133,7 +132,6 @@ export default function Feed() {
 
   return (
     <>
-      <IconSprite />
       <AppHeader />
 
       <div className={styles.page}>

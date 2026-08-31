@@ -165,6 +165,28 @@ describe('the JavaScript and CSS sides of a custom property agree', () => {
   });
 });
 
+describe('horizontal scrollers contain what is inside them', () => {
+  it.each(componentCss)('$name', ({ source }) => {
+    /*
+     * An absolutely positioned element is not clipped by an ancestor's
+     * overflow unless that ancestor is its containing block. So a scroller
+     * whose contents legitimately extend past the viewport will leak any
+     * absolutely positioned descendant — a .visually-hidden label, a tooltip —
+     * out of its own clip and into the document's scroll width.
+     *
+     * That shipped once: the feed's filter row stretched the page to 512px at
+     * a 360px viewport, with nothing visible to explain it. A scroller must be
+     * a containing block.
+     */
+    const rules = source.split('}');
+    const leaking = rules
+      .filter((rule) => /overflow-x:[^;]*\b(auto|scroll)\b/.test(rule))
+      .filter((rule) => !/position:\s*(relative|absolute|sticky|fixed)/.test(rule))
+      .map((rule) => (/\.([\w-]+)\s*\{/.exec(rule)?.[1] ?? rule).slice(0, 40));
+    expect(leaking).toEqual([]);
+  });
+});
+
 describe('the header height is derived, not repeated', () => {
   it('has exactly one literal definition of --header-height', () => {
     // The header's own height and every sticky offset below it must agree.

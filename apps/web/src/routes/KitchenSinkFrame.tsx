@@ -1,4 +1,4 @@
-import { Container, IconSprite } from '../components';
+import { Container } from '../components';
 import { Gallery } from './Gallery';
 
 /**
@@ -9,7 +9,6 @@ import { Gallery } from './Gallery';
 export default function KitchenSinkFrame() {
   return (
     <>
-      <IconSprite />
       <Container>
         <Gallery frameMode />
       </Container>

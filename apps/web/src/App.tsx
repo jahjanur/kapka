@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { IconSprite } from './components';
 import { ThemeProvider } from './lib/ThemeProvider';
 
 /* Route-level code splitting from the start (§11) — Leaflet and the map
@@ -12,6 +13,11 @@ export function App() {
   return (
     <ThemeProvider>
       <BrowserRouter>
+        {/* Once, for the whole app. Every <Icon> is a <use href="#kapka-…">
+            pointing here, and a document without the sprite renders every
+            icon blank — no error, no warning, just nothing. Leaving it to
+            each route to remember made that one forgotten line away. */}
+        <IconSprite />
         <a className="skip-link" href="#main">
           Skip to content
         </a>

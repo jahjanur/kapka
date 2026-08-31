@@ -1,4 +1,4 @@
-import { Container, IconSprite, Stack, ThemeToggle } from '../components';
+import { Container, Stack, ThemeToggle } from '../components';
 import { ViewportFrame } from '../components/ViewportFrame/ViewportFrame';
 import { Gallery } from './Gallery';
 import styles from './KitchenSink.module.css';
@@ -11,7 +11,6 @@ import styles from './KitchenSink.module.css';
 export default function KitchenSink() {
   return (
     <>
-      <IconSprite />
       <div className={styles.page}>
         <div className={styles.header}>
           <Container>

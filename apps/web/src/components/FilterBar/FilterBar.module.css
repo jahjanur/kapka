@@ -18,6 +18,13 @@
      desktop rail must wrap because there is nothing to swipe with. */
   flex-wrap: var(--filter-wrap, nowrap);
   overflow-x: var(--filter-overflow, auto);
+  /* Makes the scroller itself the containing block for anything absolutely
+     positioned inside it — which is what keeps a .visually-hidden span from
+     escaping the clip. Without this its containing block is .bar (container-type
+     establishes one) which sits OUTSIDE the scroller, so the hidden label on the
+     last chip sat at x=511 and stretched the whole document to 512px at a 360px
+     viewport. Nothing was visible; the page just scrolled sideways. */
+  position: relative;
   padding-block: var(--space-1);
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
