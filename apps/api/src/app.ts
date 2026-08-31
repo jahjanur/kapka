@@ -7,6 +7,8 @@ import {
   createPgRequestsRepository,
   type RequestsRepository,
 } from './requests/repository';
+import { createPgAdminRepository, type AdminRepository } from './admin/repository';
+import { createAdminRouter } from './routes/admin';
 import { createAuthRouter } from './routes/auth';
 import { createMeRouter } from './routes/me';
 import { generalRateLimit } from './middleware/rateLimit';
@@ -23,6 +25,7 @@ import { createRequestsRouter } from './routes/requests';
 export function createApp(
   repository: AuthRepository = createPgAuthRepository(),
   requests: RequestsRepository = createPgRequestsRepository(),
+  admin: AdminRepository = createPgAdminRepository(),
 ): Express {
   const app = express();
 
@@ -49,6 +52,7 @@ export function createApp(
   app.use('/api', createMeRouter(repository));
   app.use('/api', citiesRouter);
   app.use('/api', createRequestsRouter(repository, requests));
+  app.use('/api', createAdminRouter(repository, admin));
 
   app.use(notFound);
   app.use(errorHandler);
