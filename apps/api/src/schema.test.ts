@@ -19,6 +19,13 @@ function migrationFiles(): string[] {
     .sort();
 }
 
+/** The seed migration's full text, by name rather than by position. */
+function readSeedMigration(): string {
+  const file = migrationFiles().find((f) => f.includes('seed-blood-compatibility'));
+  if (!file) throw new Error('seed-blood-compatibility migration not found');
+  return readFileSync(migrationsDir + file, 'utf8');
+}
+
 /** Everything before "-- Down Migration"; the down section only drops things. */
 function upSections(): string {
   return migrationFiles()
@@ -118,5 +125,40 @@ describe('users can actually be deleted (§12)', () => {
     expect(sql).toMatch(
       /user_id\s+UUID PRIMARY KEY REFERENCES users\(id\) ON DELETE CASCADE/,
     );
+  });
+});
+
+describe('blood_compatibility is read-only at runtime (§3)', () => {
+  const sql = upSections();
+
+  it('installs a trigger that blocks writes', () => {
+    // "Seeded by migration, never edited at runtime" was previously a
+    // convention with nothing behind it — the API connects as the table owner
+    // and could have rewritten the matrix at will.
+    expect(sql).toMatch(/CREATE TRIGGER blood_compatibility_is_read_only/);
+    expect(sql).toMatch(/BEFORE INSERT OR UPDATE OR DELETE ON blood_compatibility/);
+  });
+
+  it('also blocks TRUNCATE, which is not a row-level operation', () => {
+    // Otherwise the one hole left open is the one that empties the table at
+    // once, which a row-level trigger never sees.
+    expect(sql).toMatch(/CREATE TRIGGER blood_compatibility_no_truncate/);
+    expect(sql).toMatch(/BEFORE TRUNCATE ON blood_compatibility/);
+  });
+
+  it('lets the seed migration write, via an explicit opt-in', () => {
+    // SET LOCAL, so the permission dies with the transaction rather than
+    // leaking into a pooled connection.
+    const seed = readSeedMigration();
+    expect(seed).toMatch(/SET LOCAL kapka\.allow_compatibility_write = 'on'/);
+  });
+
+  it('opts in on both the up and the down side', () => {
+    // Rolling back must not depend on which order the guard and the seed are
+    // undone in.
+    const seed = readSeedMigration();
+    const downAt = seed.indexOf('-- Down Migration');
+    expect(seed.slice(0, downAt)).toMatch(/SET LOCAL kapka\.allow_compatibility_write/);
+    expect(seed.slice(downAt)).toMatch(/SET LOCAL kapka\.allow_compatibility_write/);
   });
 });

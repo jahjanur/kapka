@@ -119,6 +119,7 @@ Current migrations:
 | `…120000000_initial-schema`                    | All six tables, five enums, the §3 indexes, `citext`, `updated_at` triggers          |
 | `…120100000_seed-blood-compatibility`          | The 27 valid (recipient, donor) pairs                                                |
 | `…120200000_deletable-users-and-query-indexes` | `ON DELETE SET NULL` so users are deletable (§12), plus indexes for the §4 endpoints |
+| `…120300000_lock-blood-compatibility`          | Makes the matrix read-only outside migrations                                        |
 
 `apps/api/src/schema.test.ts` holds a manifest of every table, enum and index
 the schema must contain, checked against the up sections of all migrations.
@@ -149,6 +150,25 @@ It is guarded twice over:
 
 Both guards were mutation-tested: reversing the columns, dropping a pair, and
 adding an unsafe Rh pairing each fail the suite.
+
+**The table is read-only at runtime**, and that is enforced rather than
+assumed. A trigger rejects INSERT, UPDATE, DELETE and TRUNCATE on
+`blood_compatibility`. A GRANT could not express this — the API connects as
+the table's owner, and owners bypass privileges. A migration that legitimately
+needs to change the matrix opts in first:
+
+```sql
+SET LOCAL kapka.allow_compatibility_write = 'on';
+```
+
+`SET LOCAL`, so the permission dies with the transaction instead of leaking
+into a pooled connection.
+
+⚠️ **The matrix was derived, not transcribed.** The copy of the development
+plan used to build this was truncated partway through §13, so its appendix was
+never seen. The 27 pairs come from the ABO/Rh rule and match the three
+reference points in §5.1, but they have not been diffed against the plan's own
+table. Do that before going live.
 
 ### Nobody sends real email by accident
 

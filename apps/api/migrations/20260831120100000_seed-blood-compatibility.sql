@@ -16,6 +16,10 @@
 -- Listed explicitly rather than generated. For data with clinical
 -- consequences, a reviewer must be able to read every row.
 
+-- Opt in to writing the table, so this migration works whether or not the
+-- read-only guard already exists. SET LOCAL dies with the transaction.
+SET LOCAL kapka.allow_compatibility_write = 'on';
+
 INSERT INTO blood_compatibility (recipient_type, donor_type) VALUES
   -- Patient needs O−  (1 donor type — the hardest to source)
   ('O-', 'O-'),
@@ -81,5 +85,10 @@ BEGIN
 END $$;
 
 -- Down Migration
+
+-- Opt in to writing the table: a later migration makes it read-only outside
+-- migrations, and rolling back should not depend on the order those two are
+-- undone in. SET LOCAL dies with the transaction.
+SET LOCAL kapka.allow_compatibility_write = 'on';
 
 DELETE FROM blood_compatibility;
