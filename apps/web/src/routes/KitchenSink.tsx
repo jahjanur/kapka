@@ -20,8 +20,8 @@ export default function KitchenSink() {
                 <h1>Kitchen sink</h1>
               </div>
               <p className={styles.note}>
-                Every Tier&nbsp;1 component and every token. Switch the theme and re-read
-                the page — dark is built alongside light, not bolted on afterwards.
+                Every component and every token, in both themes. Change something here and
+                the regression shows up in a specimen before it reaches a screen.
               </p>
               <ThemeToggle />
             </Stack>
@@ -32,10 +32,12 @@ export default function KitchenSink() {
           <Stack gap={16}>
             <section aria-labelledby="frames-heading">
               <div className={styles.sectionHead}>
-                <h2 id="frames-heading">On a phone</h2>
+                <h2 id="frames-heading">On a phone, in both themes</h2>
                 <p className={styles.note}>
-                  A real iframe at a real width, at 1:1, so media queries behave the way
-                  they will on the device. You are already looking at the desktop view.
+                  Real iframes at a real width, at 1:1, so media queries behave the way
+                  they will on the device — one pinned to each theme, so a dark-mode
+                  regression is visible without switching. You are already looking at the
+                  desktop view.
                 </p>
               </div>
               <ViewportFrame src="/kitchen-sink/frame" />

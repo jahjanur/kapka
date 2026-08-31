@@ -165,6 +165,50 @@ describe('the JavaScript and CSS sides of a custom property agree', () => {
   });
 });
 
+describe('every styles.x exists in its stylesheet', () => {
+  /*
+   * A CSS-module class that does not exist resolves to undefined, so the
+   * className is simply omitted. No error, no warning — the element renders
+   * unstyled and looks like a layout bug rather than a missing class.
+   *
+   * That shipped: the kitchen sink's preview frames referenced styles.frames,
+   * which was never added to the stylesheet, so the two theme previews stacked
+   * vertically instead of sitting side by side.
+   */
+  const modules = filesWithExtension(webSrc, ['.tsx', '.ts'])
+    .filter((path) => !path.includes('.test.'))
+    .map((path) => {
+      const source = readFileSync(path, 'utf8');
+      const importMatch = /import\s+styles\s+from\s+'([^']+\.module\.css)'/.exec(source);
+      return { path, source, cssPath: importMatch?.[1] };
+    })
+    .filter((entry): entry is typeof entry & { cssPath: string } =>
+      Boolean(entry.cssPath),
+    )
+    .map((entry) => ({
+      name: entry.path.replace(webSrc, ''),
+      referenced: [...entry.source.matchAll(/\bstyles\.(\w+)/g)].map((m) => m[1] ?? ''),
+      defined: (() => {
+        const dir = entry.path.slice(0, entry.path.lastIndexOf('/') + 1);
+        const css = stripComments(
+          readFileSync(dir + entry.cssPath.replace('./', ''), 'utf8'),
+        );
+        return new Set([...css.matchAll(/\.([a-zA-Z][\w-]*)/g)].map((m) => m[1] ?? ''));
+      })(),
+    }));
+
+  it('finds modules to check', () => {
+    expect(modules.length).toBeGreaterThan(5);
+  });
+
+  it.each(modules)('$name', ({ referenced, defined }) => {
+    // Dynamic lookups like styles[size] cannot be checked statically and are
+    // not captured by the regex, which only matches dot access.
+    const missing = [...new Set(referenced)].filter((name) => !defined.has(name));
+    expect(missing).toEqual([]);
+  });
+});
+
 describe('horizontal scrollers contain what is inside them', () => {
   it.each(componentCss)('$name', ({ source }) => {
     /*

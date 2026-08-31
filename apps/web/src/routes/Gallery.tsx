@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from 'react';
+import type { PublicBloodRequest } from '@kapka/shared';
 import {
   BloodTypeBadge,
+  BloodTypeLabel,
   Button,
   Card,
   Cluster,
@@ -8,8 +10,16 @@ import {
   Grid,
   Icon,
   ICON_NAMES,
+  EmptyState,
+  FilterBar,
+  FilterChip,
+  FilterGroupLabel,
   Input,
+  RequestCard,
   Select,
+  Skeleton,
+  ThemeToggle,
+  UrgencyPill,
   Stack,
   Textarea,
   WithSidebar,
@@ -106,11 +116,27 @@ const ELEVATIONS = [1, 2, 3, 4] as const;
 const BUTTON_VARIANTS = ['primary', 'secondary', 'ghost', 'danger'] as const;
 const BUTTON_SIZES = ['sm', 'md', 'lg'] as const;
 const BADGE_SIZES = ['sm', 'md', 'lg'] as const;
+const URGENCIES = ['routine', 'urgent', 'critical'] as const;
+
+/** One request, so the composites have something real to render. */
+const DEMO_REQUEST: PublicBloodRequest = {
+  id: 'demo',
+  bloodType: 'O-',
+  unitsNeeded: 3,
+  urgency: 'critical',
+  hospitalName: 'City General Hospital 8th September',
+  city: 'Skopje',
+  note: 'Road traffic accident, theatre is prepped and waiting on units.',
+  status: 'approved',
+  createdAt: new Date(Date.now() - 12 * 60_000).toISOString(),
+  expiresAt: new Date(Date.now() + 7 * 86_400_000).toISOString(),
+};
 
 /* ── The gallery ───────────────────────────────────────────────────────── */
 
 export function Gallery({ frameMode = false }: { frameMode?: boolean }) {
   const [showPassword, setShowPassword] = useState(false);
+  const [chip, setChip] = useState<string | null>('O-');
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -487,6 +513,122 @@ export function Gallery({ frameMode = false }: { frameMode?: boolean }) {
             </Stack>
           </Card>
         </Grid>
+      </Section>
+
+      <Section
+        id="urgency"
+        title="Urgency pill"
+        note="Colour, a word and an icon — never colour alone. Someone who cannot separate red from amber still reads “Critical”."
+      >
+        <Cluster gap={3}>
+          {URGENCIES.map((level) => (
+            <UrgencyPill key={level} urgency={level} />
+          ))}
+        </Cluster>
+      </Section>
+
+      <Section
+        id="blood-type-label"
+        title="Blood type label"
+        note="The glyph a sighted reader sees plus the words a screen reader says. Use it anywhere a type appears outside a badge — rendering the stored value announces “O hyphen”."
+      >
+        <Cluster gap={4}>
+          {BLOOD_TYPES.map((type) => (
+            <span key={type} className={styles.note}>
+              <BloodTypeLabel type={type} />
+            </span>
+          ))}
+        </Cluster>
+      </Section>
+
+      <Section
+        id="request-card"
+        title="Request card"
+        note="Lays itself out from its OWN width, not the viewport's. The two below are the same component: the narrow one is in a 20rem column, the wide one is not. No breakpoint is involved."
+      >
+        <Stack gap={5}>
+          <div style={{ maxInlineSize: '20rem' }}>
+            <RequestCard request={DEMO_REQUEST} />
+          </div>
+          <RequestCard request={{ ...DEMO_REQUEST, id: 'demo-wide' }} />
+        </Stack>
+      </Section>
+
+      <Section
+        id="filters"
+        title="Filter bar"
+        note="A chip row that scrolls sideways when it must and wraps when it has room. The scroller is a containing block, or an absolutely positioned label inside it escapes the clip and stretches the page."
+      >
+        <FilterBar label="Filter by blood type">
+          <FilterGroupLabel>Type</FilterGroupLabel>
+          {BLOOD_TYPES.map((type) => (
+            <FilterChip
+              key={type}
+              selected={chip === type}
+              onClick={() => {
+                setChip(chip === type ? null : type);
+              }}
+            >
+              <BloodTypeLabel type={type} />
+            </FilterChip>
+          ))}
+        </FilterBar>
+      </Section>
+
+      <Section
+        id="skeleton"
+        title="Skeleton"
+        note="Shape-matched to the content it stands in for, never a centred spinner on a blank page. Only opacity animates, and it stops entirely under reduced motion."
+      >
+        <Stack gap={3} style={{ maxInlineSize: '24rem' }}>
+          <Cluster gap={2}>
+            <Skeleton width="4rem" height="2.25rem" shape="circle" />
+            <Skeleton width="5.5rem" height="1.75rem" shape="circle" />
+          </Cluster>
+          <Skeleton width="80%" height="1.4rem" />
+          <Skeleton width="60%" shape="text" />
+          <Skeleton width="9rem" height="2.75rem" />
+        </Stack>
+      </Section>
+
+      <Section
+        id="empty-state"
+        title="Empty states"
+        note="Where most products look unfinished. Each one says what will appear here, or what to change, and offers exactly one action."
+      >
+        <Grid minColumn="18rem" gap={4}>
+          <Card>
+            <EmptyState
+              headline="No open requests right now"
+              body="That is good news. Register and we will email you the moment someone with your blood type needs help."
+              action={<Button>Register as donor</Button>}
+            />
+          </Card>
+          <Card>
+            <EmptyState
+              icon="filter"
+              headline="No requests match these filters"
+              body="Widen the search and the open requests will reappear."
+              action={<Button variant="secondary">Clear filters</Button>}
+            />
+          </Card>
+          <Card>
+            <EmptyState
+              icon="alertTriangle"
+              headline="We couldn’t load the requests"
+              body="The connection dropped on the way. Nothing is lost — try again."
+              action={<Button>Try again</Button>}
+            />
+          </Card>
+        </Grid>
+      </Section>
+
+      <Section
+        id="theme-toggle"
+        title="Theme toggle"
+        note="Three states: match the system, or pin light or dark. Each target is 44×44."
+      >
+        <ThemeToggle />
       </Section>
 
       <Section
