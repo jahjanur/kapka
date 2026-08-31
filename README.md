@@ -360,7 +360,7 @@ What the database tests cover:
 
 - **All 64 (recipient, donor) combinations** through the real query, each its
   own test case so a failure names the exact pair. See below.
-- The eligibility boundary at 55, 56 and 57 days, and never-donated.
+- The eligibility boundary — see below.
 - Every exclusion: wrong city, availability paused, notifications off,
   unverified email, deactivated account, already notified.
 - The schema's own promises: `CHECK` constraints, CITEXT case-insensitivity,
@@ -373,6 +373,39 @@ including all three §5.1 reference points; changing 56 to 55, dropping the
 city join, and dropping the already-notified guard each fail too.
 
 The whole suite runs in about 7 seconds.
+
+### Eligibility boundaries
+
+The 56-day rule (§5.2) at every edge, against a real database:
+
+| Last donated        | Eligible | Why it is worth a test                                 |
+| ------------------- | -------- | ------------------------------------------------------ |
+| never (`NULL`)      | yes      | `NULL` means never donated, not "unknown"              |
+| exactly 56 days ago | yes      | the boundary is **inclusive**                          |
+| 57 days ago         | yes      |                                                        |
+| 55 days ago         | no       | the off-by-one that would ask someone to give too soon |
+| today               | no       |                                                        |
+| **in the future**   | no       | see below                                              |
+
+Both sides are decided in SQL. The donor's date is stored relative to
+`CURRENT_DATE` and the query compares against `CURRENT_DATE`, so a session in
+any timezone gets the same answer — asserted by running the boundary case
+through connections set to UTC, Kiritimati (UTC+14) and Niue (UTC−11).
+
+**A future date is not a small thing.** It does not make a donor temporarily
+ineligible; it makes them _permanently invisible_, because
+`last_donation_date <= CURRENT_DATE - 56 days` can never be true for a date
+that keeps being ahead of today. They register, see nothing wrong, and are
+never told about a single request.
+
+`registerSchema` rejects those, but the API is not the only way a row arrives —
+an import, a fix-up script, a skewed clock on a bulk load. A trigger now
+refuses them at the table, on insert and on update. It has to be a trigger:
+Postgres requires `CHECK` expressions to be immutable and `CURRENT_DATE` is
+not.
+
+Every boundary is mutation-tested. Changing 56 to 55 or 57, turning `<=` into
+`<`, dropping the `IS NULL` branch, or disabling the trigger each fail.
 
 ### The 64-pair test
 
@@ -541,7 +574,7 @@ What the database tests cover:
 
 - **All 64 (recipient, donor) combinations** through the real query, each its
   own test case so a failure names the exact pair. See below.
-- The eligibility boundary at 55, 56 and 57 days, and never-donated.
+- The eligibility boundary — see below.
 - Every exclusion: wrong city, availability paused, notifications off,
   unverified email, deactivated account, already notified.
 - The schema's own promises: `CHECK` constraints, CITEXT case-insensitivity,
@@ -554,6 +587,39 @@ including all three §5.1 reference points; changing 56 to 55, dropping the
 city join, and dropping the already-notified guard each fail too.
 
 The whole suite runs in about 7 seconds.
+
+### Eligibility boundaries
+
+The 56-day rule (§5.2) at every edge, against a real database:
+
+| Last donated        | Eligible | Why it is worth a test                                 |
+| ------------------- | -------- | ------------------------------------------------------ |
+| never (`NULL`)      | yes      | `NULL` means never donated, not "unknown"              |
+| exactly 56 days ago | yes      | the boundary is **inclusive**                          |
+| 57 days ago         | yes      |                                                        |
+| 55 days ago         | no       | the off-by-one that would ask someone to give too soon |
+| today               | no       |                                                        |
+| **in the future**   | no       | see below                                              |
+
+Both sides are decided in SQL. The donor's date is stored relative to
+`CURRENT_DATE` and the query compares against `CURRENT_DATE`, so a session in
+any timezone gets the same answer — asserted by running the boundary case
+through connections set to UTC, Kiritimati (UTC+14) and Niue (UTC−11).
+
+**A future date is not a small thing.** It does not make a donor temporarily
+ineligible; it makes them _permanently invisible_, because
+`last_donation_date <= CURRENT_DATE - 56 days` can never be true for a date
+that keeps being ahead of today. They register, see nothing wrong, and are
+never told about a single request.
+
+`registerSchema` rejects those, but the API is not the only way a row arrives —
+an import, a fix-up script, a skewed clock on a bulk load. A trigger now
+refuses them at the table, on insert and on update. It has to be a trigger:
+Postgres requires `CHECK` expressions to be immutable and `CURRENT_DATE` is
+not.
+
+Every boundary is mutation-tested. Changing 56 to 55 or 57, turning `<=` into
+`<`, dropping the `IS NULL` branch, or disabling the trigger each fail.
 
 ### The 64-pair test
 
