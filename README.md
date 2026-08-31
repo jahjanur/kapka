@@ -333,6 +333,34 @@ development key, so nothing signed with it could be mistaken for a secret.
 `20260831130000000_refresh-tokens.sql` adds the table. §3 has none, because
 §3 does not describe rotation.
 
+### Authorisation
+
+Three guards, in `middleware/auth.ts`. **Each is self-sufficient** — none
+depends on another running first, because a silent ordering requirement is a
+guard that fails open the moment someone mounts it alone.
+
+| Guard                  | Checks                                                | Used by                             |
+| ---------------------- | ----------------------------------------------------- | ----------------------------------- |
+| `requireAuth(repo)`    | Valid token **and** an active account in the database | `GET /api/me`, `POST /api/requests` |
+| `requireRole(repo, …)` | The same, plus the role — **from the database**       | admin routes, when they exist       |
+| `optionalAuth()`       | Token only; a bad token is treated as no token        | `GET /api/requests`                 |
+
+**The role comes from the database, not the token.** A 15-minute access token
+carries whatever role was true when it was issued, so trusting the claim means
+a demoted admin keeps admin powers for up to fifteen minutes — and on this
+system an admin action emails every matching donor. The extra lookup is a
+primary-key read, and it also catches an account deactivated mid-session.
+Tested by minting a valid admin token, demoting the account, and asserting the
+next request gets 403.
+
+`optionalAuth` is the exception: token-only, no database read. It runs on the
+busiest public route, and being wrong there shows one extra phone number
+rather than granting a permission. A bad token must never turn a public page
+into an error.
+
+Authorisation is checked **before** validation, so an unauthorised caller does
+not learn which fields the schema wants.
+
 ### Seed data
 
 `npm run seed` loads synthetic data: donors covering all eight blood types

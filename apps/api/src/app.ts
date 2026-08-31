@@ -4,12 +4,13 @@ import express, { type Express } from 'express';
 import helmet from 'helmet';
 import { createPgAuthRepository, type AuthRepository } from './auth/repository';
 import { createAuthRouter } from './routes/auth';
+import { createMeRouter } from './routes/me';
 import { generalRateLimit } from './middleware/rateLimit';
 import { env } from './env';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { citiesRouter } from './routes/cities';
 import { healthRouter } from './routes/health';
-import { requestsRouter } from './routes/requests';
+import { createRequestsRouter } from './routes/requests';
 
 /**
  * `repository` is injectable so the endpoints can be exercised over real HTTP
@@ -40,8 +41,9 @@ export function createApp(
   app.use('/api', healthRouter);
   app.use('/api', generalRateLimit);
   app.use('/api', createAuthRouter(repository));
+  app.use('/api', createMeRouter(repository));
   app.use('/api', citiesRouter);
-  app.use('/api', requestsRouter);
+  app.use('/api', createRequestsRouter(repository));
 
   app.use(notFound);
   app.use(errorHandler);

@@ -18,6 +18,14 @@ export interface RefreshRecord {
   revokedAt: Date | null;
 }
 
+export interface DonorProfileRecord {
+  bloodType: BloodType;
+  city: string;
+  lastDonationDate: string | null;
+  isAvailable: boolean;
+  notifyByEmail: boolean;
+}
+
 export interface RegisterInput {
   fullName: string;
   email: string;
@@ -38,6 +46,8 @@ export interface RegisterInput {
 export interface AuthRepository {
   findUserByEmail(email: string): Promise<UserRecord | null>;
   findUserById(id: string): Promise<UserRecord | null>;
+  /** Null for a requester or admin, who have no donor profile. */
+  findDonorProfile(userId: string): Promise<DonorProfileRecord | null>;
   /** Creates the user and the donor profile in one transaction (§4). */
   createUser(input: RegisterInput): Promise<UserRecord>;
   storeRefreshToken(userId: string, tokenHash: string, expiresAt: Date): Promise<string>;
@@ -95,6 +105,32 @@ export function createPgAuthRepository(db: Queryable = pool): AuthRepository {
         [id],
       );
       return rows[0] ? toUser(rows[0]) : null;
+    },
+
+    async findDonorProfile(userId) {
+      const { rows } = await db.query<{
+        blood_type: BloodType;
+        city: string;
+        last_donation_date: Date | null;
+        is_available: boolean;
+        notify_by_email: boolean;
+      }>(
+        `SELECT blood_type, city, last_donation_date, is_available, notify_by_email
+         FROM donor_profiles WHERE user_id = $1`,
+        [userId],
+      );
+      const row = rows[0];
+      if (!row) return null;
+      return {
+        bloodType: row.blood_type,
+        city: row.city,
+        // A DATE column comes back as a Date; the API speaks ISO days.
+        lastDonationDate: row.last_donation_date
+          ? row.last_donation_date.toISOString().slice(0, 10)
+          : null,
+        isAvailable: row.is_available,
+        notifyByEmail: row.notify_by_email,
+      };
     },
 
     async createUser(input) {

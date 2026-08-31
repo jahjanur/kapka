@@ -3,8 +3,25 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { CITIES, ERROR_CODES } from '@kapka/shared';
 import { createApp } from './app';
+import { createFakeAuthRepository } from './auth/fakeRepository';
+import { hashPassword } from './auth/passwords';
 
-const app = createApp();
+const repository = createFakeAuthRepository();
+const app = createApp(repository);
+
+/** Signs in and returns an Authorization header value. */
+async function bearer(): Promise<string> {
+  const email = `caller-${String(repository.users.size)}@example.test`;
+  repository.addUser({
+    email,
+    passwordHash: await hashPassword('a-long-enough-password'),
+  });
+  const response = await request(app)
+    .post('/api/auth/login')
+    .send({ email, password: 'a-long-enough-password' });
+  const body = z.object({ accessToken: z.string() }).parse(response.body);
+  return `Bearer ${body.accessToken}`;
+}
 
 /**
  * The envelope every endpoint must return (§4), as a runtime check rather
@@ -55,6 +72,35 @@ describe('GET /api/cities', () => {
   });
 });
 
+describe('POST /api/requests authorisation', () => {
+  const valid = {
+    bloodType: 'O-',
+    hospitalName: 'City General Hospital',
+    city: 'Skopje',
+    contactPhone: '+389 70 123 456',
+  };
+
+  it('refuses an anonymous caller', async () => {
+    const response = await request(app).post('/api/requests').send(valid);
+    expect(response.status).toBe(401);
+    expect(expectErrorBody(response.body).error.code).toBe('UNAUTHENTICATED');
+  });
+
+  it('refuses a made-up token', async () => {
+    const response = await request(app)
+      .post('/api/requests')
+      .set('Authorization', 'Bearer not-a-real-token')
+      .send(valid);
+    expect(response.status).toBe(401);
+  });
+
+  it('checks authorisation before validating the body', async () => {
+    // An unauthorised caller should not learn which fields the schema wants.
+    const response = await request(app).post('/api/requests').send({ nonsense: true });
+    expect(response.status).toBe(401);
+  });
+});
+
 describe('POST /api/requests validation', () => {
   const valid = {
     bloodType: 'O-',
@@ -66,6 +112,7 @@ describe('POST /api/requests validation', () => {
   it('rejects a blood type outside the eight, naming the field', async () => {
     const response = await request(app)
       .post('/api/requests')
+      .set('Authorization', await bearer())
       .send({ ...valid, bloodType: 'Z+' });
     expect(response.status).toBe(400);
     const body = expectErrorBody(response.body);
@@ -78,6 +125,7 @@ describe('POST /api/requests validation', () => {
     // schema does not declare.
     const response = await request(app)
       .post('/api/requests')
+      .set('Authorization', await bearer())
       .send({ ...valid, isAdmin: true });
     expect(response.status).toBe(400);
     expect(expectErrorBody(response.body).error.code).toBe('VALIDATION_FAILED');
@@ -86,6 +134,7 @@ describe('POST /api/requests validation', () => {
   it('rejects a non-canonical city', async () => {
     const response = await request(app)
       .post('/api/requests')
+      .set('Authorization', await bearer())
       .send({ ...valid, city: 'bitola ' });
     expect(response.status).toBe(400);
     expect(expectErrorBody(response.body).error.field).toBe('city');
@@ -94,7 +143,10 @@ describe('POST /api/requests validation', () => {
   it('lets a valid body through to the handler', async () => {
     // 501 until the database exists — the point is that validation passed and
     // the request reached the route, not that anything was stored.
-    const response = await request(app).post('/api/requests').send(valid);
+    const response = await request(app)
+      .post('/api/requests')
+      .set('Authorization', await bearer())
+      .send(valid);
     expect(response.status).toBe(501);
     expect(expectErrorBody(response.body).error.code).toBe('NOT_IMPLEMENTED');
   });

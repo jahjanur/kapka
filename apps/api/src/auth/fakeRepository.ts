@@ -1,5 +1,6 @@
 import type {
   AuthRepository,
+  DonorProfileRecord,
   RefreshRecord,
   RegisterInput,
   UserRecord,
@@ -15,12 +16,14 @@ import type {
  */
 export function createFakeAuthRepository(): AuthRepository & {
   users: Map<string, UserRecord>;
+  profiles: Map<string, DonorProfileRecord>;
   tokens: Map<string, RefreshRecord & { tokenHash: string; replacedBy: string | null }>;
   addUser(
     user: Partial<UserRecord> & Pick<UserRecord, 'email' | 'passwordHash'>,
   ): UserRecord;
 } {
   const users = new Map<string, UserRecord>();
+  const profiles = new Map<string, DonorProfileRecord>();
   const tokens = new Map<
     string,
     RefreshRecord & { tokenHash: string; replacedBy: string | null }
@@ -46,8 +49,13 @@ export function createFakeAuthRepository(): AuthRepository & {
 
   return {
     users,
+    profiles,
     tokens,
     addUser,
+
+    findDonorProfile(userId) {
+      return Promise.resolve(profiles.get(userId) ?? null);
+    },
 
     findUserByEmail(email) {
       // users.email is CITEXT in Postgres, so matching is case-insensitive.
@@ -62,14 +70,20 @@ export function createFakeAuthRepository(): AuthRepository & {
     },
 
     createUser(input: RegisterInput) {
-      return Promise.resolve(
-        addUser({
-          email: input.email,
-          passwordHash: input.passwordHash,
-          fullName: input.fullName,
-          role: 'donor',
-        }),
-      );
+      const user = addUser({
+        email: input.email,
+        passwordHash: input.passwordHash,
+        fullName: input.fullName,
+        role: 'donor',
+      });
+      profiles.set(user.id, {
+        bloodType: input.bloodType,
+        city: input.city,
+        lastDonationDate: input.lastDonationDate,
+        isAvailable: true,
+        notifyByEmail: true,
+      });
+      return Promise.resolve(user);
     },
 
     storeRefreshToken(userId, tokenHash, expiresAt) {
