@@ -9,17 +9,22 @@ code.
 
 ## What is in the repo right now
 
-Only the frontend design system — the P0 foundation from §6, §7.3 and §8 Tier 1.
-No API, no database, no product screens yet.
+Frontend only — no API and no database yet. The public feed (§9.1) runs against
+seed data in `src/lib/requests.ts`.
 
 ```
 web/
   src/styles/tokens.css   colour tokens, light + dark, blood-type coding
   src/styles/scale.css    type, spacing, radius, elevation, motion, breakpoints
   src/styles/global.css   reset and base layer
-  src/components/         Tier 1 primitives + the five layout primitives
-  src/routes/             kitchen sink (the component gallery) + a placeholder home
+  src/components/         Tier 1 primitives, Tier 2 composites, layout primitives
+  src/lib/                blood-type vocabulary, seed data, the query hook
+  src/routes/Feed.tsx     the public feed — §9.1
+  src/routes/KitchenSink  the component gallery
 ```
+
+`useRequests()` is deliberately shaped like the TanStack Query hook that will
+wrap `GET /api/requests`, so swapping in the real call touches that one file.
 
 ## Running it
 

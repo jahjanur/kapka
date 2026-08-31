@@ -1,5 +1,5 @@
 import { Container, IconSprite, Stack, ThemeToggle } from '../components';
-import { ViewportFrames } from '../components/ViewportFrame/ViewportFrame';
+import { ViewportFrame } from '../components/ViewportFrame/ViewportFrame';
 import { Gallery } from './Gallery';
 import styles from './KitchenSink.module.css';
 
@@ -34,14 +34,14 @@ export default function KitchenSink() {
           <Stack gap={16}>
             <section aria-labelledby="frames-heading">
               <div className={styles.sectionHead}>
-                <h2 id="frames-heading">At 360px and 1280px</h2>
+                <h2 id="frames-heading">On a phone</h2>
                 <p className={styles.note}>
-                  Real iframes at real widths, so media queries behave the way
-                  they will on the device. 360px is the floor: anything that
-                  scrolls sideways in the left-hand frame is a bug.
+                  A real iframe at a real width, at 1:1, so media queries behave
+                  the way they will on the device. You are already looking at the
+                  desktop view.
                 </p>
               </div>
-              <ViewportFrames src="/kitchen-sink/frame" />
+              <ViewportFrame src="/kitchen-sink/frame" />
             </section>
 
             <Gallery />

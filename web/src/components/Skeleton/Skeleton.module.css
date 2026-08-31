@@ -1,0 +1,20 @@
+/* Shape-matched to the real content — never a centred spinner on a blank
+   page (§9.7). Only opacity animates, so this stays cheap on mid-range
+   Android (§6.6). */
+.skeleton {
+  background-color: var(--bg-surface-alt);
+  border-radius: var(--radius-sm);
+  animation: pulse 1.4s var(--ease-in-out) infinite;
+}
+
+.text { block-size: 0.85em; border-radius: var(--radius-xs); }
+.circle { border-radius: var(--radius-full); }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; opacity: 0.7; }
+}

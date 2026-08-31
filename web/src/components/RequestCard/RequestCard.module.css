@@ -1,0 +1,63 @@
+/* ============================================================================
+   RequestCard — lays itself out from its OWN width, not the viewport's (§7.2).
+   The same card works full-width in the feed and narrow in a sidebar with no
+   breakpoint anywhere. The container is unnamed on purpose: it resolves to the
+   nearest ancestor, so the card stays portable.
+   ========================================================================= */
+
+.shell { container-type: inline-size; }
+
+.card { display: grid; gap: var(--space-4); }
+
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.body { display: grid; gap: var(--space-2); min-inline-size: 0; }
+
+.hospital {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  /* A 60-character hospital name must not blow out the card (§7.6). */
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+}
+
+.metaItem { display: inline-flex; align-items: center; gap: var(--space-1); }
+
+.note {
+  max-inline-size: var(--measure);
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+  /* Clamp long notes; the detail page shows all 500 characters. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.actions { display: grid; gap: var(--space-2); }
+
+/* ── Wide enough for a horizontal arrangement ────────────────────────────── */
+@container (min-width: 30rem) {
+  .card {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: var(--space-5);
+  }
+  .top { flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+  .actions { justify-items: end; }
+}

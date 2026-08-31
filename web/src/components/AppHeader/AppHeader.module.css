@@ -1,0 +1,71 @@
+.header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--z-header);
+  background-color: color-mix(in oklab, var(--bg-canvas) 90%, transparent);
+  backdrop-filter: blur(10px);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-block-size: 3.5rem;
+  padding-block: var(--space-2);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+  color: var(--fg-primary);
+  text-decoration: none;
+}
+
+.mark { color: var(--accent); font-size: var(--text-xl); }
+
+.nav { display: none; }
+
+/* Page-level layout change, so this one is a media query by design (§7.2). */
+@media (min-width: 48rem) {
+  .nav { display: flex; align-items: center; gap: var(--space-2); }
+}
+
+.navLink {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--hit-min);
+  padding-inline: var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--fg-secondary);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+}
+@media (hover: hover) {
+  .navLink:hover { color: var(--fg-primary); background-color: var(--bg-surface-alt); }
+}
+
+.actions { display: flex; align-items: center; gap: var(--space-2); }
+
+/* §9.1: on a phone the header is the wordmark plus ONE action. The theme
+   toggle is a preference control, not a task, so it waits for the room —
+   putting it here at 360px pushed the header past the viewport. */
+.themeToggle { display: none; }
+
+@media (min-width: 48rem) {
+  .themeToggle { display: block; }
+}
+
+/* Short label on a phone; the hero carries the full "Register as donor". */
+.registerLong { display: none; }
+
+@media (min-width: 30rem) {
+  .registerShort { display: none; }
+  .registerLong { display: inline; }
+}

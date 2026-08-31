@@ -4,7 +4,7 @@ import { ThemeProvider } from './lib/theme';
 
 /* Route-level code splitting from the start (§11) — Leaflet and the map
    screens must never reach the initial bundle. */
-const Home = lazy(() => import('./routes/Home'));
+const Feed = lazy(() => import('./routes/Feed'));
 const KitchenSink = lazy(() => import('./routes/KitchenSink'));
 const KitchenSinkFrame = lazy(() => import('./routes/KitchenSinkFrame'));
 
@@ -18,7 +18,7 @@ export function App() {
               of their own (§9.7) — never a centred spinner on a blank page. */}
           <Suspense fallback={<div aria-live="polite" className="visually-hidden">Loading…</div>}>
             <Routes>
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<Feed />} />
               <Route path="/kitchen-sink" element={<KitchenSink />} />
               <Route path="/kitchen-sink/frame" element={<KitchenSinkFrame />} />
             </Routes>

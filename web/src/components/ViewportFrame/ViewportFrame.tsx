@@ -1,54 +1,51 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
+import { Button } from '../Button/Button';
 import styles from './ViewportFrame.module.css';
 
-interface ViewportFrameProps {
-  /** The width the framed page believes it has, in CSS pixels. */
-  width: number;
-  src: string;
-  label?: string;
-}
+/** The phone widths worth checking by eye. 360 is the floor (§7.1). */
+const WIDTHS = [360, 390, 430] as const;
 
-export function ViewportFrame({ width, src, label }: ViewportFrameProps) {
-  const boxRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
-
-  useEffect(() => {
-    const box = boxRef.current;
-    if (!box) return;
-    const observer = new ResizeObserver(([entry]) => {
-      if (!entry) return;
-      const available = entry.contentRect.width;
-      // Never scale up — a 360px frame on a wide screen stays 1:1 and honest.
-      setScale(Math.min(1, available / width));
-    });
-    observer.observe(box);
-    return () => observer.disconnect();
-  }, [width]);
+/**
+ * Renders a route at a real phone width, at 1:1, inside the current page.
+ *
+ * Deliberately does NOT scale a desktop width down to a thumbnail — a 1280px
+ * frame shrunk to fit a column is too small to judge anything in, which is
+ * worse than not showing it. The desktop view is the page you are already on;
+ * this covers the narrow end, where the layout actually has to work hardest.
+ */
+export function ViewportFrame({ src }: { src: string }) {
+  const [width, setWidth] = useState<number>(360);
 
   return (
-    <figure className={styles.figure}>
-      <figcaption className={styles.caption}>
-        {label ?? `${width}px`}
-        {scale < 1 && ` · shown at ${Math.round(scale * 100)}%`}
-      </figcaption>
-      <div className={styles.viewport} ref={boxRef}>
+    <div className={styles.wrap}>
+      <div className={styles.controls}>
+        {WIDTHS.map((candidate) => (
+          <Button
+            key={candidate}
+            size="sm"
+            variant={candidate === width ? 'primary' : 'secondary'}
+            aria-pressed={candidate === width}
+            onClick={() => setWidth(candidate)}
+          >
+            {candidate}px
+          </Button>
+        ))}
+        <span className={styles.caption}>
+          {width === 360 ? 'the floor — sideways scroll here is a bug' : 'shown at 1:1'}
+        </span>
+      </div>
+
+      <div
+        className={styles.viewport}
+        style={{ '--frame-width': `${width}px` } as CSSProperties}
+      >
         <iframe
           className={styles.frame}
-          style={{ '--frame-width': `${width}px`, '--frame-scale': scale } as CSSProperties}
           src={src}
-          title={label ?? `Preview at ${width} pixels wide`}
+          title={`Preview at ${width} pixels wide`}
           loading="lazy"
         />
       </div>
-    </figure>
-  );
-}
-
-export function ViewportFrames({ src }: { src: string }) {
-  return (
-    <div className={styles.frames}>
-      <ViewportFrame width={360} src={src} label="360px · the floor" />
-      <ViewportFrame width={1280} src={src} label="1280px · desktop" />
     </div>
   );
 }
