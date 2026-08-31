@@ -325,6 +325,56 @@ domain and roughly which account is usually what the log was for. The error
 handler runs everything through it before logging, and before putting it in a
 development response body.
 
+### The matching query
+
+`apps/api/src/matching/repository.ts` holds §5.1 — the query that decides who
+gets emailed. Compatibility, city and the 56-day eligibility rule in one
+statement, run when an admin approves a request.
+
+**Read the join direction before changing it.**
+`bc.recipient_type = r.blood_type` — the request's blood type is what the
+_patient needs_, matching the recipient side of the matrix.
+`dp.blood_type = bc.donor_type` — the donor's type matches the donor side.
+Swapping those produces a system that runs, returns donors, and is medically
+wrong: it would email O− donors for an AB+ patient.
+
+Eligibility is computed in SQL against `CURRENT_DATE`, not in JavaScript,
+where the server's timezone would decide who is eligible (§5.2).
+
+Results are ordered by time since last donation, never-donated first, so that
+capping a batch at the free-tier ceiling (§5.3) takes the donors most likely
+to be able to come rather than an arbitrary slice.
+
+### Testing against a real database
+
+`apps/api/src/test/database.ts` starts a **real PostgreSQL 18** for the test
+run — `embedded-postgres` downloads a server binary, so this needs no Docker
+and no service in CI — applies the actual migrations with the actual migration
+tool, and hands back a pool.
+
+This matters most for the matching query. It is entirely SQL, and §13 calls it
+the one piece of logic where a bug has consequences outside the software.
+Testing it against a mock would only confirm the mock agrees with itself.
+
+What the database tests cover:
+
+- **All 64 (recipient, donor) combinations** through the real query, compared
+  against the ABO/Rh rule written from first principles — a second opinion,
+  not a restatement of the matrix being queried.
+- The eligibility boundary at 55, 56 and 57 days, and never-donated.
+- Every exclusion: wrong city, availability paused, notifications off,
+  unverified email, deactivated account, already notified.
+- The schema's own promises: `CHECK` constraints, CITEXT case-insensitivity,
+  `ON DELETE SET NULL` letting a moderator be deleted, and the unique index
+  that stops a donor being logged twice for one request.
+- The seed script, whose INSERTs had also never met a database.
+
+All of it mutation-tested. Reversing the compatibility join fails five tests
+including all three §5.1 reference points; changing 56 to 55, dropping the
+city join, and dropping the already-notified guard each fail too.
+
+The whole suite runs in about 7 seconds.
+
 ### Cities
 
 City is a controlled list and never free text, because §5.1 matches on an
@@ -421,6 +471,56 @@ bcrypt hashes and provider keys, and masks emails to `a***@example.com` — whic
 domain and roughly which account is usually what the log was for. The error
 handler runs everything through it before logging, and before putting it in a
 development response body.
+
+### The matching query
+
+`apps/api/src/matching/repository.ts` holds §5.1 — the query that decides who
+gets emailed. Compatibility, city and the 56-day eligibility rule in one
+statement, run when an admin approves a request.
+
+**Read the join direction before changing it.**
+`bc.recipient_type = r.blood_type` — the request's blood type is what the
+_patient needs_, matching the recipient side of the matrix.
+`dp.blood_type = bc.donor_type` — the donor's type matches the donor side.
+Swapping those produces a system that runs, returns donors, and is medically
+wrong: it would email O− donors for an AB+ patient.
+
+Eligibility is computed in SQL against `CURRENT_DATE`, not in JavaScript,
+where the server's timezone would decide who is eligible (§5.2).
+
+Results are ordered by time since last donation, never-donated first, so that
+capping a batch at the free-tier ceiling (§5.3) takes the donors most likely
+to be able to come rather than an arbitrary slice.
+
+### Testing against a real database
+
+`apps/api/src/test/database.ts` starts a **real PostgreSQL 18** for the test
+run — `embedded-postgres` downloads a server binary, so this needs no Docker
+and no service in CI — applies the actual migrations with the actual migration
+tool, and hands back a pool.
+
+This matters most for the matching query. It is entirely SQL, and §13 calls it
+the one piece of logic where a bug has consequences outside the software.
+Testing it against a mock would only confirm the mock agrees with itself.
+
+What the database tests cover:
+
+- **All 64 (recipient, donor) combinations** through the real query, compared
+  against the ABO/Rh rule written from first principles — a second opinion,
+  not a restatement of the matrix being queried.
+- The eligibility boundary at 55, 56 and 57 days, and never-donated.
+- Every exclusion: wrong city, availability paused, notifications off,
+  unverified email, deactivated account, already notified.
+- The schema's own promises: `CHECK` constraints, CITEXT case-insensitivity,
+  `ON DELETE SET NULL` letting a moderator be deleted, and the unique index
+  that stops a donor being logged twice for one request.
+- The seed script, whose INSERTs had also never met a database.
+
+All of it mutation-tested. Reversing the compatibility join fails five tests
+including all three §5.1 reference points; changing 56 to 55, dropping the
+city join, and dropping the already-notified guard each fail too.
+
+The whole suite runs in about 7 seconds.
 
 ### Cities
 
@@ -601,15 +701,14 @@ silently do not run for you.
   in the database by design (§3), not in JS conditionals, so those tests land
   with the schema and the §5.1 matching query. This is the one piece of logic
   where a bug has real-world consequences, so it should not slip.
-- **Auth is tested but its SQL is not.** The endpoints are exercised over real
-  HTTP against an in-memory repository, so routing, validation, status codes,
-  error envelopes, cookie flags, token contents, rotation and reuse detection
-  are all covered. The queries behind them have never met a Postgres.
-- **`compose.yaml` and the migrations have never been run against a real
-  database.** Docker was not installed on the machine they were written on.
-  The YAML is validated and internally consistent, and the compatibility data
-  is fully tested, but no SQL has been executed by Postgres — expect to shake
-  something out on the first `npm run db:up && npm run migrate`.
+- **`compose.yaml` has never been run.** Docker was not installed on the
+  machine it was written on. The migrations and the seed are now verified
+  against a real PostgreSQL by the test suite, so what remains unproven is the
+  Compose file itself — the service definitions, ports and healthcheck.
+- **The auth repository's SQL is still untested.** Its endpoints are covered
+  over real HTTP against an in-memory repository. Now that the test harness
+  starts a real database, those queries can be covered the same way the
+  matching query is.
 - No E2E tests. §13 wants two Playwright flows at 390px and 1280px. Visual
   regression (P2) should point Playwright at `/kitchen-sink/frame`, which is
   built to be screenshotted at a fixed width.
