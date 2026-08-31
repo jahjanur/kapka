@@ -47,6 +47,10 @@
   --warning:         oklch(0.75 0.150 75);
   --warning-surface: oklch(0.97 0.040 85);
   --danger:          oklch(0.58 0.195 27);
+  /* The destructive button's own hover and press. Both are darker than
+     --danger, so white text clears AA more comfortably than at rest. */
+  --danger-hover:    oklch(0.52 0.185 27);
+  --danger-active:   oklch(0.46 0.170 27);
   --danger-surface:  oklch(0.96 0.030 27);
   --info:            oklch(0.60 0.130 250);
   --info-surface:    oklch(0.96 0.028 250);
@@ -72,6 +76,9 @@
   --fg-secondary: var(--slate-700);
   --fg-muted:     var(--slate-600);
   --fg-onAccent:  var(--slate-0);
+  /* Danger stays a saturated red in both themes, so its label stays white in
+     both — unlike --fg-onAccent, which flips to dark ink in dark mode. */
+  --fg-onDanger:  var(--slate-0);
 
   --border-subtle:  var(--slate-200);
   --border-default: var(--slate-300);

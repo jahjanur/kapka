@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { ButtonHTMLAttributes, MouseEvent, ReactNode } from 'react';
 import { cx } from '../../lib/cx';
 import styles from './Button.module.css';
 
@@ -31,6 +31,17 @@ export function Button({
   onClick,
   ...rest
 }: ButtonProps) {
+  const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
+    if (loading) {
+      // Dropping the onClick handler is not enough: a type="submit" button
+      // submits its form natively, with no handler involved. Without this,
+      // a second tap while the first request is in flight posts it twice.
+      event.preventDefault();
+      return;
+    }
+    onClick?.(event);
+  };
+
   return (
     <button
       type={type}
@@ -47,7 +58,7 @@ export function Button({
       disabled={disabled}
       aria-disabled={loading || undefined}
       aria-busy={loading || undefined}
-      onClick={loading ? undefined : onClick}
+      onClick={handleClick}
       {...rest}
     >
       <span className={styles.label}>{children}</span>

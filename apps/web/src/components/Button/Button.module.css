@@ -125,15 +125,15 @@
 /* ── Variant: danger ─────────────────────────────────────────────────────── */
 .danger {
   background-color: var(--danger);
-  color: var(--slate-0);
+  color: var(--fg-onDanger);
 }
 @media (hover: hover) {
   .danger:hover:not(:disabled) {
-    filter: brightness(0.92);
+    background-color: var(--danger-hover);
   }
 }
 .danger:active:not(:disabled) {
-  filter: brightness(0.85);
+  background-color: var(--danger-active);
 }
 
 /* ── State: active (all variants) ────────────────────────────────────────── */
