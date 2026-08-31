@@ -1,0 +1,53 @@
+/* ============================================================================
+   Intrinsic layout primitives (§7.3)
+   These respond WITHOUT breakpoints. Reach for one of these before writing a
+   media query. Use logical properties throughout so the layout survives RTL.
+   ========================================================================= */
+
+/* 1. Auto-fitting grid — no media queries needed at all.
+      min() stops the track from overflowing below the min column width.   */
+.grid {
+  display: grid;
+  gap: var(--gap, var(--space-4));
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--col-min, 18rem), 100%), 1fr));
+}
+
+/* 2. Sidebar that collapses on its own when space runs out.
+      The 999 flex-grow forces main to take everything until sidebar hits its
+      basis, at which point the pair wraps. No breakpoint involved.         */
+.withSidebar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap, var(--space-6));
+}
+.sidebar { flex: 1 1 var(--sidebar-basis, 16rem); }
+.main    { flex: 999 1 var(--main-min, 32rem); }
+
+/* Sidebar on the trailing side instead of the leading side. */
+.sidebarLast { order: 1; }
+
+/* 3. Content-width container with fluid gutters. */
+.container {
+  inline-size: 100%;
+  max-inline-size: var(--container-width, var(--container-max));
+  margin-inline: auto;
+  padding-inline: var(--container-gutter);
+}
+
+/* 4. Vertical rhythm without margin-collapsing bugs.
+      The owl selector — spacing lives BETWEEN items, so the first and last
+      child never introduce edge margin the parent has to strip off.       */
+.stack > * + * { margin-block-start: var(--flow, var(--space-4)); }
+
+/* Push everything after the marked child to the end of a fixed-height stack. */
+.stack > .pushEnd { margin-block-start: auto; }
+.stackFill { display: flex; flex-direction: column; block-size: 100%; }
+
+/* 5. Cluster — a wrapping row of items (tags, filters, actions). */
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap, var(--space-2));
+  align-items: var(--align, center);
+  justify-content: var(--justify, flex-start);
+}

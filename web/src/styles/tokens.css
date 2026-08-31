@@ -1,0 +1,247 @@
+/* ============================================================================
+   Kapka — design tokens
+   The single source of truth for every colour, size, radius, and duration.
+
+   RULE: no component may hard-code a colour, a size, a radius, or a duration.
+   If a value is not a token, it is a bug.
+
+   Implements §6 of the development plan.
+   ========================================================================= */
+
+:root {
+  color-scheme: light dark;
+
+  /* ── Brand: crimson ──────────────────────────────────────────────────── */
+  --crimson-50:  oklch(0.97 0.015 22);
+  --crimson-100: oklch(0.94 0.035 22);
+  --crimson-200: oklch(0.88 0.070 22);
+  --crimson-300: oklch(0.79 0.110 23);
+  --crimson-400: oklch(0.69 0.155 24);
+  --crimson-500: oklch(0.60 0.190 25);   /* primary */
+  --crimson-600: oklch(0.53 0.185 25);
+  --crimson-700: oklch(0.45 0.160 25);
+  --crimson-800: oklch(0.37 0.125 25);
+  --crimson-900: oklch(0.28 0.090 25);
+
+  /* ── Neutrals: cool slate ────────────────────────────────────────────── */
+  --slate-0:    oklch(1.00  0     0);
+  --slate-25:   oklch(0.99  0.003 265);
+  --slate-50:   oklch(0.975 0.005 265);
+  --slate-100:  oklch(0.955 0.008 265);
+  --slate-200:  oklch(0.915 0.011 265);
+  --slate-300:  oklch(0.855 0.014 265);
+  --slate-400:  oklch(0.715 0.018 265);
+  --slate-500:  oklch(0.590 0.020 265);
+  --slate-600:  oklch(0.480 0.022 265);
+  --slate-700:  oklch(0.385 0.022 265);
+  --slate-800:  oklch(0.285 0.020 265);
+  --slate-900:  oklch(0.205 0.018 265);
+  --slate-950:  oklch(0.155 0.016 265);
+  --slate-1000: oklch(0.115 0.014 265);
+
+  /* ── Status ──────────────────────────────────────────────────────────── */
+  --success:         oklch(0.62 0.145 155);
+  --success-surface: oklch(0.96 0.030 155);
+  --warning:         oklch(0.75 0.150 75);
+  --warning-surface: oklch(0.97 0.040 85);
+  --danger:          oklch(0.58 0.195 27);
+  --danger-surface:  oklch(0.96 0.030 27);
+  --info:            oklch(0.60 0.130 250);
+  --info-surface:    oklch(0.96 0.028 250);
+
+  /* Status text that sits ON its own surface — the raw hues above are tuned
+     for fills and borders, not for small text on a tinted background.       */
+  --success-ink: oklch(0.43 0.115 155);
+  --warning-ink: oklch(0.44 0.105 75);
+  --danger-ink:  oklch(0.45 0.165 27);
+  --info-ink:    oklch(0.45 0.130 250);
+
+  /* ── Semantic: light theme ───────────────────────────────────────────── */
+  --bg-canvas:      var(--slate-50);   /* page background — never pure white */
+  --bg-surface:     var(--slate-0);    /* cards, panels */
+  --bg-surface-alt: var(--slate-100);  /* nested / muted surfaces */
+  --bg-inset:       var(--slate-100);  /* inputs, wells */
+  --bg-overlay:     oklch(0.20 0.02 265 / 0.45);
+
+  --fg-primary:   var(--slate-900);
+  --fg-secondary: var(--slate-600);
+  --fg-muted:     var(--slate-500);
+  --fg-onAccent:  var(--slate-0);
+
+  --border-subtle:  var(--slate-200);
+  --border-default: var(--slate-300);
+  --border-strong:  var(--slate-400);
+
+  --accent:         var(--crimson-500);
+  --accent-hover:   var(--crimson-600);
+  --accent-active:  var(--crimson-700);
+  --accent-surface: var(--crimson-50);
+  --accent-border:  var(--crimson-200);
+  --accent-ink:     var(--crimson-700);   /* accent text on a light surface */
+
+  --focus-ring: var(--crimson-500);
+
+  /* ── Blood-type coding (§6.3) ────────────────────────────────────────── */
+  /* Hue carries the ABO group; fill vs outline carries the Rh sign.
+     Colour is ALWAYS secondary — the badge shows the literal text too.
+     `solid-fg` differs per group on purpose: amber cannot carry white text
+     at AA, so AB uses dark ink on a light amber fill.                      */
+  --bt-o-solid-bg:  oklch(0.53 0.185 25);
+  --bt-o-solid-fg:  var(--slate-0);
+  --bt-o-ink:       oklch(0.45 0.160 25);
+  --bt-o-border:    oklch(0.82 0.090 25);
+  --bt-o-surface:   oklch(0.97 0.018 25);
+
+  --bt-a-solid-bg:  oklch(0.50 0.180 290);
+  --bt-a-solid-fg:  var(--slate-0);
+  --bt-a-ink:       oklch(0.45 0.170 290);
+  --bt-a-border:    oklch(0.82 0.085 290);
+  --bt-a-surface:   oklch(0.97 0.018 290);
+
+  --bt-b-solid-bg:  oklch(0.50 0.095 195);
+  --bt-b-solid-fg:  var(--slate-0);
+  --bt-b-ink:       oklch(0.44 0.085 195);
+  --bt-b-border:    oklch(0.80 0.060 195);
+  --bt-b-surface:   oklch(0.96 0.022 195);
+
+  --bt-ab-solid-bg: oklch(0.78 0.150 70);
+  --bt-ab-solid-fg: oklch(0.25 0.050 70);
+  --bt-ab-ink:      oklch(0.44 0.095 70);
+  --bt-ab-border:   oklch(0.82 0.080 70);
+  --bt-ab-surface:  oklch(0.96 0.035 70);
+}
+
+/* ============================================================================
+   DARK THEME
+   The two blocks below MUST stay identical in content. The first follows the
+   OS preference (unless the user has explicitly chosen light); the second is
+   the manual toggle, which wins by specificity. Plain CSS has no way to share
+   a declaration list across a media-query boundary — edit both together.
+   ========================================================================= */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg-canvas:      var(--slate-1000);
+    --bg-surface:     var(--slate-950);
+    --bg-surface-alt: var(--slate-900);
+    --bg-inset:       var(--slate-900);
+    --bg-overlay:     oklch(0.10 0.01 265 / 0.65);
+
+    --fg-primary:   var(--slate-50);
+    --fg-secondary: var(--slate-300);
+    --fg-muted:     var(--slate-400);
+    --fg-onAccent:  var(--slate-1000);
+
+    --border-subtle:  oklch(0.30 0.018 265);
+    --border-default: oklch(0.38 0.020 265);
+    --border-strong:  oklch(0.48 0.020 265);
+
+    --accent:         var(--crimson-400);
+    --accent-hover:   var(--crimson-300);
+    --accent-active:  var(--crimson-500);
+    --accent-surface: oklch(0.28 0.070 25);
+    --accent-border:  oklch(0.40 0.100 25);
+    --accent-ink:     var(--crimson-300);
+
+    --focus-ring: var(--crimson-400);
+
+    --success-surface: oklch(0.28 0.055 155);
+    --warning-surface: oklch(0.30 0.060 85);
+    --danger-surface:  oklch(0.28 0.060 27);
+    --info-surface:    oklch(0.28 0.055 250);
+
+    --success-ink: oklch(0.82 0.115 155);
+    --warning-ink: oklch(0.86 0.110 85);
+    --danger-ink:  oklch(0.80 0.115 27);
+    --info-ink:    oklch(0.82 0.095 250);
+
+    --bt-o-solid-bg:  oklch(0.72 0.155 25);
+    --bt-o-solid-fg:  oklch(0.18 0.030 25);
+    --bt-o-ink:       oklch(0.80 0.120 25);
+    --bt-o-border:    oklch(0.45 0.110 25);
+    --bt-o-surface:   oklch(0.26 0.055 25);
+
+    --bt-a-solid-bg:  oklch(0.72 0.140 290);
+    --bt-a-solid-fg:  oklch(0.18 0.030 290);
+    --bt-a-ink:       oklch(0.81 0.110 290);
+    --bt-a-border:    oklch(0.45 0.105 290);
+    --bt-a-surface:   oklch(0.26 0.055 290);
+
+    --bt-b-solid-bg:  oklch(0.75 0.090 195);
+    --bt-b-solid-fg:  oklch(0.18 0.025 195);
+    --bt-b-ink:       oklch(0.83 0.075 195);
+    --bt-b-border:    oklch(0.45 0.065 195);
+    --bt-b-surface:   oklch(0.26 0.040 195);
+
+    --bt-ab-solid-bg: oklch(0.80 0.145 70);
+    --bt-ab-solid-fg: oklch(0.20 0.045 70);
+    --bt-ab-ink:      oklch(0.85 0.110 70);
+    --bt-ab-border:   oklch(0.47 0.085 70);
+    --bt-ab-surface:  oklch(0.27 0.050 70);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg-canvas:      var(--slate-1000);
+  --bg-surface:     var(--slate-950);
+  --bg-surface-alt: var(--slate-900);
+  --bg-inset:       var(--slate-900);
+  --bg-overlay:     oklch(0.10 0.01 265 / 0.65);
+
+  --fg-primary:   var(--slate-50);
+  --fg-secondary: var(--slate-300);
+  --fg-muted:     var(--slate-400);
+  --fg-onAccent:  var(--slate-1000);
+
+  --border-subtle:  oklch(0.30 0.018 265);
+  --border-default: oklch(0.38 0.020 265);
+  --border-strong:  oklch(0.48 0.020 265);
+
+  --accent:         var(--crimson-400);
+  --accent-hover:   var(--crimson-300);
+  --accent-active:  var(--crimson-500);
+  --accent-surface: oklch(0.28 0.070 25);
+  --accent-border:  oklch(0.40 0.100 25);
+  --accent-ink:     var(--crimson-300);
+
+  --focus-ring: var(--crimson-400);
+
+  --success-surface: oklch(0.28 0.055 155);
+  --warning-surface: oklch(0.30 0.060 85);
+  --danger-surface:  oklch(0.28 0.060 27);
+  --info-surface:    oklch(0.28 0.055 250);
+
+  --success-ink: oklch(0.82 0.115 155);
+  --warning-ink: oklch(0.86 0.110 85);
+  --danger-ink:  oklch(0.80 0.115 27);
+  --info-ink:    oklch(0.82 0.095 250);
+
+  --bt-o-solid-bg:  oklch(0.72 0.155 25);
+  --bt-o-solid-fg:  oklch(0.18 0.030 25);
+  --bt-o-ink:       oklch(0.80 0.120 25);
+  --bt-o-border:    oklch(0.45 0.110 25);
+  --bt-o-surface:   oklch(0.26 0.055 25);
+
+  --bt-a-solid-bg:  oklch(0.72 0.140 290);
+  --bt-a-solid-fg:  oklch(0.18 0.030 290);
+  --bt-a-ink:       oklch(0.81 0.110 290);
+  --bt-a-border:    oklch(0.45 0.105 290);
+  --bt-a-surface:   oklch(0.26 0.055 290);
+
+  --bt-b-solid-bg:  oklch(0.75 0.090 195);
+  --bt-b-solid-fg:  oklch(0.18 0.025 195);
+  --bt-b-ink:       oklch(0.83 0.075 195);
+  --bt-b-border:    oklch(0.45 0.065 195);
+  --bt-b-surface:   oklch(0.26 0.040 195);
+
+  --bt-ab-solid-bg: oklch(0.80 0.145 70);
+  --bt-ab-solid-fg: oklch(0.20 0.045 70);
+  --bt-ab-ink:      oklch(0.85 0.110 70);
+  --bt-ab-border:   oklch(0.47 0.085 70);
+  --bt-ab-surface:  oklch(0.27 0.050 70);
+}
+
+/* Keep the native form-control / scrollbar rendering in step with the
+   manual toggle, not just the OS preference. */
+:root[data-theme="dark"]  { color-scheme: dark; }
+:root[data-theme="light"] { color-scheme: light; }

@@ -1,0 +1,163 @@
+/* ============================================================================
+   Kapka — typography, spacing, elevation, motion, and layout scales
+   Companion to tokens.css. Same rule: if a value is not a token, it is a bug.
+   Implements §6.4, §6.5, §6.6 and §7.1 of the development plan.
+   ========================================================================= */
+
+:root {
+  /* ── Typeface ────────────────────────────────────────────────────────── */
+  /* Self-hosting a subsetted variable Inter is a P1 performance requirement
+     (§6.4). Drop InterVariable.woff2 into web/public/fonts/ and uncomment the
+     @font-face + <link rel="preload"> in index.html. Until then the stack
+     falls through to the platform UI face, which is a correct-looking and
+     zero-byte default — not a placeholder that breaks. */
+  --font-sans: "Inter Variable", "Inter", -apple-system, BlinkMacSystemFont,
+               "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* ── Fluid type scale ────────────────────────────────────────────────── */
+  /* 1.200 minor third on mobile, 1.250 on desktop.
+     Every step interpolates between 360px and 1440px viewports. */
+  --text-xs:   clamp(0.75rem,  0.72rem + 0.14vw, 0.8125rem);
+  --text-sm:   clamp(0.875rem, 0.84rem + 0.16vw, 0.9375rem);
+  --text-base: clamp(1rem,     0.96rem + 0.19vw, 1.0625rem);
+  --text-lg:   clamp(1.125rem, 1.06rem + 0.31vw, 1.3125rem);
+  --text-xl:   clamp(1.375rem, 1.26rem + 0.51vw, 1.75rem);
+  --text-2xl:  clamp(1.625rem, 1.42rem + 0.93vw, 2.25rem);
+  --text-3xl:  clamp(2rem,     1.65rem + 1.55vw, 3rem);
+  --text-4xl:  clamp(2.5rem,   1.93rem + 2.53vw, 4rem);
+
+  --leading-tight:   1.15;
+  --leading-snug:    1.3;
+  --leading-normal:  1.55;
+  --leading-relaxed: 1.7;
+  --leading-none:    1;      /* badges and buttons — see §6.4 rule 4 */
+
+  --tracking-tight:  -0.02em;   /* headings >= --text-2xl only */
+  --tracking-normal: 0;
+  --tracking-wide:   0.04em;    /* small caps, eyebrow labels */
+
+  --weight-normal:   400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+
+  /* Line length cap — §6.4 rule 2. Every paragraph gets this. */
+  --measure: 68ch;
+  --measure-narrow: 60ch;
+
+  /* ── Spacing ─────────────────────────────────────────────────────────── */
+  /* 4px base. Named by step, not by pixel, so the scale can be retuned once. */
+  --space-0:  0;
+  --space-1:  0.25rem;   /*  4px */
+  --space-2:  0.5rem;    /*  8px */
+  --space-3:  0.75rem;   /* 12px */
+  --space-4:  1rem;      /* 16px */
+  --space-5:  1.25rem;   /* 20px */
+  --space-6:  1.5rem;    /* 24px */
+  --space-8:  2rem;      /* 32px */
+  --space-10: 2.5rem;    /* 40px */
+  --space-12: 3rem;      /* 48px */
+  --space-16: 4rem;      /* 64px */
+  --space-20: 5rem;      /* 80px */
+  --space-24: 6rem;      /* 96px */
+
+  /* Fluid section rhythm — the vertical gaps that make a page breathe */
+  --space-section: clamp(3rem, 2rem + 5vw, 7rem);
+  --space-block:   clamp(1.5rem, 1.1rem + 1.8vw, 2.5rem);
+
+  /* ── Radius ──────────────────────────────────────────────────────────── */
+  /* Nesting convention: inner radius = outer radius - padding. A card at
+     --radius-xl with --space-4 padding holds an image at --radius-lg. */
+  --radius-xs:   0.25rem;
+  --radius-sm:   0.5rem;
+  --radius-md:   0.75rem;
+  --radius-lg:   1rem;
+  --radius-xl:   1.5rem;
+  --radius-2xl:  2rem;
+  --radius-full: 9999px;
+
+  /* ── Shadows ─────────────────────────────────────────────────────────── */
+  /* Two stacked shadows read as real depth; one big blurry shadow reads as a
+     2014 drop shadow. */
+  --shadow-xs: 0 1px 2px oklch(0.2 0.02 265 / 0.05);
+  --shadow-sm: 0 1px 2px oklch(0.2 0.02 265 / 0.06),
+               0 2px 6px oklch(0.2 0.02 265 / 0.05);
+  --shadow-md: 0 2px 4px oklch(0.2 0.02 265 / 0.06),
+               0 8px 20px oklch(0.2 0.02 265 / 0.08);
+  --shadow-lg: 0 4px 8px oklch(0.2 0.02 265 / 0.07),
+               0 16px 40px oklch(0.2 0.02 265 / 0.10);
+  --shadow-accent: 0 4px 14px oklch(0.60 0.19 25 / 0.28);
+
+  /* ── Elevation (use these, not the raw shadows) ──────────────────────── */
+  /* §6.5: in dark mode shadows barely register, so elevation is carried by a
+     lighter surface plus a hairline border instead. Components reference
+     --elevation-N and --border-hairline and get the right thing in both
+     themes without knowing which theme they are in. */
+  --elevation-1: var(--shadow-xs);   /* inputs, subtle dividers */
+  --elevation-2: var(--shadow-sm);   /* cards at rest */
+  --elevation-3: var(--shadow-md);   /* card hover, dropdowns, popovers */
+  --elevation-4: var(--shadow-lg);   /* modals, sheets, sticky mobile bar */
+  --border-hairline: transparent;    /* light theme leans on the shadow */
+
+  /* ── Motion ──────────────────────────────────────────────────────────── */
+  --dur-instant: 80ms;
+  --dur-fast:    140ms;   /* exits */
+  --dur-normal:  220ms;   /* entrances */
+  --dur-slow:    340ms;
+
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);      /* entrances, most UI */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);     /* moves, reorders */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);  /* toggles, badges */
+
+  --press-scale: 0.97;   /* §6.7 — active state on touch */
+
+  /* ── Hit targets ─────────────────────────────────────────────────────── */
+  --hit-min: 2.75rem;    /* 44px — WCAG 2.2 AA target size */
+  --hit-gap: var(--space-2);   /* >= 8px between adjacent targets */
+
+  /* ── Layout ──────────────────────────────────────────────────────────── */
+  --container-max: 75rem;
+  --container-gutter: clamp(var(--space-4), 4vw, var(--space-12));
+
+  /* ── Breakpoints (§7.1) ──────────────────────────────────────────────── */
+  /* Mobile-first min-widths. NOTE: custom properties cannot be used inside
+     @media or @container prelude, so these exist as documentation and for JS
+     (see src/lib/breakpoints.ts, which must stay in sync). Write the literal
+     rem value in the query and reference the token name in a comment. */
+  --bp-sm:  30rem;   /*  480px — large phones */
+  --bp-md:  48rem;   /*  768px — tablets, small laptops */
+  --bp-lg:  64rem;   /* 1024px — laptops */
+  --bp-xl:  80rem;   /* 1280px — desktops */
+  --bp-2xl: 96rem;   /* 1536px — large desktops */
+
+  /* ── Stacking order ──────────────────────────────────────────────────── */
+  --z-base:      0;
+  --z-sticky:    100;
+  --z-header:    200;
+  --z-overlay:   300;
+  --z-modal:     400;
+  --z-toast:     500;
+}
+
+/* Dark-mode elevation: swap shadow for a hairline. Two blocks, same content,
+   for the same reason as in tokens.css. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --elevation-1: none;
+    --elevation-2: none;
+    --elevation-3: 0 8px 24px oklch(0 0 0 / 0.35);
+    --elevation-4: 0 16px 48px oklch(0 0 0 / 0.50);
+    --border-hairline: var(--border-subtle);
+    --shadow-accent: 0 4px 14px oklch(0.69 0.155 24 / 0.30);
+  }
+}
+
+:root[data-theme="dark"] {
+  --elevation-1: none;
+  --elevation-2: none;
+  --elevation-3: 0 8px 24px oklch(0 0 0 / 0.35);
+  --elevation-4: 0 16px 48px oklch(0 0 0 / 0.50);
+  --border-hairline: var(--border-subtle);
+  --shadow-accent: 0 4px 14px oklch(0.69 0.155 24 / 0.30);
+}

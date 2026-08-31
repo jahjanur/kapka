@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Kapka</title>
+    <meta name="description" content="Urgent blood donation matching — find compatible, eligible donors nearby in seconds." />
+
+    <!-- Set the theme before first paint so a dark-mode user never gets a
+         white flash. Mirrors the storage key in src/lib/theme.tsx. -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('kapka.theme');
+          if (stored === 'light' || stored === 'dark') {
+            document.documentElement.setAttribute('data-theme', stored);
+          }
+        } catch (e) { /* no stored preference — fall through to the OS setting */ }
+      })();
+    </script>
+
+    <!-- Self-hosted Inter is a P1 performance requirement (§6.4). Drop the
+         subsetted WOFF2 into public/fonts/ and uncomment both lines:
+    <link rel="preload" href="/fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
+    <style>
+      @font-face {
+        font-family: "Inter Variable";
+        src: url("/fonts/InterVariable.woff2") format("woff2-variations");
+        font-weight: 100 900;
+        font-display: swap;
+      }
+    </style>
+    -->
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

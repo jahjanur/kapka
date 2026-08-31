@@ -1,0 +1,43 @@
+/* Renders a route at an exact CSS pixel width inside the current page, scaled
+   to fit its column. §8 ground rule 2 asks for every variant at 360px and
+   1280px side by side; a real iframe is the only way to get true media-query
+   behaviour rather than a container-width approximation. */
+
+.frames {
+  display: grid;
+  gap: var(--space-6);
+  grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
+}
+
+.figure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.caption {
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-secondary);
+}
+
+.viewport {
+  /* The visible box. The iframe inside is wider and scaled down to fit. */
+  overflow: hidden;
+  background-color: var(--bg-canvas);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-2);
+  block-size: 32rem;
+}
+
+.frame {
+  display: block;
+  border: 0;
+  transform-origin: 0 0;
+  scale: var(--frame-scale, 1);
+  inline-size: var(--frame-width);
+  /* Undo the scale so the iframe still fills the viewport box vertically. */
+  block-size: calc(32rem / var(--frame-scale, 1));
+}

@@ -1,0 +1,33 @@
+/* ============================================================================
+   Select — a native <select> with a styled trigger.
+
+   §7.4: on a phone the OS picker beats any custom dropdown we could build, so
+   the element stays native and only its shell is ours.
+   ========================================================================= */
+
+.wrapper { position: relative; display: block; }
+
+.select {
+  composes: control from '../Field/Control.module.css';
+  /* Room for the chevron, and never under it. */
+  padding-inline-end: var(--space-10);
+  appearance: none;
+  cursor: pointer;
+  text-overflow: ellipsis;   /* a long city name must not push the chevron */
+}
+
+.select:disabled { cursor: not-allowed; }
+
+/* Placeholder option selected — dim it like a placeholder, not like a value. */
+.select:invalid, .select[data-placeholder="true"] { color: var(--fg-muted); }
+
+.chevron {
+  position: absolute;
+  inset-inline-end: var(--space-4);
+  inset-block-start: 50%;
+  translate: 0 -50%;
+  color: var(--fg-muted);
+  pointer-events: none;   /* clicks must reach the select underneath */
+}
+
+.select:disabled ~ .chevron { opacity: 0.55; }

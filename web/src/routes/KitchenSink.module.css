@@ -1,0 +1,138 @@
+.page { padding-block: var(--space-8) var(--space-24); }
+
+.header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--z-header);
+  padding-block: var(--space-4);
+  margin-block-end: var(--space-8);
+  background-color: color-mix(in oklab, var(--bg-canvas) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.eyebrow {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.section { scroll-margin-block-start: var(--space-20); }
+
+.sectionHead {
+  padding-block-end: var(--space-3);
+  margin-block-end: var(--space-5);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.note {
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+}
+
+/* A labelled row of specimens. Wraps rather than scrolls. */
+.specimenLabel {
+  min-inline-size: 7rem;
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+}
+
+/* ── Swatches ────────────────────────────────────────────────────────────── */
+.swatchGrid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(11rem, 100%), 1fr));
+}
+.swatch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.swatchChip {
+  block-size: 3.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.swatchName {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--fg-secondary);
+  overflow-wrap: anywhere;
+}
+
+/* ── Type specimens ──────────────────────────────────────────────────────── */
+.typeRow {
+  display: grid;
+  gap: var(--space-1);
+  padding-block: var(--space-3);
+  border-block-end: 1px solid var(--border-subtle);
+}
+.typeSample { overflow-wrap: anywhere; }
+.typeBig { letter-spacing: var(--tracking-tight); font-weight: var(--weight-semibold); }
+
+/* ── Spacing ruler ───────────────────────────────────────────────────────── */
+.spaceRow { display: flex; align-items: center; gap: var(--space-4); }
+.spaceBar {
+  block-size: var(--space-4);
+  background-color: var(--accent);
+  border-radius: var(--radius-xs);
+}
+
+/* ── Radius + elevation ──────────────────────────────────────────────────── */
+.tileGrid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(9rem, 100%), 1fr));
+}
+.tile {
+  display: grid;
+  place-items: center;
+  block-size: 5rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--fg-secondary);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+}
+
+/* ── Icons ───────────────────────────────────────────────────────────────── */
+.iconGrid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(6.5rem, 100%), 1fr));
+}
+.iconCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--fg-secondary);
+  text-align: center;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow-wrap: anywhere;
+}
+.iconGlyph { font-size: var(--text-xl); color: var(--fg-primary); }
+
+/* ── Layout demo blocks ──────────────────────────────────────────────────── */
+.demoBlock {
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+  background-color: var(--accent-surface);
+  border: 1px dashed var(--accent-border);
+  border-radius: var(--radius-md);
+}
+
+/* ── Frame mode ──────────────────────────────────────────────────────────── */
+/* When the gallery is rendered inside a ViewportFrame it drops the page chrome
+   so the specimens themselves get the full width. */
+.frameMode { padding-block: var(--space-4) var(--space-8); }

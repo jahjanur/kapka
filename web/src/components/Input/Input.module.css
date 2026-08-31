@@ -1,0 +1,18 @@
+.input { composes: control from '../Field/Control.module.css'; }
+
+.textarea {
+  composes: control from '../Field/Control.module.css';
+  min-block-size: 6rem;
+  line-height: var(--leading-normal);
+  resize: vertical;
+}
+
+/* Character counter for length-capped fields (the request note is 500). */
+.counter {
+  margin-block-start: var(--space-1);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+  text-align: end;
+}
+.counterOver { color: var(--danger-ink); font-weight: var(--weight-semibold); }

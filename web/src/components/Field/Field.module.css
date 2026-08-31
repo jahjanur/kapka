@@ -1,0 +1,46 @@
+.field { display: block; }
+
+.label {
+  display: block;
+  margin-block-end: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  color: var(--fg-primary);
+}
+
+.required {
+  margin-inline-start: var(--space-1);
+  color: var(--danger);
+}
+
+.optional {
+  margin-inline-start: var(--space-2);
+  font-weight: var(--weight-normal);
+  color: var(--fg-muted);
+}
+
+.help {
+  max-inline-size: var(--measure);
+  margin-block-start: var(--space-2);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  color: var(--fg-secondary);
+}
+
+/* Error carries text AND colour AND an icon — never colour alone (§10). */
+.error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  max-inline-size: var(--measure);
+  margin-block-start: var(--space-2);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  color: var(--danger-ink);
+}
+
+.errorIcon {
+  margin-block-start: 0.1em;   /* optical alignment with the first text line */
+  color: var(--danger);
+}

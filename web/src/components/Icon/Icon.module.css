@@ -1,0 +1,20 @@
+/* Sized in em so an icon always matches the text it sits beside (§8 Tier 1). */
+.icon {
+  display: inline-block;
+  inline-size: var(--icon-size, 1em);
+  block-size: var(--icon-size, 1em);
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: -0.125em;   /* optical baseline alignment next to text */
+}
+
+.sprite {
+  position: absolute;
+  inline-size: 0;
+  block-size: 0;
+  overflow: hidden;
+}

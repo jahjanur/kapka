@@ -1,0 +1,54 @@
+/* ============================================================================
+   Shared form-control surface, composed by Input, Textarea and Select.
+   One definition means the three can never drift apart visually.
+   ========================================================================= */
+
+.control {
+  inline-size: 100%;
+  min-block-size: var(--hit-min);          /* 44px touch target (§6.7) */
+  padding-block: var(--space-3);
+  padding-inline: var(--space-4);
+
+  /* Never below 16px, or iOS Safari zooms on focus and the layout jumps
+     (§7.4). --text-base bottoms out at 1rem, so this is safe by construction. */
+  font-family: inherit;
+  font-size: var(--text-base);
+  line-height: var(--leading-snug);
+  color: var(--fg-primary);
+
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elevation-1);
+
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+
+.control::placeholder {
+  color: var(--fg-muted);
+  opacity: 1;   /* Firefox dims placeholders by default; we control contrast */
+}
+
+@media (hover: hover) {
+  .control:hover:not(:disabled):not([aria-invalid="true"]) {
+    border-color: var(--border-strong);
+  }
+}
+
+.control:focus-visible {
+  background-color: var(--bg-surface);
+  border-color: var(--accent);
+}
+
+.control[aria-invalid="true"] {
+  border-color: var(--danger);
+  background-color: var(--danger-surface);
+}
+
+.control:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  background-color: var(--bg-surface-alt);
+}

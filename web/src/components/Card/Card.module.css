@@ -1,0 +1,51 @@
+/* ============================================================================
+   Card — surface + radius + elevation, with an optional interactive state.
+
+   Radius nesting (§6.5): a card exposes --inner-radius = its own radius minus
+   its padding, so a child (image, nested panel) can sit inside it without the
+   mismatched-corner look that gives an unconsidered interface away.
+   ========================================================================= */
+
+.card {
+  --card-radius: var(--radius-xl);
+  --card-padding: var(--space-5);
+  --inner-radius: calc(var(--card-radius) - var(--card-padding));
+
+  display: block;
+  padding: var(--card-padding);
+  background-color: var(--bg-surface);
+  color: inherit;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--card-radius);
+  /* Light theme: a shadow. Dark theme: the token resolves to none and the
+     hairline above carries the elevation instead. Handled in scale.css so
+     the component never has to know which theme it is in. */
+  box-shadow: var(--elevation-2);
+}
+
+.flush { --card-padding: var(--space-0); }
+.tight { --card-padding: var(--space-4); }
+.roomy { --card-padding: var(--space-6); }
+
+/* A muted, nested surface — use inside another card, not on the canvas. */
+.alt { background-color: var(--bg-surface-alt); }
+
+/* ── Interactive ─────────────────────────────────────────────────────────── */
+.interactive {
+  cursor: pointer;
+  text-align: inherit;
+  inline-size: 100%;
+  font: inherit;
+  transition:
+    box-shadow var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-instant) var(--ease-out);
+}
+@media (hover: hover) {
+  .interactive:hover {
+    box-shadow: var(--elevation-3);
+    border-color: var(--border-subtle);
+  }
+}
+.interactive:active { scale: var(--press-scale); }
+.interactive:disabled { cursor: not-allowed; opacity: 0.5; }

@@ -1,0 +1,46 @@
+/* Three-state segmented control: system / light / dark.
+   Listed as Tier 3 in §8, built now because §6.2 requires the dark theme to be
+   implemented alongside the light one — and it cannot be reviewed without a
+   way to flip it independently of the OS setting. */
+
+.group {
+  display: inline-flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background-color: var(--bg-surface-alt);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-full);
+}
+
+.option {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: var(--hit-min);
+  min-block-size: var(--hit-min);
+  padding: var(--space-2);
+  color: var(--fg-secondary);
+  background-color: transparent;
+  border: 0;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    transform var(--dur-instant) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .option:hover { color: var(--fg-primary); background-color: var(--bg-inset); }
+}
+.option:active { scale: var(--press-scale); }
+
+.option[aria-checked="true"] {
+  background-color: var(--bg-surface);
+  color: var(--accent-ink);
+  box-shadow: var(--elevation-1);
+}
+
+@media (forced-colors: active) {
+  .option[aria-checked="true"] { outline: 2px solid Highlight; }
+}

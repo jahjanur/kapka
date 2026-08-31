@@ -1,0 +1,85 @@
+/* ============================================================================
+   BloodTypeBadge — the signature element (§6.3, §8 Tier 1)
+
+   Hue carries the ABO group, fill vs outline carries the Rh sign, and the
+   literal text is ALWAYS visible. Colour is the secondary channel, never the
+   only one (§10).
+   ========================================================================= */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+
+  padding-block: var(--pad-block);
+  padding-inline: var(--pad-inline);
+  min-inline-size: var(--min-width);
+
+  font-size: var(--font-size);
+  font-weight: var(--weight-semibold);
+  /* Uppercase, short, and needs to sit optically centred — line-height 1 plus
+     explicit padding, never a guessed line-height (§6.4 rule 4). */
+  line-height: var(--leading-none);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-wide);
+  white-space: nowrap;
+
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+}
+
+/* ── ABO group selects the hue set ───────────────────────────────────────── */
+.badge[data-group="O"] {
+  --bt-solid-bg: var(--bt-o-solid-bg);  --bt-solid-fg: var(--bt-o-solid-fg);
+  --bt-ink: var(--bt-o-ink); --bt-border: var(--bt-o-border); --bt-surface: var(--bt-o-surface);
+}
+.badge[data-group="A"] {
+  --bt-solid-bg: var(--bt-a-solid-bg);  --bt-solid-fg: var(--bt-a-solid-fg);
+  --bt-ink: var(--bt-a-ink); --bt-border: var(--bt-a-border); --bt-surface: var(--bt-a-surface);
+}
+.badge[data-group="B"] {
+  --bt-solid-bg: var(--bt-b-solid-bg);  --bt-solid-fg: var(--bt-b-solid-fg);
+  --bt-ink: var(--bt-b-ink); --bt-border: var(--bt-b-border); --bt-surface: var(--bt-b-surface);
+}
+.badge[data-group="AB"] {
+  --bt-solid-bg: var(--bt-ab-solid-bg); --bt-solid-fg: var(--bt-ab-solid-fg);
+  --bt-ink: var(--bt-ab-ink); --bt-border: var(--bt-ab-border); --bt-surface: var(--bt-ab-surface);
+}
+
+/* ── Rh sign selects fill vs outline ─────────────────────────────────────── */
+.badge[data-rh="positive"] {
+  background-color: var(--bt-solid-bg);
+  color: var(--bt-solid-fg);
+}
+.badge[data-rh="negative"] {
+  background-color: var(--bt-surface);
+  color: var(--bt-ink);
+  border-color: var(--bt-border);
+}
+
+/* ── Sizes ───────────────────────────────────────────────────────────────── */
+.sm {
+  --pad-block: var(--space-1);
+  --pad-inline: var(--space-2);
+  --min-width: 2.5rem;
+  --font-size: var(--text-xs);
+}
+.md {
+  --pad-block: var(--space-2);
+  --pad-inline: var(--space-3);
+  --min-width: 3rem;
+  --font-size: var(--text-sm);
+}
+.lg {
+  --pad-block: var(--space-3);
+  --pad-inline: var(--space-4);
+  --min-width: 4rem;
+  --font-size: var(--text-lg);
+}
+
+/* Forced colours strip our palette — the outline must survive so Rh sign is
+   still distinguishable (§10). */
+@media (forced-colors: active) {
+  .badge { border-color: currentColor; }
+}
