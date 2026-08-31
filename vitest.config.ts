@@ -31,6 +31,16 @@ export default defineConfig({
           root: './apps/api',
           environment: 'node',
           include: ['src/**/*.test.ts'],
+          // One PostgreSQL for the whole run, started here rather than once
+          // per file. Each file takes its own database from a template.
+          globalSetup: ['./src/test/globalSetup.ts'],
+          hookTimeout: 120_000,
+          env: {
+            // §12's cost of 12 is right in production and ruinous here: the
+            // suite performs hundreds of hashes, and the CPU they burn was
+            // starving supertest's sockets into hanging up.
+            BCRYPT_COST: '4',
+          },
         },
       },
       {

@@ -41,6 +41,28 @@ describe('the access token signing key', () => {
   });
 });
 
+describe('the bcrypt work factor', () => {
+  it('defaults to the 12 that §12 requires', () => {
+    expect(parseEnv(base).BCRYPT_COST).toBe(12);
+  });
+
+  it('refuses anything weaker in production', () => {
+    // Lowering it is a faster offline attack on every password in the
+    // database. Tests may turn it down; production may not.
+    expect(() =>
+      parseEnv({
+        NODE_ENV: 'production',
+        JWT_ACCESS_SECRET: 'x'.repeat(48),
+        BCRYPT_COST: '4',
+      }),
+    ).toThrow(/at least 12 in production/);
+  });
+
+  it('allows a lower cost outside production, which is why the suite is fast', () => {
+    expect(parseEnv({ ...base, BCRYPT_COST: '4' }).BCRYPT_COST).toBe(4);
+  });
+});
+
 describe('nobody sends real email by accident (§2)', () => {
   it.each(['development', 'test'])(
     'refuses to start with a SendGrid key when NODE_ENV=%s',

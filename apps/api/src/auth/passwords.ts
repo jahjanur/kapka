@@ -1,7 +1,13 @@
 import bcrypt from 'bcryptjs';
+import { env } from '../env';
 
-/** §12. Deliberately slow; that is the entire feature. */
-const COST = 12;
+/**
+ * §12 sets this to 12, and env.ts refuses anything lower in production.
+ * Deliberately slow is the entire feature — but the test suite runs hundreds
+ * of these, and at cost 12 that is tens of CPU-seconds of pure hashing, enough
+ * to starve everything else on a two-core runner.
+ */
+const COST = env.BCRYPT_COST;
 
 /**
  * A hash of a password nobody has, compared against when the email is

@@ -19,6 +19,14 @@ const envSchema = z.object({
    * reach a real inbox, and it is refused outside production below.
    */
   /**
+   * bcrypt work factor. §12 sets 12 for production, and the guard below
+   * refuses anything lower there. Tests turn it down because the whole suite
+   * otherwise spends tens of CPU-seconds on deliberately slow hashing, which
+   * starves everything else on a small CI runner.
+   */
+  BCRYPT_COST: z.coerce.number().int().min(4).max(15).default(12),
+
+  /**
    * Signs access tokens. Required in production — see the guard below.
    * Generate with: openssl rand -base64 48
    */
@@ -72,6 +80,14 @@ export function parseEnv(source: NodeJS.ProcessEnv = process.env): Env {
     throw new Error(
       `Refusing to start: MAIL_TRANSPORT=sendgrid with NODE_ENV=${data.NODE_ENV}.\n` +
         'Use MAIL_TRANSPORT=smtp, which delivers to Mailpit.',
+    );
+  }
+
+  /* §12 fixes the cost factor at 12. Anything lower is a faster offline
+     attack on every password in the database. */
+  if (isProduction && data.BCRYPT_COST < 12) {
+    throw new Error(
+      `BCRYPT_COST must be at least 12 in production, got ${String(data.BCRYPT_COST)}.`,
     );
   }
 
