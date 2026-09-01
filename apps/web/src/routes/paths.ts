@@ -8,6 +8,13 @@
 export const PATHS = {
   feed: '/',
   request: (id: string) => `/requests/${id}`,
+  /**
+   * Ranked above `request(':id')` by React Router, which scores a static
+   * segment higher than a dynamic one whatever the order they are declared in.
+   * App.test.tsx holds that behaviour down, because getting it wrong would
+   * render the detail screen looking for a request called "new".
+   */
+  postRequest: '/requests/new',
   register: '/register',
   howItWorks: '/how-it-works',
   /**
@@ -24,4 +31,9 @@ export const PATHS = {
  * verifyEmail is deliberately absent: it is reachable only from a link in an
  * email, is meaningless without a token, and has no business in a nav.
  */
-export const STATIC_PATHS: string[] = [PATHS.feed, PATHS.register, PATHS.howItWorks];
+export const STATIC_PATHS: string[] = [
+  PATHS.feed,
+  PATHS.postRequest,
+  PATHS.register,
+  PATHS.howItWorks,
+];

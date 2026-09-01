@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type SyntheticEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type SyntheticEvent } from 'react';
 import {
   AppHeader,
   BloodTypeLabel,
@@ -20,12 +20,12 @@ import {
 import { BREAKPOINTS } from '@kapka/tokens';
 import { api, ApiError, type Session } from '../lib/api';
 import { cx } from '../lib/cx';
+import { useFieldErrors } from '../lib/useFieldErrors';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { useSession } from '../lib/session';
 import { PATHS } from './paths';
 import styles from './Register.module.css';
 
-type Errors = Partial<Record<string, string>>;
 type Step = 1 | 2;
 
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -88,7 +88,6 @@ export default function Register() {
   const [lastDonationDate, setLastDonationDate] = useState('');
   const [phone, setPhone] = useState('');
 
-  const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -119,8 +118,8 @@ export default function Register() {
   }, [step]);
 
   /** Everything the schema wants, with any just-changed value applied. */
-  function candidate(overrides: Record<string, unknown> = {}) {
-    return {
+  const candidate = useCallback(
+    (overrides: Record<string, unknown> = {}) => ({
       fullName,
       email,
       password,
@@ -129,55 +128,22 @@ export default function Register() {
       lastDonationDate: neverDonated ? null : lastDonationDate,
       ...(phone.trim() ? { phone } : {}),
       ...overrides,
-    };
-  }
+    }),
+    [fullName, email, password, bloodType, city, neverDonated, lastDonationDate, phone],
+  );
 
-  /**
-   * Checks one field against the whole schema.
-   *
-   * The whole schema, not a picked-apart piece of it, because a rule can span
-   * two fields — a donation date in the future is a refinement over the object
-   * — and it still has to land on the field it belongs to.
-   */
-  function checkField(field: string, overrides: Record<string, unknown> = {}) {
-    const parsed = registerSchema.safeParse(candidate(overrides));
-    const message = parsed.success
-      ? undefined
-      : parsed.error.issues.find((issue) => issue.path[0] === field)?.message;
-    setErrors((previous) => ({ ...previous, [field]: message }));
-  }
-
-  /**
-   * Drops a message for a field being edited, without checking anything.
-   *
-   * Not validation: it removes a sentence that has stopped describing what is
-   * on screen. Leaving "Enter a valid email address." under an address someone
-   * is halfway through fixing is just nagging. The real check runs on blur.
-   */
-  function clearError(field: string) {
-    setErrors((previous) =>
-      previous[field] ? { ...previous, [field]: undefined } : previous,
-    );
-  }
-
-  /** Messages for one step's fields. Empty means the step is complete. */
-  function stepErrors(which: Step): Errors {
-    const parsed = registerSchema.safeParse(candidate());
-    if (parsed.success) return {};
-    const found: Errors = {};
-    for (const issue of parsed.error.issues) {
-      const key = String(issue.path[0] ?? 'form');
-      // First message per field wins — a stack of three under one input is
-      // noise, and fixing the first usually clears the rest.
-      if (STEP_FIELDS[which].includes(key)) found[key] ??= issue.message;
-    }
-    return found;
-  }
+  const {
+    errors,
+    check: checkField,
+    clear: clearError,
+    checkAll,
+    checkSome,
+    set: setErrors,
+  } = useFieldErrors(registerSchema, candidate);
 
   function handleContinue() {
-    const found = stepErrors(1);
+    const found = checkSome(STEP_FIELDS[1]);
     if (Object.keys(found).length > 0) {
-      setErrors((previous) => ({ ...previous, ...found }));
       setFocusRequest((n) => n + 1);
       return;
     }
@@ -199,17 +165,11 @@ export default function Register() {
 
     const parsed = registerSchema.safeParse(candidate());
     if (!parsed.success) {
-      const next: Errors = {};
-      for (const issue of parsed.error.issues) {
-        const key = issue.path.map(String).join('.') || 'form';
-        next[key] ??= issue.message;
-      }
-      setErrors(next);
+      const found = checkAll();
 
       /* Something invalid on the step that is not showing would otherwise be
          a form that refuses to submit and says nothing anyone can see. */
-      const firstInvalid = String(parsed.error.issues[0]?.path[0] ?? '');
-      if (!singlePage && STEP_FIELDS[1].includes(firstInvalid)) setStep(1);
+      if (!singlePage && STEP_FIELDS[1].some((field) => field in found)) setStep(1);
 
       setFocusRequest((n) => n + 1);
       return;

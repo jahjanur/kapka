@@ -121,8 +121,11 @@ export default function Feed() {
                 <Button to={PATHS.register} size="lg">
                   Register as donor
                 </Button>
-                <Button to={PATHS.howItWorks} variant="ghost" size="lg">
-                  How it works
+                {/* The hero speaks to donors, but the person whose relative
+                    needs blood lands here too, and the header nav that would
+                    take them on is hidden on a phone. */}
+                <Button to={PATHS.postRequest} variant="ghost" size="lg">
+                  Post a request
                   <Icon name="arrowRight" />
                 </Button>
               </div>

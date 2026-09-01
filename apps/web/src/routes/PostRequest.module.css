@@ -1,0 +1,231 @@
+/* ============================================================================
+   Post a blood request (§9.3) — the two-minute screen. Mobile-first: written
+   narrow, widened upward.
+   ========================================================================= */
+
+.page {
+  padding-block: var(--space-8) var(--space-24);
+}
+
+.layout {
+  display: grid;
+  gap: var(--space-8);
+}
+
+.intro {
+  max-inline-size: var(--measure-narrow);
+}
+
+.title {
+  font-size: var(--text-3xl);
+  letter-spacing: var(--tracking-tight);
+}
+
+.lead {
+  margin-block-start: var(--space-3);
+  font-size: var(--text-lg);
+  color: var(--fg-secondary);
+}
+
+/* ── Form ────────────────────────────────────────────────────────────────── */
+.form {
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-5);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--elevation-2);
+}
+
+.formError {
+  display: flex;
+  align-items: start;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--danger-ink);
+  background-color: var(--danger-surface);
+  border-radius: var(--radius-md);
+}
+
+.formError svg {
+  flex: none;
+}
+
+/* ── Blood type: eight buttons, all of them visible ─────────────────────────
+   Four across on the narrowest phone. At 360px that is a 72px button, which
+   clears the 44px minimum in both directions with room to spare — this is the
+   one answer on the form that must not be tapped by accident.
+   ------------------------------------------------------------------------ */
+.typeGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.typeButton {
+  min-block-size: var(--hit-min);
+  padding: var(--space-3) var(--space-1);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-primary);
+  background-color: var(--bg-surface-alt);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .typeButton:hover {
+    border-color: var(--accent);
+  }
+}
+
+.typeButtonOn {
+  color: var(--fg-onAccent);
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ── Units and city ──────────────────────────────────────────────────────── */
+.pair {
+  display: grid;
+  gap: var(--space-5);
+}
+
+/* ── Urgency ─────────────────────────────────────────────────────────────── */
+.urgency {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.urgencyButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: var(--hit-min);
+  padding: var(--space-3);
+  text-align: start;
+  background-color: var(--bg-surface-alt);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.urgencyButtonOn {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-accent);
+}
+
+.urgencyHelp {
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+}
+
+/* ── Submit ──────────────────────────────────────────────────────────────── */
+.submit {
+  margin-block-start: var(--space-1);
+}
+
+.submitNote {
+  margin-block-start: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+  text-align: center;
+}
+
+/* ── The preview column ──────────────────────────────────────────────────── */
+.aside {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+}
+
+.asideTitle {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--fg-secondary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.optional {
+  font-weight: var(--weight-normal);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.previewCard {
+  /* The card is a link everywhere else. Here it is a picture of one, so
+     nothing about it should look clickable. */
+  cursor: default;
+}
+
+.previewEmpty,
+.mapHelp,
+.pinNote {
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+}
+
+.mapLoading {
+  block-size: 16rem;
+  background-color: var(--bg-surface-alt);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
+}
+
+/* ── Confirmation ────────────────────────────────────────────────────────── */
+.done {
+  max-inline-size: var(--measure-narrow);
+  margin-inline: auto;
+  padding-block: var(--space-10);
+  text-align: center;
+}
+
+.doneMark {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 3.5rem;
+  block-size: 3.5rem;
+  margin-block-end: var(--space-5);
+  font-size: var(--text-2xl);
+  color: var(--success-ink);
+  background-color: var(--success-surface);
+  border-radius: var(--radius-full);
+}
+
+.doneActions {
+  margin-block-start: var(--space-6);
+}
+
+/* Two short fields side by side once there is room for the longest city name.
+   Page-level enough to be a media query: it is the form's own column width
+   that decides, and the form is the page here (§7.2). */
+@media (min-width: 30rem) {
+  .pair {
+    grid-template-columns: minmax(0, 7rem) minmax(0, 1fr);
+  }
+}
+
+/* The preview column appears from lg. It is rendered only above this width —
+   see WIDE in PostRequest.tsx — so there is nothing to hide below it. */
+@media (min-width: 64rem) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
+    gap: var(--space-12);
+    align-items: start;
+  }
+
+  .aside {
+    position: sticky;
+    inset-block-start: calc(var(--header-height) + var(--space-6));
+  }
+
+  .form {
+    padding: var(--space-8);
+  }
+}

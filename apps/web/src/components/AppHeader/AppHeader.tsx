@@ -9,6 +9,7 @@ import styles from './AppHeader.module.css';
 
 const NAV = [
   { to: PATHS.feed, label: 'Requests', end: true },
+  { to: PATHS.postRequest, label: 'Post a request', end: false },
   { to: PATHS.howItWorks, label: 'How it works', end: false },
 ];
 

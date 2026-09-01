@@ -1,5 +1,7 @@
 import type {
   ApiErrorBody,
+  AuthedBloodRequest,
+  CreateRequestInput,
   ErrorCode,
   PublicBloodRequest,
   RegisterInput,
@@ -52,6 +54,16 @@ export interface ApiClient {
   listRequests(): Promise<PublicBloodRequest[]>;
   getRequest(id: string): Promise<PublicBloodRequest>;
   register(input: RegisterInput): Promise<Session>;
+  /**
+   * Posts a request (§9.3). Signed in only — the API answers 401 otherwise.
+   *
+   * It lands as `pending`: nothing reaches a donor until an admin approves it,
+   * which is why the screen says so rather than "posted".
+   */
+  createRequest(
+    input: CreateRequestInput,
+    accessToken: string,
+  ): Promise<AuthedBloodRequest>;
   /** Spends the token from a confirmation link. Returns the confirmed user. */
   verifyEmail(token: string): Promise<SessionUser>;
   /**
@@ -126,6 +138,17 @@ function createHttpClient(baseUrl: string): ApiClient {
         body: JSON.stringify(input),
       });
     },
+    async createRequest(input, accessToken) {
+      const { request } = await call<{ request: AuthedBloodRequest }>('/requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(input),
+      });
+      return request;
+    },
     async verifyEmail(token) {
       const { user } = await call<{ user: SessionUser }>('/auth/verify-email', {
         method: 'POST',
@@ -189,6 +212,32 @@ function createDemoClient(): ApiClient {
           emailVerified: false,
         },
         accessToken: 'demo-access-token',
+      };
+    },
+    async createRequest(input) {
+      await latency(null);
+      const now = new Date();
+      const week = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      /* Written out rather than spread from the input: the schema's optional
+         fields are `number | null | undefined` and the response type's are
+         `number | null`, which exactOptionalPropertyTypes is right to keep
+         apart. Absent and null are not the same answer. */
+      return {
+        id: 'demo-request',
+        bloodType: input.bloodType,
+        unitsNeeded: input.unitsNeeded,
+        urgency: input.urgency,
+        hospitalName: input.hospitalName,
+        hospitalLat: input.hospitalLat ?? null,
+        hospitalLng: input.hospitalLng ?? null,
+        city: input.city,
+        contactPhone: input.contactPhone,
+        note: input.note ?? null,
+        // Pending, like the real one. A demo that answered 'approved' would
+        // rehearse a flow the product does not have.
+        status: 'pending' as const,
+        createdAt: now.toISOString(),
+        expiresAt: week.toISOString(),
       };
     },
     async verifyEmail(token) {

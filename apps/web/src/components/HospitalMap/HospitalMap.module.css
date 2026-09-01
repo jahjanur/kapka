@@ -1,0 +1,45 @@
+/* ============================================================================
+   The hospital map (§9.3). Desktop only — see PostRequest.tsx for why it is
+   never loaded on a phone.
+   ========================================================================= */
+
+/*
+   Leaflet adds .leaflet-container to this same element, so its own font and
+   background are overridden here rather than in a descendant rule — a
+   `.map .leaflet-container` selector would never match anything.
+ */
+.map {
+  block-size: 16rem;
+  font: inherit;
+  background-color: var(--bg-surface-alt);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
+  /* The tile grid is square; the corners are not. */
+  overflow: hidden;
+}
+
+/*
+   The controls Leaflet paints are descendants, and are the places its
+   stylesheet would otherwise put a colour on the page that no token chose.
+   :global, because the class names are Leaflet's, not this module's.
+ */
+.map :global(.leaflet-control-attribution) {
+  color: var(--fg-secondary);
+  background-color: var(--bg-surface);
+}
+
+.map :global(.leaflet-control-attribution a) {
+  color: var(--fg-secondary);
+}
+
+/* The marker, as our own element rather than Leaflet's blue PNG. */
+.pin {
+  display: block;
+  inline-size: var(--space-6);
+  block-size: var(--space-6);
+  background-color: var(--accent);
+  border: 2px solid var(--fg-onAccent);
+  border-radius: var(--radius-full) var(--radius-full) var(--radius-xs);
+  box-shadow: var(--elevation-2);
+  transform: rotate(-45deg);
+}

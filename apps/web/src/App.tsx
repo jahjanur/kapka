@@ -10,6 +10,7 @@ import { PATHS } from './routes/paths';
    screens must never reach the initial bundle. */
 const Feed = lazy(() => import('./routes/Feed'));
 const RequestDetail = lazy(() => import('./routes/RequestDetail'));
+const PostRequest = lazy(() => import('./routes/PostRequest'));
 const Register = lazy(() => import('./routes/Register'));
 const VerifyEmail = lazy(() => import('./routes/VerifyEmail'));
 const HowItWorks = lazy(() => import('./routes/HowItWorks'));
@@ -63,6 +64,9 @@ export function App() {
             >
               <Routes>
                 <Route path={PATHS.feed} element={<Feed />} />
+                {/* Before the dynamic one for readability only — React
+                    Router ranks by specificity, not by source order. */}
+                <Route path={PATHS.postRequest} element={<PostRequest />} />
                 <Route path={PATHS.request(':id')} element={<RequestDetail />} />
                 <Route path={PATHS.register} element={<Register />} />
                 <Route path={PATHS.verifyEmail} element={<VerifyEmail />} />
