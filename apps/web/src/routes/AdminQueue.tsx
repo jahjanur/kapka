@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ModerationQueueItem } from '@kapka/shared';
 import { BREAKPOINTS } from '@kapka/tokens';
 import {
@@ -42,6 +42,7 @@ export default function AdminQueue() {
   const [outcome, setOutcome] = useState<{ id: string; result: ApprovalOutcome } | null>(
     null,
   );
+  const [confirming, setConfirming] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState<string | null>(null);
   const [reason, setReason] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
@@ -62,9 +63,19 @@ export default function AdminQueue() {
   const settle = (id: string) => {
     setSettled((current) => [...current, id]);
     setOpenId((current) => (current === id ? null : current));
+    setConfirming(null);
     setRejecting(null);
     setReason('');
   };
+
+  /* The confirmation is announced by moving focus to its heading. A panel that
+     appears silently below the button is a panel a screen-reader user does not
+     know is there, and this is the one control in the product that mails
+     strangers. */
+  useEffect(() => {
+    if (!confirming) return;
+    document.getElementById(`confirm-${confirming}`)?.focus();
+  }, [confirming]);
 
   async function approve(item: ModerationQueueItem) {
     if (!token) return;
@@ -201,15 +212,56 @@ export default function AdminQueue() {
             </Button>
           </div>
         </div>
+      ) : confirming === item.id ? (
+        /*
+         * The gate. Approving used to be one click that mailed strangers and
+         * could not be taken back — the count was on the screen, but nothing
+         * made anyone read it. Now the number is the last thing between the
+         * decision and the send, and it is in the button's own label: whatever
+         * else gets skimmed, the control being clicked says what it does.
+         */
+        <div
+          className={styles.confirmBox}
+          role="group"
+          aria-labelledby={`confirm-${item.id}`}
+        >
+          <h4 id={`confirm-${item.id}`} className={styles.confirmHeadline} tabIndex={-1}>
+            {item.matchedDonors === 0
+              ? 'Approve without emailing anyone?'
+              : `Email ${reach(item.matchedDonors)} now?`}
+          </h4>
+          <p className={styles.confirmBody}>
+            {item.matchedDonors === 0 ? (
+              <>
+                Nobody matches this request yet. Approving publishes it to the feed and
+                emails no one — donors who register later are not sent past requests.
+              </>
+            ) : (
+              <>
+                {reach(item.matchedDonors)} in {item.city} will be emailed about{' '}
+                <strong>{item.hospitalName}</strong> straight away. This cannot be undone,
+                and it cannot be sent again.
+              </>
+            )}
+          </p>
+          <div className={styles.actions}>
+            <Button
+              onClick={() => void approve(item)}
+              loading={busyId === item.id}
+              loadingLabel="Approving and emailing…"
+            >
+              {item.matchedDonors === 0
+                ? 'Approve without emailing'
+                : `Yes, email ${reach(item.matchedDonors)}`}
+            </Button>
+            <Button variant="ghost" onClick={() => setConfirming(null)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
       ) : (
         <div className={styles.actions}>
-          <Button
-            onClick={() => void approve(item)}
-            loading={busyId === item.id}
-            loadingLabel="Approving and emailing…"
-          >
-            Approve and notify
-          </Button>
+          <Button onClick={() => setConfirming(item.id)}>Approve and notify</Button>
           <Button variant="secondary" onClick={() => setRejecting(item.id)}>
             Reject
           </Button>

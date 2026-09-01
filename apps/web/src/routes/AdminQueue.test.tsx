@@ -166,6 +166,7 @@ describe('working through the queue', () => {
     renderQueue();
     await user.click(await screen.findByRole('button', { name: 'City General' }));
     await user.click(screen.getByRole('button', { name: /Approve and notify/ }));
+    await user.click(screen.getByRole('button', { name: /Yes, email 23 donors/ }));
 
     await waitFor(() => {
       expect(approveRequest).toHaveBeenCalledWith('q1', 'admin-token');
@@ -173,6 +174,76 @@ describe('working through the queue', () => {
     // Not a bare success toast (§9.6).
     expect(await screen.findByText(/23 of 23 emailed/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'City General' })).toBeNull();
+  });
+
+  it('sends nothing on the first click — the count is a gate, not a caption', async () => {
+    /* This used to be one click that emailed strangers and could not be taken
+       back. The number was on the screen; nothing made anyone read it. */
+    const user = userEvent.setup();
+    renderQueue();
+    await user.click(await screen.findByRole('button', { name: 'City General' }));
+    await user.click(screen.getByRole('button', { name: /Approve and notify/ }));
+
+    expect(approveRequest).not.toHaveBeenCalled();
+    expect(await screen.findByText('Email 23 donors now?')).toBeInTheDocument();
+  });
+
+  it('names the number in the button that does the sending', async () => {
+    // Whatever else is skimmed, the control being clicked says what it does.
+    const user = userEvent.setup();
+    renderQueue();
+    await user.click(await screen.findByRole('button', { name: 'City General' }));
+    await user.click(screen.getByRole('button', { name: /Approve and notify/ }));
+
+    expect(
+      screen.getByRole('button', { name: /Yes, email 23 donors/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/23 donors in Skopje will be emailed about/),
+    ).toBeInTheDocument();
+  });
+
+  it('lets the admin back out without sending', async () => {
+    const user = userEvent.setup();
+    renderQueue();
+    await user.click(await screen.findByRole('button', { name: 'City General' }));
+    await user.click(screen.getByRole('button', { name: /Approve and notify/ }));
+    await user.click(screen.getByRole('button', { name: /Cancel/ }));
+
+    expect(approveRequest).not.toHaveBeenCalled();
+    expect(screen.queryByText('Email 23 donors now?')).toBeNull();
+    expect(
+      screen.getByRole('button', { name: /Approve and notify/ }),
+    ).toBeInTheDocument();
+  });
+
+  it('does not promise emails it will not send when nobody matches', async () => {
+    /* Approving with no matches is still valid — it publishes the request to
+       the feed — but "email nobody now?" would be nonsense. */
+    listPendingRequests.mockResolvedValue([item({ matchedDonors: 0 })]);
+    const user = userEvent.setup();
+    renderQueue();
+    await user.click(await screen.findByRole('button', { name: 'City General' }));
+    await user.click(screen.getByRole('button', { name: /Approve and notify/ }));
+
+    expect(screen.getByText('Approve without emailing anyone?')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Approve without emailing/ }));
+    await waitFor(() => {
+      expect(approveRequest).toHaveBeenCalled();
+    });
+  });
+
+  it('moves focus to the confirmation, so it is not missed', async () => {
+    // A panel that appears silently below the button is one a screen-reader
+    // user does not know is there.
+    const user = userEvent.setup();
+    renderQueue();
+    await user.click(await screen.findByRole('button', { name: 'City General' }));
+    await user.click(screen.getByRole('button', { name: /Approve and notify/ }));
+
+    await waitFor(() => {
+      expect(document.activeElement).toHaveTextContent('Email 23 donors now?');
+    });
   });
 
   it('puts a budget shortfall where it cannot be missed', async () => {
@@ -188,6 +259,7 @@ describe('working through the queue', () => {
     renderQueue();
     await user.click(await screen.findByRole('button', { name: 'City General' }));
     await user.click(screen.getByRole('button', { name: /Approve and notify/ }));
+    await user.click(screen.getByRole('button', { name: /Yes, email 23 donors/ }));
 
     expect(await screen.findByText(/queued for tomorrow/)).toBeInTheDocument();
   });
@@ -215,6 +287,7 @@ describe('working through the queue', () => {
     renderQueue();
     await user.click(await screen.findByRole('button', { name: 'City General' }));
     await user.click(screen.getByRole('button', { name: /Approve and notify/ }));
+    await user.click(screen.getByRole('button', { name: /Yes, email 23 donors/ }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/already approved/);
     expect(screen.getByRole('button', { name: 'City General' })).toBeInTheDocument();
