@@ -544,11 +544,14 @@ export function Gallery({ frameMode = false }: { frameMode?: boolean }) {
       <Section
         id="request-card"
         title="Request card"
-        note="Lays itself out from its OWN width, not the viewport's. The two below are the same component: the narrow one is in a 20rem column, the wide one is not. No breakpoint is involved."
+        note="Lays itself out from its OWN width, not the viewport's. All three below are the same component at the same viewport size: a 14rem rail, a 20rem feed column, and a row to itself. Watch the meta line stack, the age move, and the type grow. No breakpoint is involved."
       >
         <Stack gap={5}>
-          <div style={{ maxInlineSize: '20rem' }}>
+          <div style={{ maxInlineSize: '14rem' }}>
             <RequestCard request={DEMO_REQUEST} />
+          </div>
+          <div style={{ maxInlineSize: '20rem' }}>
+            <RequestCard request={{ ...DEMO_REQUEST, id: 'demo-column' }} />
           </div>
           <RequestCard request={{ ...DEMO_REQUEST, id: 'demo-wide' }} />
         </Stack>

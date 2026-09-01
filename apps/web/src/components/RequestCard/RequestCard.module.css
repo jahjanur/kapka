@@ -1,6 +1,17 @@
 /* ============================================================================
-   One request in the feed. Mobile-first: written narrow, widened upward.
+   One request. Written narrow and widened upward — but against its OWN width,
+   not the viewport's, so the same card is right in a 14rem rail, a 22rem
+   preview column, and a feed row that has only one card in it.
+
+   An element cannot query its own width, which is the whole reason .shell
+   exists: it is the container, and everything inside it reads that container.
    ========================================================================= */
+
+.shell {
+  container: card / inline-size;
+  /* Passes the grid row's height down, so cards in a row still match. */
+  block-size: 100%;
+}
 
 .card {
   position: relative;
@@ -8,10 +19,12 @@
      stretch the footer of every card that has no note. */
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  /* The narrow end is the base: a rail, or a phone at 360px. Everything
+     below widens it back out. */
+  gap: var(--space-2);
   block-size: 100%;
-  padding: var(--space-5);
-  padding-inline-start: var(--space-6);
+  padding: var(--space-4);
+  padding-inline-start: var(--space-5);
   overflow: hidden;
   background-color: var(--bg-surface);
   border: 1px solid var(--border-hairline);
@@ -69,7 +82,6 @@
 /* Pushed to the end of the row, and the first thing to drop to its own line
    when the card is narrow. */
 .age {
-  margin-inline-start: auto;
   font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
   color: var(--fg-muted);
@@ -77,7 +89,7 @@
 }
 
 .hospital {
-  font-size: var(--text-lg);
+  font-size: var(--text-base);
   line-height: var(--leading-snug);
   letter-spacing: var(--tracking-tight);
   /* A hospital name can be sixty characters. Two lines, then ellipsis — a
@@ -91,8 +103,10 @@
 
 .meta {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-4);
+  /* One item per line while the card is narrow: two of them side by side in a
+     14rem column wrap mid-phrase and read as one run-on line. */
+  flex-direction: column;
+  gap: var(--space-1);
   font-size: var(--text-sm);
   color: var(--fg-secondary);
 }
@@ -127,4 +141,70 @@
   font-weight: var(--weight-semibold);
   color: var(--fg-secondary);
   transition: color var(--dur-fast) var(--ease-out);
+}
+
+/* ── From 20rem: the ordinary feed card ──────────────────────────────────
+   Room for the meta on one line and for the age to sit out at the end of the
+   badge row, which is where the eye looks for it.
+   ---------------------------------------------------------------------- */
+@container card (min-width: 20rem) {
+  .card {
+    gap: var(--space-3);
+    padding: var(--space-5);
+    padding-inline-start: var(--space-6);
+  }
+
+  .age {
+    margin-inline-start: auto;
+  }
+
+  .hospital {
+    font-size: var(--text-lg);
+  }
+
+  .meta {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+  }
+}
+
+/* ── From 34rem: a card with the row to itself ───────────────────────────
+   A feed that has filtered down to one request gives its card the whole
+   track. At that width the type set for a 19rem column looks lost, and there
+   is room for a third line of the note.
+
+   It stays a column rather than reflowing into two. The note is optional, and
+   a fixed row template would have to place a footer that is sometimes the
+   third child and sometimes the fourth — the same reason the card is flex and
+   not grid in the first place.
+   ---------------------------------------------------------------------- */
+@container card (min-width: 34rem) {
+  .card {
+    gap: var(--space-4);
+    padding: var(--space-6);
+    padding-inline-start: var(--space-8);
+  }
+
+  /* Nothing needs to wrap when there is this much room, and letting it wrap
+     drops the age onto a line of its own for no reason. */
+  .top {
+    flex-wrap: nowrap;
+  }
+
+  .hospital {
+    font-size: var(--text-xl);
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  .meta {
+    gap: var(--space-2) var(--space-6);
+    font-size: var(--text-base);
+  }
+
+  .note {
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+  }
 }

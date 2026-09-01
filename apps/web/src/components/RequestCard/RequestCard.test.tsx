@@ -78,6 +78,17 @@ describe('RequestCard', () => {
     expect(container.textContent).not.toContain('Road traffic accident.');
   });
 
+  it('renders the card inside the wrapper its container queries need', () => {
+    /* An element cannot query its own width, so every @container rule in the
+       stylesheet is written against this wrapper. Take it away and all of
+       them stop applying at once — no error, no warning, just a card that
+       never changes shape again. */
+    const { container } = renderCard();
+    const shell = container.firstElementChild;
+    expect(shell?.tagName).toBe('DIV');
+    expect(shell?.firstElementChild).toBe(screen.getByRole('link'));
+  });
+
   it('gives the time a machine-readable datetime', () => {
     const { container } = renderCard();
     expect(container.querySelector('time')).toHaveAttribute(
