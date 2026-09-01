@@ -1,0 +1,207 @@
+/* ============================================================================
+   The donor's own settings (§9.5). Mobile-first: one column, widened upward.
+   ========================================================================= */
+
+.page {
+  padding-block: var(--space-8) var(--space-24);
+}
+
+.head {
+  max-inline-size: var(--measure-narrow);
+  margin-block-end: var(--space-6);
+}
+
+.title {
+  font-size: var(--text-3xl);
+  letter-spacing: var(--tracking-tight);
+}
+
+.lead {
+  margin-block-start: var(--space-3);
+  font-size: var(--text-lg);
+  color: var(--fg-secondary);
+}
+
+.skeletons {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.card {
+  padding: var(--space-5);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--elevation-1);
+}
+
+/* The eligibility card carries its answer in its colour as well as its
+   words — never in the colour alone. */
+.cardReady {
+  background-color: var(--success-surface);
+  border-color: var(--success);
+}
+
+.cardWaiting {
+  background-color: var(--bg-surface-alt);
+}
+
+.cardMark {
+  display: inline-grid;
+  place-items: center;
+  margin-block-end: var(--space-2);
+  color: var(--fg-secondary);
+}
+
+.cardReady .cardMark {
+  color: var(--success-ink);
+}
+
+.cardTitle {
+  font-size: var(--text-lg);
+  line-height: var(--leading-snug);
+}
+
+.cardBody {
+  margin-block-start: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+}
+
+.cardReady .cardBody,
+.cardReady .cardTitle {
+  color: var(--success-ink);
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-block-start: var(--space-4);
+}
+
+/* ── Details ─────────────────────────────────────────────────────────────── */
+.facts {
+  display: grid;
+  gap: var(--space-3);
+  margin-block-start: var(--space-4);
+  font-size: var(--text-base);
+}
+
+.facts dt {
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.form {
+  display: grid;
+  gap: var(--space-5);
+  margin-block-start: var(--space-4);
+}
+
+.formError {
+  display: flex;
+  align-items: start;
+  gap: var(--space-2);
+  margin-block-start: var(--space-3);
+  padding: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--danger-ink);
+  background-color: var(--danger-surface);
+  border-radius: var(--radius-md);
+}
+
+.formError svg {
+  flex: none;
+}
+
+/* Eight targets, four across at 360px — the same grid as the request form,
+   and the same reason: this is the field nobody may get wrong. */
+.types {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.typeButton {
+  min-block-size: var(--hit-min);
+  padding: var(--space-3) var(--space-1);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--fg-primary);
+  background-color: var(--bg-surface-alt);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.typeButtonOn {
+  color: var(--fg-onAccent);
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+
+.fieldset {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-4);
+  background-color: var(--bg-surface-alt);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
+}
+
+.legend {
+  padding-inline: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: var(--hit-min);
+  cursor: pointer;
+}
+
+.check input {
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+  accent-color: var(--accent);
+}
+
+.note {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block-start: var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--success-ink);
+  background-color: var(--success-surface);
+  border-radius: var(--radius-md);
+}
+
+.note svg {
+  flex: none;
+}
+
+/* Two cards abreast once there is room; the details card keeps the full row,
+   because a form in a half-width column is a form with wrapped labels. */
+@media (min-width: 48rem) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cardWide {
+    grid-column: 1 / -1;
+  }
+}

@@ -1,6 +1,10 @@
-import type { BloodType, UserRole } from '@kapka/shared';
+import type { BloodType, DonorProfilePatchInput, UserRole } from '@kapka/shared';
 import type pg from 'pg';
 import { pool, withTransaction } from '../db';
+import { eligibleFromSql } from '../matching/eligibility';
+
+/** Exactly what donorProfilePatchSchema accepts — see @kapka/shared. */
+export type DonorProfilePatch = DonorProfilePatchInput;
 
 export interface UserRecord {
   id: string;
@@ -33,6 +37,13 @@ export interface DonorProfileRecord {
   lastDonationDate: string | null;
   isAvailable: boolean;
   notifyByEmail: boolean;
+  /**
+   * Null when they can give today, otherwise the day the interval is up.
+   *
+   * Computed in SQL and handed over, so no screen has to do date arithmetic
+   * to answer the one question a donor opens their dashboard to ask (§5.2).
+   */
+  eligibleFrom: string | null;
 }
 
 export interface RegisterInput {
@@ -57,6 +68,16 @@ export interface AuthRepository {
   findUserById(id: string): Promise<UserRecord | null>;
   /** Null for a requester or admin, who have no donor profile. */
   findDonorProfile(userId: string): Promise<DonorProfileRecord | null>;
+  /**
+   * Applies a partial update and returns the profile as it now stands.
+   *
+   * Null when there is no profile to update — the caller is a requester or an
+   * admin, and creating one for them would invent a blood type.
+   */
+  updateDonorProfile(
+    userId: string,
+    patch: DonorProfilePatch,
+  ): Promise<DonorProfileRecord | null>;
   /** Creates the user and the donor profile in one transaction (§4). */
   createUser(input: RegisterInput): Promise<UserRecord>;
   storeRefreshToken(userId: string, tokenHash: string, expiresAt: Date): Promise<string>;
@@ -112,6 +133,32 @@ const toUser = (row: UserRow): UserRecord => ({
   emailVerified: row.email_verified,
 });
 
+interface ProfileRow {
+  blood_type: BloodType;
+  city: string;
+  last_donation_date: string | null;
+  is_available: boolean;
+  notify_by_email: boolean;
+  eligible_from: string | null;
+}
+
+/* to_char, not the bare column: node-pg parses a DATE into a Date at LOCAL
+   midnight, so toISOString() on it gives the previous day east of UTC. */
+const PROFILE_COLUMNS = `
+  blood_type, city,
+  to_char(last_donation_date, 'YYYY-MM-DD') AS last_donation_date,
+  is_available, notify_by_email,
+  ${eligibleFromSql('last_donation_date')} AS eligible_from`;
+
+const toProfile = (row: ProfileRow): DonorProfileRecord => ({
+  bloodType: row.blood_type,
+  city: row.city,
+  lastDonationDate: row.last_donation_date,
+  isAvailable: row.is_available,
+  notifyByEmail: row.notify_by_email,
+  eligibleFrom: row.eligible_from,
+});
+
 const USER_COLUMNS =
   'id, email, password_hash, role, full_name, is_active, email_verified';
 
@@ -141,32 +188,48 @@ export function createPgAuthRepository(db: pg.Pool = pool): AuthRepository {
     },
 
     async findDonorProfile(userId) {
-      const { rows } = await db.query<{
-        blood_type: BloodType;
-        city: string;
-        last_donation_date: string | null;
-        is_available: boolean;
-        notify_by_email: boolean;
-      }>(
+      const { rows } = await db.query<ProfileRow>(
         /* to_char, not the bare column. node-pg parses a DATE into a Date at
            LOCAL midnight, so toISOString() on it gives the previous day in
            every timezone east of UTC — this returned 2026-08-10 for a
            donation recorded on the 11th. Postgres formats the day instead. */
-        `SELECT blood_type, city,
-                to_char(last_donation_date, 'YYYY-MM-DD') AS last_donation_date,
-                is_available, notify_by_email
-         FROM donor_profiles WHERE user_id = $1`,
+        `SELECT ${PROFILE_COLUMNS} FROM donor_profiles WHERE user_id = $1`,
         [userId],
       );
-      const row = rows[0];
-      if (!row) return null;
-      return {
-        bloodType: row.blood_type,
-        city: row.city,
-        lastDonationDate: row.last_donation_date,
-        isAvailable: row.is_available,
-        notifyByEmail: row.notify_by_email,
-      };
+      return rows[0] ? toProfile(rows[0]) : null;
+    },
+
+    async updateDonorProfile(userId, patch) {
+      /*
+       * COALESCE against the column, so an absent field keeps what is there.
+       * Every value is a bound parameter and the column list is fixed in this
+       * source — there is no path from a request body to the SQL text.
+       *
+       * lastDonationDate is the exception the COALESCE pattern cannot cover:
+       * null is a real value there ("I have never donated") and is different
+       * from absent, so it carries its own flag.
+       */
+      const { rows } = await db.query<ProfileRow>(
+        `UPDATE donor_profiles SET
+           blood_type   = COALESCE($2::blood_type, blood_type),
+           city         = COALESCE($3::text, city),
+           last_donation_date = CASE WHEN $4::boolean THEN $5::date
+                                     ELSE last_donation_date END,
+           is_available = COALESCE($6::boolean, is_available),
+           notify_by_email = COALESCE($7::boolean, notify_by_email)
+         WHERE user_id = $1
+         RETURNING ${PROFILE_COLUMNS}`,
+        [
+          userId,
+          patch.bloodType ?? null,
+          patch.city ?? null,
+          'lastDonationDate' in patch,
+          patch.lastDonationDate ?? null,
+          patch.isAvailable ?? null,
+          patch.notifyByEmail ?? null,
+        ],
+      );
+      return rows[0] ? toProfile(rows[0]) : null;
     },
 
     async createUser(input) {

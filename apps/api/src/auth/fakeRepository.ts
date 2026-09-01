@@ -64,6 +64,26 @@ export function createFakeAuthRepository(): AuthRepository & {
       return Promise.resolve(profiles.get(userId) ?? null);
     },
 
+    updateDonorProfile(userId, patch) {
+      const current = profiles.get(userId);
+      if (!current) return Promise.resolve(null);
+      const next: DonorProfileRecord = {
+        ...current,
+        ...(patch.bloodType === undefined ? {} : { bloodType: patch.bloodType }),
+        ...(patch.city === undefined ? {} : { city: patch.city }),
+        // Absent keeps it; an explicit null is "I have never donated".
+        ...('lastDonationDate' in patch
+          ? { lastDonationDate: patch.lastDonationDate ?? null }
+          : {}),
+        ...(patch.isAvailable === undefined ? {} : { isAvailable: patch.isAvailable }),
+        ...(patch.notifyByEmail === undefined
+          ? {}
+          : { notifyByEmail: patch.notifyByEmail }),
+      };
+      profiles.set(userId, next);
+      return Promise.resolve(next);
+    },
+
     findUserByEmail(email) {
       // users.email is CITEXT in Postgres, so matching is case-insensitive.
       const found = [...users.values()].find(
@@ -89,6 +109,9 @@ export function createFakeAuthRepository(): AuthRepository & {
         lastDonationDate: input.lastDonationDate,
         isAvailable: true,
         notifyByEmail: true,
+        // The real repository computes this in SQL; nothing in the fake
+        // pretends to do date arithmetic.
+        eligibleFrom: null,
       });
       return Promise.resolve(user);
     },

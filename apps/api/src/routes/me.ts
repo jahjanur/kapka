@@ -1,6 +1,12 @@
 import { Router } from 'express';
+import {
+  apiError,
+  donorProfilePatchSchema,
+  type DonorProfilePatchInput,
+} from '@kapka/shared';
 import { getAuth } from '../auth/context';
 import { requireAuth } from '../middleware/auth';
+import { validateBody } from '../middleware/validate';
 import type { AuthRepository } from '../auth/repository';
 
 /**
@@ -35,6 +41,40 @@ export function createMeRouter(repository: AuthRepository): Router {
       donorProfile: profile,
     });
   });
+
+  /**
+   * PATCH /api/me/donor-profile — the donor's own settings (§9.5).
+   *
+   * Every field optional, at least one required, enforced by the schema. The
+   * pause switch lives here: without it, stopping the emails would mean
+   * deleting the account (§3), and a donor who cannot pause quietly is a
+   * donor who leaves loudly.
+   */
+  router.patch(
+    '/me/donor-profile',
+    requireAuth(repository),
+    validateBody(donorProfilePatchSchema),
+    async (req, res) => {
+      const auth = getAuth(res);
+      if (!auth) return;
+
+      const profile = await repository.updateDonorProfile(
+        auth.userId,
+        req.body as DonorProfilePatchInput,
+      );
+
+      if (!profile) {
+        // A requester or an admin. Creating a profile here would have to
+        // invent a blood type, which is the one field nobody may guess.
+        res
+          .status(404)
+          .json(apiError('NOT_FOUND', 'This account does not have a donor profile.'));
+        return;
+      }
+
+      res.json({ donorProfile: profile });
+    },
+  );
 
   return router;
 }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ModerationQueueItem, PublicBloodRequest } from '@kapka/shared';
-import { api, ApiError, type ViewedRequest } from './api';
+import { api, ApiError, type Me, type ViewedRequest } from './api';
 
 interface Snapshot<T> {
   /** Which fetch this data belongs to. */
@@ -110,5 +110,14 @@ export function usePendingRequests(
 ): QueryResult<ModerationQueueItem[]> {
   return useQuery(`admin/requests/${accessToken ?? 'anonymous'}`, () =>
     accessToken ? api.listPendingRequests(accessToken) : Promise.resolve([]),
+  );
+}
+
+/** GET /api/me — the signed-in account and its donor profile (§9.5). */
+export function useMe(accessToken: string | undefined): QueryResult<Me> {
+  return useQuery(`me/${accessToken ?? 'anonymous'}`, () =>
+    accessToken
+      ? api.getMe(accessToken)
+      : Promise.reject(new ApiError('UNAUTHENTICATED', 'Sign in to continue.', 401)),
   );
 }

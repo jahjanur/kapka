@@ -1,8 +1,10 @@
 import type {
   ApiErrorBody,
+  BloodType,
   AuthedBloodRequest,
   CreateRequestInput,
   DonorFit,
+  DonorProfilePatchInput,
   ModerationQueueItem,
   ErrorCode,
   PublicBloodRequest,
@@ -62,6 +64,23 @@ export class ApiError extends Error {
   }
 }
 
+/** The donor's own profile, as §9.5's dashboard needs it. */
+export interface DonorProfile {
+  bloodType: BloodType;
+  city: string;
+  lastDonationDate: string | null;
+  isAvailable: boolean;
+  notifyByEmail: boolean;
+  /** Null when they can give today. Computed by the API, never here (§5.2). */
+  eligibleFrom: string | null;
+}
+
+export interface Me {
+  user: SessionUser;
+  /** Null for a requester or an admin, who never had one. */
+  donorProfile: DonorProfile | null;
+}
+
 /** What approving actually did, once the emails have been attempted. */
 export interface ApprovalOutcome {
   matchedDonors: number;
@@ -101,6 +120,13 @@ export interface ApiClient {
     input: CreateRequestInput,
     accessToken: string,
   ): Promise<AuthedBloodRequest>;
+  /** The signed-in account and its donor profile (§9.5). */
+  getMe(accessToken: string): Promise<Me>;
+  /** Partial by design: every field optional, at least one required. */
+  updateDonorProfile(
+    patch: DonorProfilePatchInput,
+    accessToken: string,
+  ): Promise<DonorProfile>;
   /** The moderation queue (§9.6). Admin-only; the API answers 403 otherwise. */
   listPendingRequests(accessToken: string): Promise<ModerationQueueItem[]>;
   /** Approves and dispatches. Returns what the dispatch actually managed. */
@@ -205,6 +231,16 @@ function createHttpClient(baseUrl: string): ApiClient {
       });
       return request;
     },
+    getMe(accessToken) {
+      return call<Me>('/me', { headers: authed(accessToken) });
+    },
+    async updateDonorProfile(patch, accessToken) {
+      const { donorProfile } = await call<{ donorProfile: DonorProfile }>(
+        '/me/donor-profile',
+        { method: 'PATCH', headers: authed(accessToken), body: JSON.stringify(patch) },
+      );
+      return donorProfile;
+    },
     async listPendingRequests(accessToken) {
       const { requests } = await call<{ requests: ModerationQueueItem[] }>(
         '/admin/requests',
@@ -256,6 +292,23 @@ function createHttpClient(baseUrl: string): ApiClient {
  * It is reachable ONLY in a dev build with no VITE_API_URL set — see
  * createApiClient. A production build always talks to a real API.
  */
+const DEMO_USER: SessionUser = {
+  id: 'demo-user',
+  email: 'demo@example.com',
+  fullName: 'Demo Donor',
+  role: 'donor',
+  emailVerified: true,
+};
+
+let demoProfile: DonorProfile = {
+  bloodType: 'O-',
+  city: 'Skopje',
+  lastDonationDate: null,
+  isAvailable: true,
+  notifyByEmail: true,
+  eligibleFrom: null,
+};
+
 function createDemoClient(): ApiClient {
   const latency = <T>(value: T): Promise<T> =>
     new Promise((resolve) => setTimeout(() => resolve(value), 350));
@@ -324,6 +377,31 @@ function createDemoClient(): ApiClient {
         createdAt: now.toISOString(),
         expiresAt: week.toISOString(),
       };
+    },
+    async getMe() {
+      await latency(null);
+      return { user: DEMO_USER, donorProfile: { ...demoProfile } };
+    },
+    async updateDonorProfile(patch) {
+      await latency(null);
+      // Kept in a module-level object so the dashboard's own edits stick for
+      // as long as the tab is open, the way the real one would.
+      /* Field by field, not a spread: under exactOptionalPropertyTypes an
+         absent key and an undefined one are different, and spreading the
+         patch would write undefined over a value that is meant to stay. */
+      demoProfile = {
+        ...demoProfile,
+        ...(patch.bloodType === undefined ? {} : { bloodType: patch.bloodType }),
+        ...(patch.city === undefined ? {} : { city: patch.city }),
+        ...('lastDonationDate' in patch
+          ? { lastDonationDate: patch.lastDonationDate ?? null }
+          : {}),
+        ...(patch.isAvailable === undefined ? {} : { isAvailable: patch.isAvailable }),
+        ...(patch.notifyByEmail === undefined
+          ? {}
+          : { notifyByEmail: patch.notifyByEmail }),
+      };
+      return { ...demoProfile };
     },
     async listPendingRequests() {
       await latency(null);

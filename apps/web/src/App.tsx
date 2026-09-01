@@ -12,6 +12,7 @@ const Feed = lazy(() => import('./routes/Feed'));
 const RequestDetail = lazy(() => import('./routes/RequestDetail'));
 const PostRequest = lazy(() => import('./routes/PostRequest'));
 const AdminQueue = lazy(() => import('./routes/AdminQueue'));
+const Dashboard = lazy(() => import('./routes/Dashboard'));
 const Register = lazy(() => import('./routes/Register'));
 const VerifyEmail = lazy(() => import('./routes/VerifyEmail'));
 const HowItWorks = lazy(() => import('./routes/HowItWorks'));
@@ -47,6 +48,7 @@ export function App() {
                 <Route path={PATHS.postRequest} element={<PostRequest />} />
                 <Route path={PATHS.request(':id')} element={<RequestDetail />} />
                 <Route path={PATHS.admin} element={<AdminQueue />} />
+                <Route path={PATHS.dashboard} element={<Dashboard />} />
                 <Route path={PATHS.register} element={<Register />} />
                 <Route path={PATHS.verifyEmail} element={<VerifyEmail />} />
                 <Route path={PATHS.howItWorks} element={<HowItWorks />} />

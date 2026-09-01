@@ -17,6 +17,8 @@ export const PATHS = {
   postRequest: '/requests/new',
   /** Admin-only, and the screen says so rather than pretending not to exist. */
   admin: '/admin',
+  /** The donor's own dashboard (§9.5). */
+  dashboard: '/me',
   register: '/register',
   howItWorks: '/how-it-works',
   /**

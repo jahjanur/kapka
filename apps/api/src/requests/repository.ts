@@ -8,6 +8,7 @@ import type {
   Urgency,
 } from '@kapka/shared';
 import { pool, type Queryable } from '../db';
+import { eligibleFromSql } from '../matching/eligibility';
 
 /** Who is asking. `null` is an anonymous caller. */
 export interface Viewer {
@@ -197,9 +198,8 @@ export function createPgRequestsRepository(db: Queryable = pool): RequestsReposi
        * the same table, because there must be exactly one answer to this
        * question in the codebase.
        *
-       * The 56-day interval and CURRENT_DATE are both evaluated here rather
-       * than in JavaScript, for the reason §5.2 gives: otherwise the server's
-       * timezone decides who is eligible.
+       * The eligibility date comes from eligibleFromSql, shared with the
+       * donor's own dashboard: the same question must not have two answers.
        */
       const { rows } = await db.query<RequestRow>(
         `SELECT ${AUTHED_COLUMNS},
@@ -209,14 +209,7 @@ export function createPgRequestsRepository(db: Queryable = pool): RequestsReposi
                   WHERE bc.recipient_type = r.blood_type
                     AND bc.donor_type = dp.blood_type
                 ) AS compatible,
-                CASE
-                  WHEN dp.last_donation_date IS NULL
-                    OR dp.last_donation_date <= CURRENT_DATE - INTERVAL '56 days'
-                  THEN NULL
-                  ELSE to_char(
-                         (dp.last_donation_date + INTERVAL '56 days')::date,
-                         'YYYY-MM-DD')
-                END AS eligible_from
+                ${eligibleFromSql('dp.last_donation_date')} AS eligible_from
          FROM blood_requests r
          LEFT JOIN donor_profiles dp ON dp.user_id = $2
          WHERE r.id = $1 AND r.status = 'approved'`,
