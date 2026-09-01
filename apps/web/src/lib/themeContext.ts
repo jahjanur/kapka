@@ -32,17 +32,6 @@ export function useTheme(): ThemeContextValue {
   return context;
 }
 
-/**
- * A `?theme=` override, used by the kitchen sink's preview frames so light and
- * dark can be shown side by side. Deliberately not persisted: the frame and
- * the page share an origin and therefore a localStorage, so writing it would
- * change the theme of the page doing the previewing.
- */
-export function themeFromUrl(): ThemePreference | null {
-  const value = new URLSearchParams(window.location.search).get('theme');
-  return value === 'light' || value === 'dark' ? value : null;
-}
-
 export function readStoredPreference(): ThemePreference {
   // Private windows and blocked site data both throw here, not just return null.
   try {

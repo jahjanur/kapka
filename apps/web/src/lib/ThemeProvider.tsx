@@ -3,15 +3,13 @@ import {
   readStoredPreference,
   ThemeContext,
   THEME_STORAGE_KEY,
-  themeFromUrl,
   type ThemeContextValue,
   type ThemePreference,
 } from './themeContext';
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [preference, setPreferenceState] = useState<ThemePreference>(
-    () => themeFromUrl() ?? readStoredPreference(),
-  );
+  const [preference, setPreferenceState] =
+    useState<ThemePreference>(readStoredPreference);
   const [systemDark, setSystemDark] = useState(
     () => window.matchMedia('(prefers-color-scheme: dark)').matches,
   );

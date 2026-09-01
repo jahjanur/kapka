@@ -35,11 +35,11 @@ describe('the product header', () => {
   it('links nowhere developer-facing', () => {
     /*
      * A "Design system" link sat in this nav and shipped. Someone reading this
-     * header is looking for blood or offering to give it; a link to the
+     * header is looking for blood or offering to give it; a link to a
      * component gallery is noise at best and looks unfinished at worst.
      *
-     * The kitchen sink is reachable by typing the URL in development, and is
-     * not routed at all in a production build.
+     * There is no such page any more. The guard stays because the next one
+     * would arrive the same way — added to the nav by whoever built it.
      */
     const { container } = renderHeader();
     for (const href of hrefsIn(container)) {

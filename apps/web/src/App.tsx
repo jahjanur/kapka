@@ -1,4 +1,4 @@
-import { lazy, Suspense, type ReactNode } from 'react';
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { IconSprite } from './components';
 import { ThemeProvider } from './lib/ThemeProvider';
@@ -15,29 +15,6 @@ const Register = lazy(() => import('./routes/Register'));
 const VerifyEmail = lazy(() => import('./routes/VerifyEmail'));
 const HowItWorks = lazy(() => import('./routes/HowItWorks'));
 const NotFound = lazy(() => import('./routes/NotFound'));
-
-/**
- * The kitchen sink is a developer tool, not part of the product.
- *
- * Registered only in development, so it is not reachable on the deployed site
- * and its chunk is not built. A stranger browsing the design system of a
- * platform that handles health-adjacent data is a small thing, but this is a
- * product where looking like it was built by people who take that seriously
- * is the feature (§2).
- */
-function developerRoutes(): ReactNode {
-  if (!import.meta.env.DEV) return null;
-
-  const KitchenSink = lazy(() => import('./routes/KitchenSink'));
-  const KitchenSinkFrame = lazy(() => import('./routes/KitchenSinkFrame'));
-
-  return (
-    <>
-      <Route path="/kitchen-sink" element={<KitchenSink />} />
-      <Route path="/kitchen-sink/frame" element={<KitchenSinkFrame />} />
-    </>
-  );
-}
 
 export function App() {
   return (
@@ -71,7 +48,6 @@ export function App() {
                 <Route path={PATHS.register} element={<Register />} />
                 <Route path={PATHS.verifyEmail} element={<VerifyEmail />} />
                 <Route path={PATHS.howItWorks} element={<HowItWorks />} />
-                {developerRoutes()}
                 {/* Last, so it only catches what nothing above matched. */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

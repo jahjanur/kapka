@@ -171,9 +171,9 @@ describe('every styles.x exists in its stylesheet', () => {
    * className is simply omitted. No error, no warning — the element renders
    * unstyled and looks like a layout bug rather than a missing class.
    *
-   * That shipped: the kitchen sink's preview frames referenced styles.frames,
-   * which was never added to the stylesheet, so the two theme previews stacked
-   * vertically instead of sitting side by side.
+   * That shipped once already: a screen referenced a styles.frames that was
+   * never added to its stylesheet, so a side-by-side pair stacked vertically
+   * and nothing anywhere said why.
    */
   const modules = filesWithExtension(webSrc, ['.tsx', '.ts'])
     .filter((path) => !path.includes('.test.'))
