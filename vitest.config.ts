@@ -44,6 +44,21 @@ export default defineConfig({
         },
       },
       {
+        /*
+         * The bundle, not the components. Node rather than jsdom because it
+         * runs a real Vite build in memory and inspects the chunks — see
+         * apps/web/bundle/bundle.test.ts for why it builds rather than
+         * reading dist/.
+         */
+        test: {
+          name: 'web-bundle',
+          root: './apps/web',
+          environment: 'node',
+          include: ['bundle/**/*.test.ts'],
+          testTimeout: 60_000,
+        },
+      },
+      {
         plugins: [react()],
         test: {
           name: 'web',
