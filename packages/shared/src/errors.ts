@@ -17,6 +17,9 @@ export const ERROR_CODES = [
   'EMAIL_NOT_VERIFIED',
   'DONOR_NOT_ELIGIBLE',
   'RATE_LIMITED',
+  /** The device has no connection. Not the same as the server being down:
+      one is waited out, the other is retried. */
+  'OFFLINE',
   'ALREADY_MODERATED',
   'REQUEST_EXPIRED',
   'EMAIL_BUDGET_EXHAUSTED',

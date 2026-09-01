@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { IconSprite, ToastProvider } from './components';
+import { IconSprite, OfflineBanner, ToastProvider } from './components';
 import { ThemeProvider } from './lib/ThemeProvider';
 import { SessionProvider } from './lib/SessionProvider';
 import { ScrollToTop } from './lib/ScrollToTop';
@@ -34,6 +34,9 @@ export function App() {
             <a className="skip-link" href="#main">
               Skip to content
             </a>
+            {/* Outside <main>, because it is about the device rather than the
+                page, and it must not move when a route changes. */}
+            <OfflineBanner />
             <main id="main">
               {/* Route-level fallback only. Screens get shape-matched skeletons
               of their own (§9.7) — never a centred spinner on a blank page. */}

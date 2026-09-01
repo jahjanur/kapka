@@ -14,6 +14,7 @@ import {
   Button,
   Container,
   EmptyState,
+  ErrorState,
   Field,
   Icon,
   Input,
@@ -160,12 +161,7 @@ export default function Dashboard() {
           )}
 
           {error && (
-            <EmptyState
-              icon="alertTriangle"
-              headline="We couldn’t load your settings"
-              body="The connection dropped on the way. Nothing is lost — try again."
-              action={<Button onClick={refetch}>Try again</Button>}
-            />
+            <ErrorState error={error} subject="your settings" onRetry={refetch} />
           )}
 
           {!isLoading && !error && !profile && (

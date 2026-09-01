@@ -7,6 +7,7 @@ import {
   Button,
   Container,
   EmptyState,
+  ErrorState,
   Icon,
   Skeleton,
   Stack,
@@ -88,12 +89,7 @@ export default function RequestDetail() {
                   action={<Button to="/">Back to requests</Button>}
                 />
               ) : (
-                <EmptyState
-                  icon="alertTriangle"
-                  headline="We couldn’t load this request"
-                  body="The connection dropped on the way. Nothing is lost — try again."
-                  action={<Button onClick={refetch}>Try again</Button>}
-                />
+                <ErrorState error={error} subject="this request" onRetry={refetch} />
               )}
             </div>
           )}

@@ -185,6 +185,31 @@ describe('the public feed', () => {
     expect(screen.getByRole('button', { name: /Try again/ })).toBeInTheDocument();
   });
 
+  it('tells a reader with no signal that it is their connection', async () => {
+    /* Someone standing in a hospital corridor with no bars is not helped by
+       being told the server is unreachable — and there is no button that
+       would fix it, so they are not offered one. */
+    listRequests.mockRejectedValue(new ApiError('OFFLINE', 'You are offline.', 0));
+    renderFeed();
+
+    expect(await screen.findByText('You are offline')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Try again/ })).toBeNull();
+  });
+
+  it('loads itself when the connection comes back', async () => {
+    /* A screen that failed while the device had no signal fixes itself. The
+       alternative is a reader looking at an error, having done nothing
+       wrong, on a page that would load perfectly well by now. */
+    listRequests.mockRejectedValueOnce(new ApiError('OFFLINE', 'You are offline.', 0));
+    renderFeed();
+    await screen.findByText('You are offline');
+
+    listRequests.mockResolvedValue(REQUESTS);
+    window.dispatchEvent(new Event('online'));
+
+    expect(await screen.findByText('3 open requests')).toBeInTheDocument();
+  });
+
   it('says something useful when nothing is open', async () => {
     listRequests.mockResolvedValue([]);
     renderFeed();

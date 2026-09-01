@@ -6,6 +6,7 @@ import {
   Button,
   Container,
   EmptyState,
+  ErrorState,
   Field,
   FilterBar,
   FilterChip,
@@ -252,12 +253,7 @@ export default function Feed() {
                 )}
 
                 {error && (
-                  <EmptyState
-                    icon="alertTriangle"
-                    headline="We couldn’t load the requests"
-                    body="The connection dropped on the way. Nothing is lost — try again."
-                    action={<Button onClick={refetch}>Try again</Button>}
-                  />
+                  <ErrorState error={error} subject="the requests" onRetry={refetch} />
                 )}
 
                 {!isLoading &&

@@ -176,9 +176,21 @@ function createHttpClient(baseUrl: string): ApiClient {
         ...init,
       });
     } catch {
-      // A dropped connection is not an HTTP status, and the screens still
-      // need something they can show a person.
-      throw new ApiError('INTERNAL', 'We could not reach the server.', 0);
+      /*
+       * A dropped connection is not an HTTP status, and the two reasons it
+       * drops need different answers. Someone in a hospital corridor with no
+       * signal is not helped by being told the server is unreachable — their
+       * move is to wait, not to retry — and the screens can only tell them
+       * apart if this does.
+       *
+       * navigator.onLine is only trustworthy when it says false: a device on
+       * a captive-portal wifi reports true and reaches nothing. So false
+       * means offline, and true means we genuinely do not know, which is
+       * what the server-side message says.
+       */
+      throw navigator.onLine
+        ? new ApiError('INTERNAL', 'We could not reach the server.', 0)
+        : new ApiError('OFFLINE', 'You are offline.', 0);
     }
 
     if (response.status === 204) return undefined as T;

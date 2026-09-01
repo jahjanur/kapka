@@ -7,6 +7,7 @@ import {
   Button,
   Container,
   EmptyState,
+  ErrorState,
   Icon,
   Skeleton,
   Textarea,
@@ -304,14 +305,7 @@ export default function AdminQueue() {
             </div>
           )}
 
-          {error && (
-            <EmptyState
-              icon="alertTriangle"
-              headline="We couldn’t load the queue"
-              body="The connection dropped on the way. Nothing is lost — try again."
-              action={<Button onClick={refetch}>Try again</Button>}
-            />
-          )}
+          {error && <ErrorState error={error} subject="the queue" onRetry={refetch} />}
 
           {!error && isLoading && (
             /* Shaped like the card it stands in for, not a grey box of about

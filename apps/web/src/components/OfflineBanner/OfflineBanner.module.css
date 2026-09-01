@@ -1,0 +1,36 @@
+/* ============================================================================
+   The connection bar. Under the header, above everything else, at every
+   width — losing signal is not a property of the screen you are on.
+   ========================================================================= */
+
+.offline,
+.back {
+  position: sticky;
+  inset-block-start: var(--header-height);
+  z-index: var(--z-sticky);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  text-align: center;
+}
+
+.offline svg,
+.back svg {
+  flex: none;
+}
+
+.offline {
+  color: var(--warning-ink);
+  background-color: var(--warning-surface);
+  border-block-end: 1px solid var(--warning);
+}
+
+.back {
+  color: var(--success-ink);
+  background-color: var(--success-surface);
+  border-block-end: 1px solid var(--success);
+}

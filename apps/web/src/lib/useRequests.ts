@@ -76,6 +76,25 @@ function useQuery<T>(key: string, fetcher: () => Promise<T>): QueryResult<T> {
     setAttempt((n) => n + 1);
   }, []);
 
+  /*
+   * A screen that failed while the device had no signal fixes itself when the
+   * signal returns. Without this the reader is left looking at an error with
+   * a button, having done nothing wrong, on a page that could load perfectly
+   * well by the time they notice it.
+   *
+   * Only after a failure: a successful screen has no reason to refetch, and
+   * doing so would put every open tab on the network at the same moment the
+   * connection comes back.
+   */
+  const failed = current.error !== null;
+  useEffect(() => {
+    if (!failed) return;
+    // setState in an event callback, not in the effect body.
+    const retry = () => setAttempt((n) => n + 1);
+    window.addEventListener('online', retry);
+    return () => window.removeEventListener('online', retry);
+  }, [failed]);
+
   return {
     data: current.data,
     isLoading: current.data === undefined && current.error === null,
