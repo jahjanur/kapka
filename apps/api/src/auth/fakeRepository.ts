@@ -4,6 +4,7 @@ import type {
   RefreshRecord,
   RegisterInput,
   UserRecord,
+  VerificationRecord,
 } from './repository';
 
 /**
@@ -18,6 +19,7 @@ export function createFakeAuthRepository(): AuthRepository & {
   users: Map<string, UserRecord>;
   profiles: Map<string, DonorProfileRecord>;
   tokens: Map<string, RefreshRecord & { tokenHash: string; replacedBy: string | null }>;
+  verifications: Map<string, VerificationRecord & { tokenHash: string; createdAt: Date }>;
   addUser(
     user: Partial<UserRecord> & Pick<UserRecord, 'email' | 'passwordHash'>,
   ): UserRecord;
@@ -27,6 +29,10 @@ export function createFakeAuthRepository(): AuthRepository & {
   const tokens = new Map<
     string,
     RefreshRecord & { tokenHash: string; replacedBy: string | null }
+  >();
+  const verifications = new Map<
+    string,
+    VerificationRecord & { tokenHash: string; createdAt: Date }
   >();
   let sequence = 0;
   const nextId = () => `id-${String(++sequence)}`;
@@ -51,6 +57,7 @@ export function createFakeAuthRepository(): AuthRepository & {
     users,
     profiles,
     tokens,
+    verifications,
     addUser,
 
     findDonorProfile(userId) {
@@ -133,6 +140,51 @@ export function createFakeAuthRepository(): AuthRepository & {
         if (record.userId === userId && !record.revokedAt) record.revokedAt = new Date();
       }
       return Promise.resolve();
+    },
+
+    createVerificationToken(userId, tokenHash, expiresAt) {
+      const id = nextId();
+      verifications.set(id, {
+        id,
+        userId,
+        tokenHash,
+        expiresAt,
+        consumedAt: null,
+        createdAt: new Date(),
+      });
+      return Promise.resolve(id);
+    },
+
+    findVerificationToken(tokenHash) {
+      const found = [...verifications.values()].find((v) => v.tokenHash === tokenHash);
+      return Promise.resolve(found ?? null);
+    },
+
+    consumeVerificationToken(id, userId) {
+      const record = verifications.get(id);
+      // Missing, or already spent: the second of two taps on one link gets
+      // nothing back, exactly as the conditional UPDATE does for real.
+      if (!record || record.consumedAt) return Promise.resolve(null);
+      record.consumedAt = new Date();
+
+      for (const sibling of verifications.values()) {
+        if (sibling.userId === userId && !sibling.consumedAt) {
+          sibling.consumedAt = new Date();
+        }
+      }
+
+      const user = users.get(userId);
+      if (!user) return Promise.resolve(null);
+      user.emailVerified = true;
+      return Promise.resolve(user);
+    },
+
+    lastVerificationSentAt(userId) {
+      const issued = [...verifications.values()]
+        .filter((v) => v.userId === userId)
+        .map((v) => v.createdAt)
+        .sort((a, b) => b.getTime() - a.getTime());
+      return Promise.resolve(issued[0] ?? null);
     },
   };
 }

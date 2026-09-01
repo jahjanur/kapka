@@ -11,6 +11,7 @@ import { PATHS } from './routes/paths';
 const Feed = lazy(() => import('./routes/Feed'));
 const RequestDetail = lazy(() => import('./routes/RequestDetail'));
 const Register = lazy(() => import('./routes/Register'));
+const VerifyEmail = lazy(() => import('./routes/VerifyEmail'));
 const HowItWorks = lazy(() => import('./routes/HowItWorks'));
 const NotFound = lazy(() => import('./routes/NotFound'));
 
@@ -64,6 +65,7 @@ export function App() {
                 <Route path={PATHS.feed} element={<Feed />} />
                 <Route path={PATHS.request(':id')} element={<RequestDetail />} />
                 <Route path={PATHS.register} element={<Register />} />
+                <Route path={PATHS.verifyEmail} element={<VerifyEmail />} />
                 <Route path={PATHS.howItWorks} element={<HowItWorks />} />
                 {developerRoutes()}
                 {/* Last, so it only catches what nothing above matched. */}

@@ -19,6 +19,14 @@ export interface RefreshRecord {
   revokedAt: Date | null;
 }
 
+export interface VerificationRecord {
+  id: string;
+  userId: string;
+  expiresAt: Date;
+  /** Set once the link has been spent. A spent token is not a valid one. */
+  consumedAt: Date | null;
+}
+
 export interface DonorProfileRecord {
   bloodType: BloodType;
   city: string;
@@ -63,6 +71,25 @@ export interface AuthRepository {
   revokeRefreshToken(id: string): Promise<void>;
   /** Used when a revoked token is presented — see the reuse note in routes. */
   revokeAllForUser(userId: string): Promise<void>;
+
+  /** Records a freshly issued confirmation link, by hash only (§12). */
+  createVerificationToken(
+    userId: string,
+    tokenHash: string,
+    expiresAt: Date,
+  ): Promise<string>;
+  findVerificationToken(tokenHash: string): Promise<VerificationRecord | null>;
+  /**
+   * Spends the token and verifies the account, in one transaction: marks this
+   * row consumed, sets users.email_verified, and consumes the user's other
+   * outstanding tokens so an older link in the same mailbox stops working.
+   *
+   * Returns the updated user, or null if the row had already been spent — two
+   * taps on the same link race here, and exactly one of them may win.
+   */
+  consumeVerificationToken(id: string, userId: string): Promise<UserRecord | null>;
+  /** When the newest confirmation link for this user was issued. */
+  lastVerificationSentAt(userId: string): Promise<Date | null>;
 }
 
 interface UserRow {
@@ -226,6 +253,79 @@ export function createPgAuthRepository(db: pg.Pool = pool): AuthRepository {
          WHERE user_id = $1 AND revoked_at IS NULL`,
         [userId],
       );
+    },
+
+    async createVerificationToken(userId, tokenHash, expiresAt) {
+      const { rows } = await db.query<{ id: string }>(
+        `INSERT INTO email_verification_tokens (user_id, token_hash, expires_at)
+         VALUES ($1, $2, $3) RETURNING id`,
+        [userId, tokenHash, expiresAt],
+      );
+      const id = rows[0]?.id;
+      if (!id) throw new Error('verification token insert returned no row');
+      return id;
+    },
+
+    async findVerificationToken(tokenHash) {
+      const { rows } = await db.query<{
+        id: string;
+        user_id: string;
+        expires_at: Date;
+        consumed_at: Date | null;
+      }>(
+        `SELECT id, user_id, expires_at, consumed_at
+         FROM email_verification_tokens WHERE token_hash = $1`,
+        [tokenHash],
+      );
+      const row = rows[0];
+      return row
+        ? {
+            id: row.id,
+            userId: row.user_id,
+            expiresAt: row.expires_at,
+            consumedAt: row.consumed_at,
+          }
+        : null;
+    },
+
+    async consumeVerificationToken(id, userId) {
+      return withTransaction(async (client) => {
+        /* The claim and the guard in one statement. Reading the row and then
+           updating it would let two concurrent taps both pass the read; this
+           way the second one updates nothing and gets no row back. */
+        const claimed = await client.query<{ id: string }>(
+          `UPDATE email_verification_tokens SET consumed_at = now()
+           WHERE id = $1 AND consumed_at IS NULL RETURNING id`,
+          [id],
+        );
+        if (claimed.rows.length === 0) return null;
+
+        /* Every other outstanding link for this account stops working. A donor
+           who asked for three of them has one mailbox; leaving the older two
+           live is two more bearer credentials for no benefit. */
+        await client.query(
+          `UPDATE email_verification_tokens SET consumed_at = now()
+           WHERE user_id = $1 AND consumed_at IS NULL`,
+          [userId],
+        );
+
+        const { rows } = await client.query<UserRow>(
+          `UPDATE users SET email_verified = TRUE
+           WHERE id = $1 RETURNING ${USER_COLUMNS}`,
+          [userId],
+        );
+        const row = rows[0];
+        return row ? toUser(row) : null;
+      }, db);
+    },
+
+    async lastVerificationSentAt(userId) {
+      const { rows } = await db.query<{ created_at: Date }>(
+        `SELECT created_at FROM email_verification_tokens
+         WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`,
+        [userId],
+      );
+      return rows[0]?.created_at ?? null;
     },
   };
 }

@@ -71,7 +71,8 @@ describe('donor registration', () => {
       // absent, is what says so (§5.2).
       lastDonationDate: null,
     });
-    expect(await screen.findByText(/You are on the list/)).toBeInTheDocument();
+    // Registered is not yet on the list — the confirmation screen says so.
+    expect(await screen.findByText(/Confirm your email/)).toBeInTheDocument();
   });
 
   it('sends no request when the form is incomplete', async () => {

@@ -46,20 +46,51 @@ export async function verifyAccessToken(
 }
 
 /**
+ * A donor who reads their email in the evening must still be able to use the
+ * link; an old link sitting in a mailbox must not be a standing key to an
+ * account. A day is the compromise, and the resend endpoint covers the rest.
+ */
+export const EMAIL_VERIFICATION_TTL_SECONDS = 24 * 60 * 60;
+
+/** 256 bits of randomness, URL-safe. 43 characters. */
+const opaqueToken = () => randomBytes(32).toString('base64url');
+
+/** What gets stored. The token itself never touches the database (§12). */
+const sha256 = (token: string) => createHash('sha256').update(token).digest('hex');
+
+/**
  * Refresh tokens are opaque random bytes, not JWTs.
  *
  * A JWT refresh token is valid until it expires whatever the server decides,
  * which is exactly the property rotation and logout need it not to have.
  */
 export function generateRefreshToken(): string {
-  return randomBytes(32).toString('base64url');
+  return opaqueToken();
 }
 
-/** What gets stored. The token itself never touches the database (§12). */
 export function hashRefreshToken(token: string): string {
-  return createHash('sha256').update(token).digest('hex');
+  return sha256(token);
 }
 
 export function refreshTokenExpiry(from: Date = new Date()): Date {
   return new Date(from.getTime() + REFRESH_TOKEN_TTL_SECONDS * 1000);
+}
+
+/**
+ * The token inside a confirmation link.
+ *
+ * Same construction as a refresh token, and named separately because it is a
+ * different credential with a different lifetime — one of them being twenty
+ * lines from the other is not a reason for a route to be able to mix them up.
+ */
+export function generateVerificationToken(): string {
+  return opaqueToken();
+}
+
+export function hashVerificationToken(token: string): string {
+  return sha256(token);
+}
+
+export function verificationTokenExpiry(from: Date = new Date()): Date {
+  return new Date(from.getTime() + EMAIL_VERIFICATION_TTL_SECONDS * 1000);
 }

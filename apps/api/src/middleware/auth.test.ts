@@ -9,12 +9,17 @@ import { createFakeAuthRepository } from '../auth/fakeRepository';
 import { hashPassword } from '../auth/passwords';
 import { signAccessToken } from '../auth/tokens';
 import { optionalAuth, requireAuth, requireRole } from './auth';
+import { noVerificationEmail } from '../test/mail';
 
 let repository: ReturnType<typeof createFakeAuthRepository>;
 
 beforeEach(() => {
   repository = createFakeAuthRepository();
 });
+
+/** The whole app, with the confirmation email stubbed out — see test/mail.ts. */
+const appFor = (auth: typeof repository) =>
+  createApp(auth, undefined, undefined, undefined, noVerificationEmail);
 
 /** A minimal app so each guard is tested on its own, not through a route. */
 function appWith(middleware: express.RequestHandler) {
@@ -220,12 +225,12 @@ describe('GET /api/me', () => {
   };
 
   it('refuses an anonymous caller', async () => {
-    const response = await request(serverFor(createApp(repository))).get('/api/me');
+    const response = await request(serverFor(appFor(repository))).get('/api/me');
     expect(response.status).toBe(401);
   });
 
   it('returns the user and their donor profile', async () => {
-    const app = createApp(repository);
+    const app = appFor(repository);
     const registered = await request(serverFor(app))
       .post('/api/auth/register')
       .send(registration);
@@ -254,7 +259,7 @@ describe('GET /api/me', () => {
   });
 
   it('never returns the password hash', async () => {
-    const app = createApp(repository);
+    const app = appFor(repository);
     const registered = await request(serverFor(app))
       .post('/api/auth/register')
       .send(registration);
@@ -276,7 +281,7 @@ describe('GET /api/me', () => {
       role: 'admin',
     });
     const token = await signAccessToken(admin.id, 'admin');
-    const response = await request(serverFor(createApp(repository)))
+    const response = await request(serverFor(appFor(repository)))
       .get('/api/me')
       .set('Authorization', `Bearer ${token}`);
     expect(

@@ -32,6 +32,13 @@ const envSchema = z.object({
    */
   JWT_ACCESS_SECRET: z.string().default(''),
 
+  /**
+   * Where the links in outgoing email point. The web app, not the API — a
+   * confirmation link is only useful if it opens the page that can spend it.
+   * Trailing slash is stripped below so callers can append a path blindly.
+   */
+  APP_BASE_URL: z.url().default('http://localhost:5173'),
+
   MAIL_TRANSPORT: z.enum(['smtp', 'sendgrid']).default('smtp'),
   SMTP_HOST: z.string().default('localhost'),
   SMTP_PORT: z.coerce.number().int().positive().default(1025),
@@ -101,6 +108,17 @@ export function parseEnv(source: NodeJS.ProcessEnv = process.env): Env {
     );
   }
 
+  /* A confirmation link pointing at a laptop is a dead link in every donor's
+     inbox, and nothing in production would notice — the mail sends perfectly
+     well, it just cannot be acted on. Caught at boot instead. */
+  if (isProduction && new URL(data.APP_BASE_URL).hostname === 'localhost') {
+    throw new Error(
+      `APP_BASE_URL is still ${data.APP_BASE_URL} with NODE_ENV=production.\n` +
+        'Set it to the public address of the web app — every verification link ' +
+        'we email points at it.',
+    );
+  }
+
   /* The mirror of the rule above: production must not silently post real
      notifications into a mail catcher nobody reads. */
   if (
@@ -119,6 +137,9 @@ export function parseEnv(source: NodeJS.ProcessEnv = process.env): Env {
     JWT_ACCESS_SECRET:
       data.JWT_ACCESS_SECRET ||
       (isProduction ? '' : 'kapka-development-only-signing-key-not-a-secret'),
+    // Stripped once, here, so no caller has to think about whether the
+    // configured value ended in a slash before appending a path.
+    APP_BASE_URL: data.APP_BASE_URL.replace(/\/$/, ''),
     corsOrigins: data.CORS_ORIGINS.split(',')
       .map((origin) => origin.trim())
       .filter(Boolean),

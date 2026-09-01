@@ -166,6 +166,12 @@
   margin-block-start: var(--space-6);
 }
 
+.doneNote {
+  margin-block-start: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+}
+
 /* Page-level layout change, so a media query by design (§7.2). */
 @media (min-width: 64rem) {
   .layout {

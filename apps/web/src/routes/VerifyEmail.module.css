@@ -1,0 +1,58 @@
+/* ============================================================================
+   Confirming a donor's email (§12). One short column, mobile-first — this
+   screen is opened from a phone mail client more or less always.
+   ========================================================================= */
+
+.page {
+  padding-block: var(--space-8) var(--space-24);
+}
+
+.panel {
+  max-inline-size: var(--measure-narrow);
+  margin-inline: auto;
+  padding-block: var(--space-10);
+  text-align: center;
+}
+
+.working {
+  font-size: var(--text-lg);
+  color: var(--fg-secondary);
+}
+
+.mark {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 3.5rem;
+  block-size: 3.5rem;
+  margin-block-end: var(--space-5);
+  font-size: var(--text-2xl);
+  color: var(--success-ink);
+  background-color: var(--success-surface);
+  border-radius: var(--radius-full);
+}
+
+.markBad {
+  color: var(--danger-ink);
+  background-color: var(--danger-surface);
+}
+
+.title {
+  font-size: var(--text-3xl);
+  letter-spacing: var(--tracking-tight);
+}
+
+.lead {
+  margin-block-start: var(--space-3);
+  font-size: var(--text-lg);
+  color: var(--fg-secondary);
+}
+
+.actions {
+  margin-block-start: var(--space-6);
+}
+
+.note {
+  margin-block-start: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+}

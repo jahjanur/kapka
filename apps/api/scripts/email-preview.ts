@@ -1,5 +1,5 @@
 /**
- * Renders the donor notification to files, and optionally mails it somewhere
+ * Renders the emails Kapka sends to files, and optionally mails them somewhere
  * real.
  *
  * The unit tests assert the rules Gmail, Outlook and Apple Mail impose on the
@@ -18,11 +18,17 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import nodemailer from 'nodemailer';
 import { buildEmail, type RequestSummary } from '../src/notify/email';
+import { buildVerificationEmail } from '../src/notify/verifyEmail';
+import type { OutgoingEmail } from '../src/notify/mailer';
 
 const LINKS = {
   request: 'https://kapka.mk/requests/11111111-1111-4111-8111-111111111111',
   pauseNotifications: 'https://kapka.mk/me/notifications',
 };
+
+/** Long enough to wrap in a narrow client, like the real ones. */
+const CONFIRMATION_LINK =
+  'https://kapka.mk/verify-email?token=Zm9vYmFyYmF6cXV4MTIzNDU2Nzg5MGFiY2RlZmdo';
 
 /**
  * The cases worth looking at with your own eyes, not the happy path four
@@ -86,10 +92,18 @@ async function main(): Promise<void> {
   const outDir = join(import.meta.dirname, '..', 'preview');
   mkdirSync(outDir, { recursive: true });
 
-  const built = FIXTURES.map((fixture) => ({
-    ...fixture,
-    email: buildEmail(fixture.request, fixture.donor, LINKS),
-  }));
+  const built: { name: string; email: OutgoingEmail }[] = [
+    ...FIXTURES.map((fixture) => ({
+      name: fixture.name,
+      email: buildEmail(fixture.request, fixture.donor, LINKS),
+    })),
+    /* The confirmation email shares the shell with the notification, so it
+       breaks in the same clients and belongs in the same walk-through. */
+    {
+      name: '05-confirm-email',
+      email: buildVerificationEmail('Ana', CONFIRMATION_LINK),
+    },
+  ];
 
   for (const { name, email } of built) {
     writeFileSync(join(outDir, `${name}.html`), email.html, 'utf8');

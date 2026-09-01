@@ -41,6 +41,26 @@ describe('the access token signing key', () => {
   });
 });
 
+describe('the address the emailed links point at', () => {
+  it('defaults to the local web app, so a fresh clone just works', () => {
+    expect(parseEnv(base).APP_BASE_URL).toBe('http://localhost:5173');
+  });
+
+  it('drops a trailing slash, so appending a path is always safe', () => {
+    expect(parseEnv({ ...base, APP_BASE_URL: 'https://kapka.mk/' }).APP_BASE_URL).toBe(
+      'https://kapka.mk',
+    );
+  });
+
+  it('refuses to point production at a laptop', () => {
+    // The mail would send perfectly well. Every confirmation link in it would
+    // be dead, and nothing in production would notice.
+    expect(() =>
+      parseEnv({ NODE_ENV: 'production', JWT_ACCESS_SECRET: 'x'.repeat(48) }),
+    ).toThrow(/APP_BASE_URL/);
+  });
+});
+
 describe('the bcrypt work factor', () => {
   it('defaults to the 12 that §12 requires', () => {
     expect(parseEnv(base).BCRYPT_COST).toBe(12);
@@ -96,6 +116,7 @@ describe('nobody sends real email by accident (§2)', () => {
       MAIL_TRANSPORT: 'sendgrid',
       SENDGRID_API_KEY: 'SG.x',
       JWT_ACCESS_SECRET: 'x'.repeat(48),
+      APP_BASE_URL: 'https://kapka.mk',
     });
     expect(env.MAIL_TRANSPORT).toBe('sendgrid');
   });
@@ -106,6 +127,7 @@ describe('nobody sends real email by accident (§2)', () => {
         NODE_ENV: 'production',
         MAIL_TRANSPORT: 'sendgrid',
         JWT_ACCESS_SECRET: 'x'.repeat(48),
+        APP_BASE_URL: 'https://kapka.mk',
       }),
     ).toThrow(/requires SENDGRID_API_KEY/);
   });

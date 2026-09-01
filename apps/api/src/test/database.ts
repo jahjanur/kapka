@@ -44,7 +44,7 @@ export async function startTestDatabase(): Promise<TestDatabase> {
       // blood_compatibility is reference data owned by a migration, and its
       // trigger would reject the write anyway.
       await pool.query(
-        'TRUNCATE refresh_tokens, audit_log, notification_log, blood_requests, donor_profiles, users RESTART IDENTITY CASCADE',
+        'TRUNCATE refresh_tokens, email_verification_tokens, audit_log, notification_log, blood_requests, donor_profiles, users RESTART IDENTITY CASCADE',
       );
     },
     async stop() {

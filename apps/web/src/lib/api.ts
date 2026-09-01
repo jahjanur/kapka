@@ -42,10 +42,26 @@ export class ApiError extends Error {
   }
 }
 
+/** What the resend endpoint reports back. */
+export interface ResendResult {
+  sent: boolean;
+  emailVerified: boolean;
+}
+
 export interface ApiClient {
   listRequests(): Promise<PublicBloodRequest[]>;
   getRequest(id: string): Promise<PublicBloodRequest>;
   register(input: RegisterInput): Promise<Session>;
+  /** Spends the token from a confirmation link. Returns the confirmed user. */
+  verifyEmail(token: string): Promise<SessionUser>;
+  /**
+   * Asks for another confirmation link.
+   *
+   * Takes the access token explicitly rather than reading a module-level
+   * session: the endpoint is authenticated, and the alternative is a hidden
+   * dependency between this file and whichever provider happens to be mounted.
+   */
+  resendVerification(accessToken: string): Promise<ResendResult>;
 }
 
 /* ── The real one ───────────────────────────────────────────────────────── */
@@ -110,6 +126,22 @@ function createHttpClient(baseUrl: string): ApiClient {
         body: JSON.stringify(input),
       });
     },
+    async verifyEmail(token) {
+      const { user } = await call<{ user: SessionUser }>('/auth/verify-email', {
+        method: 'POST',
+        body: JSON.stringify({ token }),
+      });
+      return user;
+    },
+    resendVerification(accessToken) {
+      return call<ResendResult>('/auth/verify-email/resend', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+    },
   };
 }
 
@@ -158,6 +190,30 @@ function createDemoClient(): ApiClient {
         },
         accessToken: 'demo-access-token',
       };
+    },
+    async verifyEmail(token) {
+      await latency(null);
+      // 'expired' is the failure worth being able to walk through locally: it
+      // is the only one a real donor is likely to hit.
+      if (token === 'expired') {
+        throw new ApiError(
+          'VALIDATION_FAILED',
+          'That confirmation link has expired. Ask for a new one.',
+          400,
+          'token',
+        );
+      }
+      return {
+        id: 'demo-user',
+        email: 'demo@example.com',
+        fullName: 'Demo Donor',
+        role: 'donor',
+        emailVerified: true,
+      };
+    },
+    async resendVerification() {
+      await latency(null);
+      return { sent: true, emailVerified: false };
     },
   };
 }

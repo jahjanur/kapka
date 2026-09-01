@@ -17,8 +17,9 @@ import {
   registerSchema,
   type BloodType,
 } from '@kapka/shared';
-import { api, ApiError } from '../lib/api';
+import { api, ApiError, type Session } from '../lib/api';
 import { useSession } from '../lib/session';
+import { PATHS } from './paths';
 import styles from './Register.module.css';
 
 type Errors = Partial<Record<string, string>>;
@@ -36,7 +37,11 @@ const TODAY = new Date().toISOString().slice(0, 10);
  */
 export default function Register() {
   const { signIn } = useSession();
-  const [registered, setRegistered] = useState<string | null>(null);
+  /* The whole session, not just the address: asking for another confirmation
+     link is an authenticated call, and this screen is where it is asked for. */
+  const [registered, setRegistered] = useState<Session | null>(null);
+  const [resending, setResending] = useState(false);
+  const [resendNote, setResendNote] = useState<string | null>(null);
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -92,7 +97,7 @@ export default function Register() {
       // Confirmed in place rather than on a route of its own: a /registered
       // URL is reachable by reload and by anyone who bookmarks it, and it has
       // nothing true to say to either.
-      setRegistered(session.user.email);
+      setRegistered(session);
     } catch (error) {
       if (error instanceof ApiError && error.field) {
         setErrors({ [error.field]: error.message });
@@ -106,6 +111,28 @@ export default function Register() {
     }
   }
 
+  async function handleResend() {
+    if (!registered) return;
+    setResendNote(null);
+    setResending(true);
+    try {
+      const result = await api.resendVerification(registered.accessToken);
+      setResendNote(
+        result.emailVerified
+          ? 'That address is already confirmed. You are on the list.'
+          : 'Sent. Give it a minute, and check your spam folder.',
+      );
+    } catch (error) {
+      setResendNote(
+        error instanceof ApiError
+          ? error.message
+          : 'We could not send that email. Try again shortly.',
+      );
+    } finally {
+      setResending(false);
+    }
+  }
+
   if (registered) {
     return (
       <>
@@ -116,16 +143,37 @@ export default function Register() {
               <span className={styles.doneMark} aria-hidden="true">
                 <Icon name="checkCircle" />
               </span>
-              <h1 className={styles.title}>You are on the list.</h1>
+              <h1 className={styles.title}>Confirm your email</h1>
+              {/* Not "you are on the list": they are not, until the link is
+                  opened. The matching query refuses an unconfirmed donor, so
+                  saying otherwise here would be a promise nothing keeps. */}
               <p className={styles.lead}>
-                We sent a confirmation to <strong>{registered}</strong>. From now on you
-                will hear from us only when someone near you needs your blood type.
+                Your account is created. We sent a confirmation link to{' '}
+                <strong>{registered.user.email}</strong> — open it and you join the donors
+                we contact when someone near you needs your blood type.
               </p>
               <div className={styles.doneActions}>
-                <Button to="/" size="lg">
+                <Button to={PATHS.feed} size="lg">
                   See open requests
                 </Button>
               </div>
+              <p className={styles.doneNote}>
+                Nothing arrived?{' '}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => void handleResend()}
+                  loading={resending}
+                  loadingLabel="Sending a new link…"
+                >
+                  Send it again
+                </Button>
+              </p>
+              {resendNote && (
+                <p className={styles.doneNote} aria-live="polite">
+                  {resendNote}
+                </p>
+              )}
             </div>
           </Container>
         </div>

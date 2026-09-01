@@ -39,6 +39,23 @@ export const loginSchema = z.strictObject({
 
 export type LoginInput = z.infer<typeof loginSchema>;
 
+/**
+ * The token out of a confirmation link, on its way back to the API (§12).
+ *
+ * The web app posts this rather than the email linking straight at the API:
+ * corporate mail scanners follow links in mail before the recipient does, and
+ * a GET that spends the token would be spent by the scanner. A form post from
+ * the page a person opened is not something a link-follower does.
+ *
+ * Length is capped because the token is 32 random bytes in base64url — 43
+ * characters. Anything near the cap is not one of ours.
+ */
+export const verifyEmailSchema = z.strictObject({
+  token: z.string().min(1, 'That confirmation link is missing its token.').max(200),
+});
+
+export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
+
 function today(): string {
   return new Date().toISOString().slice(0, 10);
 }

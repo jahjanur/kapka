@@ -6,6 +6,7 @@ import { createApp } from '../app';
 import { createPgAuthRepository } from '../auth/repository';
 import { startTestDatabase, type TestDatabase } from '../test/database';
 import { createPgRequestsRepository } from './repository';
+import { noVerificationEmail } from '../test/mail';
 
 /**
  * The three request endpoints, over real HTTP against a real PostgreSQL.
@@ -48,7 +49,13 @@ beforeEach(async () => {
   callers = 0;
   // Both repositories point at the real database, so requester_id actually
   // references a row — and the auth SQL gets exercised alongside.
-  app = createApp(createPgAuthRepository(db.pool), createPgRequestsRepository(db.pool));
+  app = createApp(
+    createPgAuthRepository(db.pool),
+    createPgRequestsRepository(db.pool),
+    undefined,
+    undefined,
+    noVerificationEmail,
+  );
 });
 
 /** Registers a real account and returns an Authorization header for it. */

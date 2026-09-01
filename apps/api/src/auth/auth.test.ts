@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '../app';
 import { createFakeAuthRepository } from './fakeRepository';
+import { noVerificationEmail } from '../test/mail';
 import { REFRESH_COOKIE } from './cookies';
 import { hashPassword } from './passwords';
 import { ACCESS_TOKEN_TTL_SECONDS, verifyAccessToken } from './tokens';
@@ -23,7 +24,9 @@ let app: ReturnType<typeof createApp>;
 
 beforeEach(() => {
   repository = createFakeAuthRepository();
-  app = createApp(repository);
+  // Registration mails a confirmation link; this file is about everything
+  // else it does. See auth/verification.test.ts for the link itself.
+  app = createApp(repository, undefined, undefined, undefined, noVerificationEmail);
 });
 
 /*

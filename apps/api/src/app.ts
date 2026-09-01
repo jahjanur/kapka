@@ -9,6 +9,7 @@ import {
 } from './requests/repository';
 import { createPgAdminRepository, type AdminRepository } from './admin/repository';
 import { createAdminRouter } from './routes/admin';
+import { createVerificationSender, type SendVerification } from './auth/verification';
 import { dispatchNotifications } from './notify/dispatch';
 import { createMailer } from './notify/mailer';
 import type { Dispatch } from './routes/admin';
@@ -31,6 +32,9 @@ export function createApp(
   admin: AdminRepository = createPgAdminRepository(),
   dispatch: Dispatch = (requestId) =>
     dispatchNotifications(requestId, { mailer: createMailer() }),
+  // Bound to the same repository the routes use, so the token it writes is the
+  // token they can find.
+  sendVerification: SendVerification = createVerificationSender(repository),
 ): Express {
   const app = express();
 
@@ -53,7 +57,7 @@ export function createApp(
 
   app.use('/api', healthRouter);
   app.use('/api', generalRateLimit);
-  app.use('/api', createAuthRouter(repository));
+  app.use('/api', createAuthRouter(repository, sendVerification));
   app.use('/api', createMeRouter(repository));
   app.use('/api', citiesRouter);
   app.use('/api', createRequestsRouter(repository, requests));

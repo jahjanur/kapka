@@ -29,7 +29,7 @@ This does not go through the application's mailer. That one is pinned to
 Mailpit outside production so it can never reach a donor by accident, and that
 guard is worth keeping.
 
-Four fixtures are sent, subject-prefixed with the fixture name:
+Five fixtures are sent, subject-prefixed with the fixture name:
 
 |                          |                                                                            |
 | ------------------------ | -------------------------------------------------------------------------- |
@@ -37,6 +37,7 @@ Four fixtures are sent, subject-prefixed with the fixture name:
 | `02-routine-single-unit` | singular "1 unit", lowest urgency                                          |
 | `03-cyrillic-long-name`  | Cyrillic; a hospital name that truncates the subject and wraps the heading |
 | `04-awkward-characters`  | `&`, `"` and `'` — where escaping goes wrong                               |
+| `05-confirm-email`       | the confirmation link; same shell, so the same clients break it            |
 
 ## The checklist
 

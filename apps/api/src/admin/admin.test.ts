@@ -9,6 +9,7 @@ import { startTestDatabase, type TestDatabase } from '../test/database';
 import { dispatchNotifications } from '../notify/dispatch';
 import type { Mailer, OutgoingEmail } from '../notify/mailer';
 import { createPgAdminRepository } from './repository';
+import { noVerificationEmail } from '../test/mail';
 
 /**
  * Approving a request is what releases it to donors, so these are the two
@@ -56,6 +57,7 @@ beforeEach(async () => {
     // The real dispatcher, bound to this test's database and a mailer that
     // never opens a socket. Approving genuinely emails, in other words.
     (requestId) => dispatchNotifications(requestId, { db: db.pool, mailer }),
+    noVerificationEmail,
   );
 });
 
