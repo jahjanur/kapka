@@ -13,6 +13,7 @@
     "migrate:create": "node-pg-migrate create --envPath .env -m migrations -j sql",
     "migrate:status": "node-pg-migrate up --envPath .env -m migrations --dry-run",
     "seed": "tsx src/seed/run.ts",
+    "expire-requests": "tsx src/jobs/expireRequests.ts",
     "email:preview": "tsx scripts/email-preview.ts"
   },
   "dependencies": {

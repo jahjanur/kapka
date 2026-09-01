@@ -563,6 +563,92 @@ describe('moderating twice', () => {
   });
 });
 
+describe('requests whose window has closed', () => {
+  /** A pending request that expired `daysAgo` days ago. */
+  async function stale(daysAgo: number): Promise<string> {
+    const requester = await signIn();
+    const { rows } = await db.pool.query<{ id: string }>(
+      `INSERT INTO blood_requests
+         (requester_id, blood_type, hospital_name, city, contact_phone, expires_at)
+       VALUES ($1, 'O-', 'Lapsed General', 'Skopje', '+389 70 000 000',
+               now() - ($2 || ' days')::interval)
+       RETURNING id`,
+      [requester.id, String(daysAgo)],
+    );
+    return rows[0]?.id ?? '';
+  }
+
+  it('are not offered to an admin at all', async () => {
+    /* The daily job flips them and they drop out anyway; this covers the
+       hours in between, so nobody is offered a decision approve would then
+       refuse. */
+    const admin = await signIn('admin');
+    await stale(1);
+    const fresh = await pendingRequest();
+
+    const response = await request(serverFor(app))
+      .get('/api/admin/requests')
+      .set('Authorization', admin.header);
+    const ids = z
+      .object({ requests: z.array(z.object({ id: z.string() })) })
+      .parse(response.body)
+      .requests.map((r) => r.id);
+
+    expect(ids).toEqual([fresh]);
+  });
+
+  it('cannot be approved, however the admin got to them', async () => {
+    /* This is the one that matters. Approving emails every matching donor in
+       the city about a hospital that stopped needing blood a week ago. */
+    const admin = await signIn('admin');
+    await eligibleDonor();
+    const id = await stale(2);
+
+    const response = await request(serverFor(app))
+      .post(`/api/admin/requests/${id}/approve`)
+      .set('Authorization', admin.header);
+
+    expect(response.status).toBe(409);
+    expect(errorSchema.parse(response.body).error.code).toBe('REQUEST_EXPIRED');
+    expect(mailer.sent).toHaveLength(0);
+  });
+
+  it('are left pending rather than quietly decided', async () => {
+    // Refusing is not moderating. The job is what changes the status.
+    const admin = await signIn('admin');
+    const id = await stale(1);
+    await request(serverFor(app))
+      .post(`/api/admin/requests/${id}/approve`)
+      .set('Authorization', admin.header);
+
+    const { rows } = await db.pool.query<{ status: string }>(
+      'SELECT status FROM blood_requests WHERE id = $1',
+      [id],
+    );
+    expect(rows[0]?.status).toBe('pending');
+  });
+
+  it('cannot be rejected either', async () => {
+    const admin = await signIn('admin');
+    const id = await stale(1);
+    const response = await request(serverFor(app))
+      .post(`/api/admin/requests/${id}/reject`)
+      .set('Authorization', admin.header)
+      .send({ reason: 'Too old to act on.' });
+
+    expect(response.status).toBe(409);
+    expect(errorSchema.parse(response.body).error.code).toBe('REQUEST_EXPIRED');
+  });
+
+  it('still tells a missing request from an expired one', async () => {
+    const admin = await signIn('admin');
+    const response = await request(serverFor(app))
+      .post('/api/admin/requests/11111111-1111-4111-8111-111111111111/approve')
+      .set('Authorization', admin.header);
+    expect(response.status).toBe(404);
+  });
+});
+
 describe('requests that are not there', () => {
   it('answers 404 for an id that does not exist', async () => {
     const admin = await signIn('admin');

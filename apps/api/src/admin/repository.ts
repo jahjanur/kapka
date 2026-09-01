@@ -11,6 +11,9 @@ export type ModerationOutcome =
   | { kind: 'not-found' }
   /** Someone already approved or rejected it. */
   | { kind: 'already-moderated'; status: string }
+  /** Its window closed before anyone decided. Approving would email donors
+      about a hospital that stopped needing blood days ago. */
+  | { kind: 'expired' }
   | { kind: 'approved'; matchedDonors: MatchedDonor[] }
   | { kind: 'rejected' };
 
@@ -77,22 +80,30 @@ async function moderate(
     const { rows } = await client.query<{ id: string }>(
       `UPDATE blood_requests
        SET status = $2, moderated_by = $3, moderated_at = now(), reject_reason = $4
-       WHERE id = $1 AND status = 'pending'
+       WHERE id = $1 AND status = 'pending' AND expires_at > now()
        RETURNING id`,
       [requestId, next, adminId, reason],
     );
 
     if (!rows[0]) {
-      // Nothing moved. Either it does not exist, or it was moderated already —
-      // and those need different answers.
-      const { rows: existing } = await client.query<{ status: string }>(
-        'SELECT status FROM blood_requests WHERE id = $1',
+      /*
+       * Nothing moved, and the three reasons need three answers. The expiry
+       * check is in the UPDATE rather than read first because the daily job
+       * may be flipping this very row: whichever statement takes the lock
+       * first wins, and the other finds the world already changed.
+       */
+      const { rows: existing } = await client.query<{
+        status: string;
+        expired: boolean;
+      }>(
+        'SELECT status, expires_at <= now() AS expired FROM blood_requests WHERE id = $1',
         [requestId],
       );
-      const status = existing[0]?.status;
-      return status
-        ? { kind: 'already-moderated' as const, status }
-        : { kind: 'not-found' as const };
+      const row = existing[0];
+      if (!row) return { kind: 'not-found' as const };
+      if (row.status !== 'pending')
+        return { kind: 'already-moderated' as const, status: row.status };
+      return { kind: 'expired' as const };
     }
 
     if (next === 'rejected') {
@@ -124,6 +135,11 @@ export function createPgAdminRepository(db: pg.Pool = pool): AdminRepository {
        * worked through, and the request that has been waiting longest is the
        * one somebody is still waiting on an answer for.
        *
+       * Expired ones are left out rather than shown and refused. The daily
+       * job flips them to `expired` and they drop out anyway; this covers the
+       * hours in between, so an admin is never offered a decision that
+       * approve would then reject.
+       *
        * contact_phone is selected here where it is not for the public feed:
        * an admin deciding whether a request is real is exactly who §4 means
        * by an authenticated viewer, and the route above this is admin-only.
@@ -134,7 +150,7 @@ export function createPgAdminRepository(db: pg.Pool = pool): AdminRepository {
                 r.created_at, r.expires_at, u.full_name AS requester_name
          FROM blood_requests r
          JOIN users u ON u.id = r.requester_id
-         WHERE r.status = 'pending'
+         WHERE r.status = 'pending' AND r.expires_at > now()
          ORDER BY r.created_at ASC
          LIMIT ${String(QUEUE_LIMIT)}`,
       );

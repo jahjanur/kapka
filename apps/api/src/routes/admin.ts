@@ -47,6 +47,19 @@ export function createAdminRouter(
       res.status(404).json(apiError('NOT_FOUND', 'That request does not exist.'));
       return true;
     }
+    if (outcome.kind === 'expired') {
+      // 409 like already-moderated, and for the same reason: the request is
+      // fine, the world moved on while it sat in the queue.
+      res
+        .status(409)
+        .json(
+          apiError(
+            'REQUEST_EXPIRED',
+            'That request has expired. Approving it would email donors about a hospital that no longer needs them.',
+          ),
+        );
+      return true;
+    }
     if (outcome.kind === 'already-moderated') {
       // 409, not 400: the request is fine, the world moved. Two admins
       // working the queue at once land here, and it tells them what happened.
