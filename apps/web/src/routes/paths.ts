@@ -21,6 +21,7 @@ export const PATHS = {
   dashboard: '/me',
   register: '/register',
   howItWorks: '/how-it-works',
+  privacy: '/privacy',
   /**
    * Where a confirmation email lands, with the token in the query string. The
    * page posts it to the API — see the note in verifyEmailSchema about why the
@@ -40,4 +41,5 @@ export const STATIC_PATHS: string[] = [
   PATHS.postRequest,
   PATHS.register,
   PATHS.howItWorks,
+  PATHS.privacy,
 ];

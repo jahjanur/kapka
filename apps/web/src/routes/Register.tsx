@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type SyntheticEvent } from 'react';
+import { Link } from 'react-router-dom';
 import {
   AppHeader,
   BloodTypeLabel,
@@ -302,6 +303,13 @@ export default function Register() {
                   Pause the emails, or delete your account, at any time.
                 </li>
               </ul>
+              {/* Before the form, not buried under the submit button. Somebody
+                  deciding whether to hand over their blood type should be able
+                  to read what happens to it first. */}
+              <p className={styles.privacy}>
+                <Link to={PATHS.privacy}>What we store, and why</Link> — the whole notice
+                is a two-minute read.
+              </p>
             </div>
 
             <form

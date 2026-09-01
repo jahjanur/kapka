@@ -16,6 +16,7 @@ const Dashboard = lazy(() => import('./routes/Dashboard'));
 const Register = lazy(() => import('./routes/Register'));
 const VerifyEmail = lazy(() => import('./routes/VerifyEmail'));
 const HowItWorks = lazy(() => import('./routes/HowItWorks'));
+const Privacy = lazy(() => import('./routes/Privacy'));
 const NotFound = lazy(() => import('./routes/NotFound'));
 
 export function App() {
@@ -62,6 +63,7 @@ export function App() {
                   <Route path={PATHS.register} element={<Register />} />
                   <Route path={PATHS.verifyEmail} element={<VerifyEmail />} />
                   <Route path={PATHS.howItWorks} element={<HowItWorks />} />
+                  <Route path={PATHS.privacy} element={<Privacy />} />
                   {/* Last, so it only catches what nothing above matched. */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
