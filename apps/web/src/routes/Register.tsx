@@ -104,16 +104,19 @@ export default function Register() {
   }, [focusRequest]);
 
   /* Changing step moves focus to the new step's heading, so a screen reader
-     announces where it now is rather than leaving the user on a button that
-     has just disappeared. Skipped on the first render, where it would drag
-     focus into the form before anyone asked. */
+     announces where it now is rather than being left on a button that has
+     just disappeared.
+
+     Compared against the previous step rather than a "have I mounted" flag.
+     A ref survives StrictMode's mount-unmount-mount, so the flag was already
+     true the second time round and the heading took focus on page load —
+     which put the first Tab past the skip link and the whole header. This
+     way a remount changes nothing, because the step has not changed. */
   const stepHeading = useRef<HTMLHeadingElement>(null);
-  const mounted = useRef(false);
+  const previousStep = useRef(step);
   useEffect(() => {
-    if (!mounted.current) {
-      mounted.current = true;
-      return;
-    }
+    if (previousStep.current === step) return;
+    previousStep.current = step;
     stepHeading.current?.focus();
   }, [step]);
 

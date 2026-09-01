@@ -253,6 +253,29 @@ describe('on a phone, in two steps', () => {
     expect(document.querySelectorAll('[aria-invalid="true"]')).toHaveLength(3);
   });
 
+  it('moves focus to the step it has just opened', async () => {
+    /* So a screen reader says where it now is, rather than leaving the user
+       on a Continue button that has been unmounted. The guard on this used a
+       "have I mounted" ref, which survives StrictMode's remount — so the
+       heading took focus on page load instead, putting the first Tab past
+       the skip link and the entire header. */
+    const user = userEvent.setup();
+    renderPage();
+
+    // Nothing on the page has taken focus. Asserting on activeElement's text
+    // would match the whole body, which contains every heading there is.
+    expect(document.activeElement).toBe(document.body);
+
+    await user.type(screen.getByLabelText(/Full name/), 'Ana Petrovska');
+    await user.type(screen.getByLabelText(/^Email/), 'ana@example.com');
+    await user.type(screen.getByLabelText(/^Password/), 'a-long-enough-password');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+
+    await waitFor(() => {
+      expect(document.activeElement).toHaveTextContent('Your blood');
+    });
+  });
+
   it('keeps what was typed when stepping back and forward', async () => {
     const user = userEvent.setup();
     renderPage();

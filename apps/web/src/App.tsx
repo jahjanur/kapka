@@ -37,7 +37,11 @@ export function App() {
             {/* Outside <main>, because it is about the device rather than the
                 page, and it must not move when a route changes. */}
             <OfflineBanner />
-            <main id="main">
+            {/* tabIndex={-1} is what makes the skip link skip. Without it
+                the browser scrolls to #main and leaves focus on <body>, so
+                the next Tab starts again from the top — the link appears to
+                work and does nothing for the person using it. */}
+            <main id="main" tabIndex={-1}>
               {/* Route-level fallback only. Screens get shape-matched skeletons
               of their own (§9.7) — never a centred spinner on a blank page. */}
               <Suspense

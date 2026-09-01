@@ -67,6 +67,20 @@ describe('the app end to end', () => {
     ).toBeInTheDocument();
   });
 
+  it('gives the skip link somewhere to put focus', async () => {
+    /* Without tabIndex on <main> the browser scrolls to #main and leaves
+       focus on <body>, so the next Tab starts again from the top: the link
+       looks like it works and does nothing for the person using it. Found
+       by driving a real browser; jsdom does not implement fragment
+       navigation, so this pins the attribute the fix depends on. */
+    render(<App />);
+    await screen.findByText(/open requests/);
+
+    const main = document.querySelector('main');
+    expect(main).toHaveAttribute('id', 'main');
+    expect(main).toHaveAttribute('tabindex', '-1');
+  });
+
   it('walks from the header to registration', async () => {
     const user = userEvent.setup();
     render(<App />);
