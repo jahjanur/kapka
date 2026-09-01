@@ -101,6 +101,9 @@ const submit = (user: ReturnType<typeof userEvent.setup>) =>
   user.click(screen.getByRole('button', { name: /Post request/ }));
 
 beforeEach(() => {
+  /* The form autosaves, so without this each test starts with whatever the
+     previous one was halfway through typing. */
+  localStorage.clear();
   setViewport('phone');
   createRequest.mockReset();
   createRequest.mockResolvedValue({
@@ -213,6 +216,90 @@ describe('posting a request', () => {
       await screen.findByRole('heading', { name: /need an account/i }),
     ).toBeInTheDocument();
     expect(screen.queryByLabelText(/Hospital/)).not.toBeInTheDocument();
+  });
+});
+
+describe('the draft that survives a dropped connection', () => {
+  /** Everything a reload does that matters here: the component goes and comes
+      back, and only what reached storage comes back with it. */
+  function reload(rendered: { unmount: () => void }) {
+    rendered.unmount();
+    return renderPage();
+  }
+
+  it('brings back a half-filled form, and says that is what happened', async () => {
+    const user = userEvent.setup();
+    const first = renderPage();
+    await user.type(await screen.findByLabelText(/Hospital/), 'City General');
+    await user.type(screen.getByLabelText(/Contact phone/), '+389 70 123 456');
+
+    reload(first);
+
+    expect(await screen.findByLabelText(/Hospital/)).toHaveValue('City General');
+    expect(screen.getByLabelText(/Contact phone/)).toHaveValue('+389 70 123 456');
+    // Not silently: a form that is mysteriously already filled in is
+    // unsettling, and on a shared machine it is somebody else's question.
+    expect(screen.getByText(/We kept what you had typed/)).toBeInTheDocument();
+  });
+
+  it('brings back the blood type too, not only the text', async () => {
+    const user = userEvent.setup();
+    const first = renderPage();
+    await user.click(await screen.findByRole('button', { name: 'O negative' }));
+
+    reload(first);
+
+    expect(await screen.findByRole('button', { name: 'O negative' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+
+  it('says nothing about a draft on a form nobody has touched', async () => {
+    renderPage();
+    await screen.findByLabelText(/Hospital/);
+    expect(screen.queryByText(/We kept what you had typed/)).not.toBeInTheDocument();
+  });
+
+  it('throws the draft away when asked, and does not bring it back', async () => {
+    const user = userEvent.setup();
+    const first = renderPage();
+    await user.type(await screen.findByLabelText(/Hospital/), 'City General');
+    const second = reload(first);
+
+    await user.click(await screen.findByRole('button', { name: /Start over/ }));
+    expect(screen.getByLabelText(/Hospital/)).toHaveValue('');
+    expect(screen.queryByText(/We kept what you had typed/)).not.toBeInTheDocument();
+
+    // And it is gone from storage, not merely off the screen.
+    reload(second);
+    expect(await screen.findByLabelText(/Hospital/)).toHaveValue('');
+  });
+
+  it('keeps the draft when the post fails — which is the whole point', async () => {
+    createRequest.mockRejectedValue(
+      new ApiError('INTERNAL', 'We could not reach the server.', 0),
+    );
+    const user = userEvent.setup();
+    const first = renderPage();
+    await fillValidForm(user);
+    await submit(user);
+    await screen.findByRole('alert');
+
+    reload(first);
+    expect(await screen.findByLabelText(/Hospital/)).toHaveValue('City General');
+  });
+
+  it('forgets it once the request is actually posted', async () => {
+    // The API has it now, and this may be a shared machine.
+    const user = userEvent.setup();
+    const first = renderPage();
+    await fillValidForm(user);
+    await submit(user);
+    await screen.findByText(/with an admin/i);
+
+    reload(first);
+    expect(await screen.findByLabelText(/Hospital/)).toHaveValue('');
   });
 });
 

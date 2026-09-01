@@ -38,6 +38,23 @@
   box-shadow: var(--elevation-2);
 }
 
+/* The "we kept what you typed" notice. Informational, not a warning: nothing
+   has gone wrong, and colouring it like an error would say otherwise. */
+.draftNote {
+  display: flex;
+  align-items: start;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+  background-color: var(--bg-surface-alt);
+  border-radius: var(--radius-md);
+}
+
+.draftNote svg {
+  flex: none;
+}
+
 .formError {
   display: flex;
   align-items: start;

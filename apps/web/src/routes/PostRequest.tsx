@@ -37,6 +37,7 @@ import { api, ApiError } from '../lib/api';
 import { cx } from '../lib/cx';
 import { useFieldErrors } from '../lib/useFieldErrors';
 import { useMediaQuery } from '../lib/useMediaQuery';
+import { clearDraft, EMPTY_DRAFT, readDraft, writeDraft } from '../lib/requestDraft';
 import { useSession } from '../lib/session';
 import { PATHS } from './paths';
 import styles from './PostRequest.module.css';
@@ -77,18 +78,63 @@ export default function PostRequest() {
   const { session } = useSession();
   const wide = useMediaQuery(WIDE);
 
-  const [bloodType, setBloodType] = useState<BloodType | null>(null);
-  const [unitsNeeded, setUnitsNeeded] = useState('1');
-  const [urgency, setUrgency] = useState<Urgency>('urgent');
-  const [hospitalName, setHospitalName] = useState('');
-  const [city, setCity] = useState('');
-  const [contactPhone, setContactPhone] = useState('');
-  const [note, setNote] = useState('');
-  const [pin, setPin] = useState<{ lat: number; lng: number } | null>(null);
+  /* Read once, before the first render, so a restored form is simply what is
+     on screen — restoring in an effect would paint an empty form first and
+     then fill it in, which reads as the page having lost the work and found
+     it again. */
+  const [restored] = useState(() => readDraft());
+  const start = restored ?? EMPTY_DRAFT;
+  const [keptDraft, setKeptDraft] = useState(restored !== null);
+
+  const [bloodType, setBloodType] = useState<BloodType | null>(start.bloodType);
+  const [unitsNeeded, setUnitsNeeded] = useState(start.unitsNeeded);
+  const [urgency, setUrgency] = useState<Urgency>(start.urgency);
+  const [hospitalName, setHospitalName] = useState(start.hospitalName);
+  const [city, setCity] = useState(start.city);
+  const [contactPhone, setContactPhone] = useState(start.contactPhone);
+  const [note, setNote] = useState(start.note);
+  const [pin, setPin] = useState<{ lat: number; lng: number } | null>(start.pin);
 
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [posted, setPosted] = useState<PublicBloodRequest | null>(null);
+
+  /*
+   * Every change, straight to storage. The connection this form is filled in
+   * on drops in lifts and stairwells, and a request half-typed by someone
+   * whose relative is in surgery is not something to lose to a reload.
+   *
+   * It runs per render rather than per keystroke — React has already batched
+   * by the time an effect fires — and writes under a kilobyte, so there is
+   * nothing here worth debouncing. A debounce would only reintroduce the
+   * window this exists to close.
+   */
+  useEffect(() => {
+    writeDraft({
+      bloodType,
+      unitsNeeded,
+      urgency,
+      hospitalName,
+      city,
+      contactPhone,
+      note,
+      pin,
+    });
+  }, [bloodType, unitsNeeded, urgency, hospitalName, city, contactPhone, note, pin]);
+
+  /** Throws the draft away and empties the form. */
+  function discardDraft() {
+    clearDraft();
+    setKeptDraft(false);
+    setBloodType(EMPTY_DRAFT.bloodType);
+    setUnitsNeeded(EMPTY_DRAFT.unitsNeeded);
+    setUrgency(EMPTY_DRAFT.urgency);
+    setHospitalName(EMPTY_DRAFT.hospitalName);
+    setCity(EMPTY_DRAFT.city);
+    setContactPhone(EMPTY_DRAFT.contactPhone);
+    setNote(EMPTY_DRAFT.note);
+    setPin(EMPTY_DRAFT.pin);
+  }
 
   /* Focus has to move after the render that marks the fields invalid, not in
      the handler that set them — nothing carries aria-invalid until then. */
@@ -140,7 +186,13 @@ export default function PostRequest() {
 
     setSubmitting(true);
     try {
-      setPosted(await api.createRequest(parsed.data, session.accessToken));
+      const created = await api.createRequest(parsed.data, session.accessToken);
+      /* Only once the API has it. Clearing before the call would lose the
+         draft to the exact failure it is here for — and this machine may well
+         be a shared one, so a posted request has no business staying in its
+         storage either. */
+      clearDraft();
+      setPosted(created);
     } catch (error) {
       if (error instanceof ApiError) setFormError(error.message);
       else setFormError('Something went wrong. Try again.');
@@ -242,6 +294,22 @@ export default function PostRequest() {
                   is emailed at once.
                 </p>
               </div>
+
+              {keptDraft && (
+                /* Said out loud rather than silently refilling the fields. A
+                   form that is mysteriously already filled in is unsettling,
+                   and on a shared machine the honest reading of it is "whose
+                   is this?" — so the way to throw it away sits right here. */
+                <p className={styles.draftNote}>
+                  <Icon name="info" />
+                  <span>
+                    We kept what you had typed here.{' '}
+                    <Button variant="ghost" size="sm" onClick={discardDraft}>
+                      Start over
+                    </Button>
+                  </span>
+                </p>
+              )}
 
               {formError && (
                 <p className={styles.formError} role="alert">
