@@ -1,0 +1,21 @@
+/* The harness's own chrome. Nothing here styles a component — every rule is
+   about the space around one, so a snapshot photographs the component and a
+   predictable margin rather than whatever the page happened to do. */
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.specimen {
+  /* Padding, not margin: the element screenshot is of this box, so this is
+     the breathing room inside every snapshot. */
+  padding: var(--space-4, 1rem);
+  background: var(--color-bg);
+}
+
+/* Shrink to the component for anything that is not laid out by its width, so
+   a small button does not produce a 1280px-wide photograph of empty page. */
+.specimen[data-width='auto'] {
+  display: inline-block;
+}

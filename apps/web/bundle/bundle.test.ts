@@ -131,6 +131,22 @@ describe('the initial bundle', () => {
    * and that is what the assertions above ask.
    */
 
+  it('does not ship the visual-regression harness', () => {
+    /*
+     * visual-harness.html is test equipment: a page on the dev server that
+     * photographs every component variant. It stays out of dist/ because Vite
+     * builds index.html and nothing else — but that is a default, and
+     * build.rollupOptions.input is one line away from changing it.
+     *
+     * The catalogue imports every component in the product and hands them
+     * fixtures. Shipping it would put a page nobody should reach in front of
+     * every visitor, and drag the entire component library into the bundle to
+     * do it. The fingerprint is the handle the spec reaches for.
+     */
+    const harness = chunks.filter((chunk) => chunk.code.includes('__SPECIMENS__'));
+    expect(harness).toEqual([]);
+  });
+
   it('splits every route out of the entry', () => {
     /* Route-level splitting from the start (§11). If a screen stops being
        lazy it lands in the entry, and the feed pays for the admin queue. */
