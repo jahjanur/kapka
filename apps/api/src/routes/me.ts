@@ -1,10 +1,14 @@
 import { Router } from 'express';
 import {
   apiError,
+  deleteAccountSchema,
   donorProfilePatchSchema,
+  type DeleteAccountInput,
   type DonorProfilePatchInput,
 } from '@kapka/shared';
 import { getAuth } from '../auth/context';
+import { verifyPassword } from '../auth/passwords';
+import { REFRESH_COOKIE, clearRefreshCookieOptions } from '../auth/cookies';
 import { requireAuth } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
 import type { AuthRepository } from '../auth/repository';
@@ -85,6 +89,70 @@ export function createMeRouter(repository: AuthRepository): Router {
       }
 
       res.json({ donorProfile: profile });
+    },
+  );
+
+  /**
+   * GET /api/me/export — everything we hold about the caller (§12).
+   *
+   * Sent as a download rather than rendered, because the point is to have
+   * the file. The shape follows the tables: an export is a record of what is
+   * stored, and arranging it into a nicer story would make it a worse answer
+   * to "what do you have about me".
+   */
+  router.get('/me/export', requireAuth(repository), async (_req, res) => {
+    const auth = getAuth(res);
+    if (!auth) return;
+
+    const data = await repository.exportUserData(auth.userId);
+    if (!data) return; // requireAuth already confirmed the account exists.
+
+    const day = data.exportedAt.slice(0, 10);
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="kapka-data-${day}.json"`);
+    // An export is the one response that must never be cached by anything.
+    res.setHeader('Cache-Control', 'no-store');
+    res.send(JSON.stringify(data, null, 2));
+  });
+
+  /**
+   * DELETE /api/me — real deletion (§12).
+   *
+   * The password again, because this cannot be undone and takes the requests
+   * they posted with it. One field for the person; everything, for somebody
+   * holding a borrowed session.
+   */
+  router.delete(
+    '/me',
+    requireAuth(repository),
+    validateBody(deleteAccountSchema),
+    async (req, res) => {
+      const auth = getAuth(res);
+      if (!auth) return;
+
+      const user = await repository.findUserById(auth.userId);
+      if (!user) return;
+
+      const { password } = req.body as DeleteAccountInput;
+      if (!(await verifyPassword(password, user.passwordHash))) {
+        /* Not the generic login message: the caller is already authenticated
+           and knows the account exists, so there is nothing to protect by
+           being vague — only a person to confuse. */
+        res
+          .status(401)
+          .json(
+            apiError('INVALID_CREDENTIALS', 'That password is not right.', 'password'),
+          );
+        return;
+      }
+
+      await repository.deleteUser(auth.userId);
+
+      /* The cookie goes too. Leaving it would send a token for a user who no
+         longer exists on every subsequent request, and the refresh rows are
+         already gone with the account. */
+      res.clearCookie(REFRESH_COOKIE, clearRefreshCookieOptions());
+      res.status(204).end();
     },
   );
 

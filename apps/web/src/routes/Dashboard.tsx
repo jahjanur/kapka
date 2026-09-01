@@ -1,5 +1,5 @@
 import { useState, type SyntheticEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   BLOOD_TYPES,
   CITIES,
@@ -18,8 +18,10 @@ import {
   Field,
   Icon,
   Input,
+  Modal,
   Select,
   Skeleton,
+  useToast,
 } from '../components';
 import { api, ApiError, type DonorProfile } from '../lib/api';
 import { cx } from '../lib/cx';
@@ -44,7 +46,8 @@ const longDate = (day: string) =>
 
 /** The donor's own dashboard (§9.5). */
 export default function Dashboard() {
-  const { session } = useSession();
+  const { session, signOut } = useSession();
+  const navigate = useNavigate();
   const token = session?.accessToken;
   const { data, isLoading, error, refetch } = useMe(token);
   const { data: notifications, isLoading: loadingHistory } = useMyNotifications(token);
@@ -59,6 +62,12 @@ export default function Dashboard() {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const { show } = useToast();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [leaving, setLeaving] = useState(false);
 
   const [bloodType, setBloodType] = useState<BloodType | null>(null);
   const [city, setCity] = useState('');
@@ -79,6 +88,51 @@ export default function Dashboard() {
       );
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function download() {
+    if (!token) return;
+    try {
+      const data = await api.exportMyData(token);
+      /* Built in the browser from the JSON rather than following a link: the
+         endpoint needs an Authorization header, and a plain <a href> cannot
+         carry one. */
+      const url = URL.createObjectURL(
+        new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }),
+      );
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `kapka-data-${data.exportedAt.slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      show('Your data has been downloaded.', { tone: 'success' });
+    } catch (caught) {
+      show(
+        caught instanceof ApiError ? caught.message : 'We could not build that file.',
+        { tone: 'error' },
+      );
+    }
+  }
+
+  async function deleteAccount() {
+    if (!token) return;
+    setDeleteError(null);
+    setLeaving(true);
+    try {
+      await api.deleteMyAccount(deletePassword, token);
+      setConfirmingDelete(false);
+      /* Signed out here rather than left holding a token for an account that
+         no longer exists — every subsequent call would 401 and the screen
+         would look broken rather than finished. */
+      signOut();
+      void navigate(PATHS.feed, { replace: true });
+    } catch (caught) {
+      setDeleteError(
+        caught instanceof ApiError ? caught.message : 'We could not delete that.',
+      );
+    } finally {
+      setLeaving(false);
     }
   }
 
@@ -442,8 +496,77 @@ export default function Dashboard() {
                   </ul>
                 )}
               </section>
+              {/* ── Your data ─────────────────────────────────────────────
+                  §12: a donor may take their data and may leave. Both live
+                  at the bottom, away from the switches somebody uses often,
+                  and one of them cannot be undone.                          */}
+              <section className={cx(styles.card, styles.cardWide)}>
+                <h2 className={styles.cardTitle}>Your data</h2>
+                <p className={styles.cardBody}>
+                  Everything we hold about you — your account, your details, the requests
+                  you have posted and every email we have sent you.
+                </p>
+                <div className={styles.cardActions}>
+                  <Button variant="secondary" onClick={() => void download()}>
+                    <Icon name="arrowRight" />
+                    Download my data
+                  </Button>
+                  <Button variant="ghost" onClick={() => setConfirmingDelete(true)}>
+                    Delete my account
+                  </Button>
+                </div>
+              </section>
             </div>
           )}
+
+          <Modal
+            open={confirmingDelete}
+            onClose={() => {
+              setConfirmingDelete(false);
+              setDeletePassword('');
+              setDeleteError(null);
+            }}
+            title="Delete your account?"
+            footer={
+              <>
+                <Button
+                  variant="danger"
+                  onClick={() => void deleteAccount()}
+                  loading={leaving}
+                  loadingLabel="Deleting…"
+                >
+                  Delete everything
+                </Button>
+                <Button variant="ghost" onClick={() => setConfirmingDelete(false)}>
+                  Keep my account
+                </Button>
+              </>
+            }
+          >
+            <p className={styles.cardBody}>
+              This removes your account, your donor details and any requests you have
+              posted, along with the phone number on them. It cannot be undone.
+            </p>
+            <p className={styles.cardBody}>
+              The record that we emailed you about a request stays, with your name taken
+              off it — otherwise the daily email count would read low and donors who are
+              still here would stop being reached.
+            </p>
+
+            <Field
+              label="Your password"
+              required
+              error={deleteError ?? undefined}
+              help="Asked again because this cannot be undone."
+            >
+              <Input
+                type="password"
+                autoComplete="current-password"
+                value={deletePassword}
+                onChange={(event) => setDeletePassword(event.target.value)}
+              />
+            </Field>
+          </Modal>
 
           {note && (
             <p className={styles.note} role="status">

@@ -3,6 +3,7 @@ import type {
   BloodType,
   AuthedBloodRequest,
   CreateRequestInput,
+  DonorExport,
   DonorFit,
   DonorNotification,
   DonorProfilePatchInput,
@@ -128,6 +129,10 @@ export interface ApiClient {
     patch: DonorProfilePatchInput,
     accessToken: string,
   ): Promise<DonorProfile>;
+  /** Everything held about the caller, for them to keep (§12). */
+  exportMyData(accessToken: string): Promise<DonorExport>;
+  /** Real deletion. The password again, because it cannot be undone. */
+  deleteMyAccount(password: string, accessToken: string): Promise<void>;
   /** What this donor has been contacted about (§9.5). Their own rows only. */
   listMyNotifications(accessToken: string): Promise<DonorNotification[]>;
   /** The moderation queue (§9.6). Admin-only; the API answers 403 otherwise. */
@@ -255,6 +260,16 @@ function createHttpClient(baseUrl: string): ApiClient {
         { method: 'PATCH', headers: authed(accessToken), body: JSON.stringify(patch) },
       );
       return donorProfile;
+    },
+    exportMyData(accessToken) {
+      return call<DonorExport>('/me/export', { headers: authed(accessToken) });
+    },
+    async deleteMyAccount(password, accessToken) {
+      await call('/me', {
+        method: 'DELETE',
+        headers: authed(accessToken),
+        body: JSON.stringify({ password }),
+      });
     },
     async listMyNotifications(accessToken) {
       const { notifications } = await call<{ notifications: DonorNotification[] }>(
@@ -424,6 +439,27 @@ function createDemoClient(): ApiClient {
           : { notifyByEmail: patch.notifyByEmail }),
       };
       return { ...demoProfile };
+    },
+    async exportMyData() {
+      await latency(null);
+      return {
+        exportedAt: new Date().toISOString(),
+        account: {
+          id: DEMO_USER.id,
+          email: DEMO_USER.email,
+          fullName: DEMO_USER.fullName,
+          phone: null,
+          role: DEMO_USER.role,
+          emailVerified: DEMO_USER.emailVerified,
+          createdAt: new Date().toISOString(),
+        },
+        donorProfile: { ...demoProfile },
+        requests: [],
+        notifications: [],
+      };
+    },
+    async deleteMyAccount() {
+      await latency(null);
     },
     async listMyNotifications() {
       await latency(null);

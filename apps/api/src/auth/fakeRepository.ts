@@ -129,6 +129,61 @@ export function createFakeAuthRepository(): AuthRepository & {
       );
     },
 
+    exportUserData(userId) {
+      const user = users.get(userId);
+      if (!user) return Promise.resolve(null);
+      const profile = profiles.get(userId);
+      return Promise.resolve({
+        exportedAt: new Date().toISOString(),
+        account: {
+          id: user.id,
+          email: user.email,
+          fullName: user.fullName,
+          phone: null,
+          role: user.role,
+          emailVerified: user.emailVerified,
+          createdAt: new Date().toISOString(),
+        },
+        donorProfile: profile
+          ? {
+              bloodType: profile.bloodType,
+              city: profile.city,
+              lastDonationDate: profile.lastDonationDate,
+              isAvailable: profile.isAvailable,
+              notifyByEmail: profile.notifyByEmail,
+            }
+          : null,
+        // The fake holds no requests; requests.test.ts covers the real one.
+        requests: [],
+        notifications: notifications
+          .filter((row) => row.donorId === userId)
+          .map((row) => ({
+            requestId: row.requestId,
+            hospitalName: row.hospitalName,
+            city: row.city,
+            status: row.status,
+            createdAt: row.createdAt,
+            sentAt: row.sentAt,
+          })),
+      });
+    },
+
+    deleteUser(userId) {
+      if (!users.has(userId)) return Promise.resolve(false);
+      users.delete(userId);
+      profiles.delete(userId);
+      for (const [id, token] of tokens) if (token.userId === userId) tokens.delete(id);
+      for (const [id, v] of verifications)
+        if (v.userId === userId) verifications.delete(id);
+      /* Anonymised, not removed — the same rule the real schema applies. A
+         fake that cleaned up more thoroughly than the database would hide
+         exactly the behaviour this feature is about. */
+      for (const row of notifications) {
+        if (row.donorId === userId) row.donorId = '';
+      }
+      return Promise.resolve(true);
+    },
+
     storeRefreshToken(userId, tokenHash, expiresAt) {
       const id = nextId();
       tokens.set(id, {

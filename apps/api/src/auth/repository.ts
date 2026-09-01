@@ -1,5 +1,6 @@
 import type {
   BloodType,
+  DonorExport,
   DonorNotification,
   DonorProfilePatchInput,
   NotificationStatus,
@@ -88,6 +89,16 @@ export interface AuthRepository {
   ): Promise<DonorProfileRecord | null>;
   /** Everything this donor has been contacted about, newest first (§9.5). */
   listNotifications(userId: string): Promise<DonorNotification[]>;
+  /** Everything held about one person, for them to take away (§12). */
+  exportUserData(userId: string): Promise<DonorExport | null>;
+  /**
+   * Real deletion (§12). Returns false if there was nobody to delete.
+   *
+   * Everything of theirs goes by CASCADE — profile, sessions, verification
+   * tokens, the requests they posted. The notification log is the exception
+   * and keeps its rows with the donor detached; see the migration for why.
+   */
+  deleteUser(userId: string): Promise<boolean>;
   /** Creates the user and the donor profile in one transaction (§4). */
   createUser(input: RegisterInput): Promise<UserRecord>;
   storeRefreshToken(userId: string, tokenHash: string, expiresAt: Date): Promise<string>;
@@ -310,6 +321,125 @@ export function createPgAuthRepository(db: pg.Pool = pool): AuthRepository {
         createdAt: row.created_at.toISOString(),
         sentAt: row.sent_at ? row.sent_at.toISOString() : null,
       }));
+    },
+
+    async exportUserData(userId) {
+      /*
+       * Four reads, all scoped to this user, inside one transaction so the
+       * export is a single moment rather than a smear across four of them.
+       * Notably absent: password_hash. An export is what we hold about a
+       * person, not a head start on cracking their password.
+       */
+      return withTransaction(async (client) => {
+        const { rows: users } = await client.query<{
+          id: string;
+          email: string;
+          full_name: string;
+          phone: string | null;
+          role: UserRole;
+          email_verified: boolean;
+          created_at: Date;
+        }>(
+          `SELECT id, email, full_name, phone, role, email_verified, created_at
+           FROM users WHERE id = $1`,
+          [userId],
+        );
+        const user = users[0];
+        if (!user) return null;
+
+        const { rows: profiles } = await client.query<ProfileRow>(
+          `SELECT ${PROFILE_COLUMNS} FROM donor_profiles WHERE user_id = $1`,
+          [userId],
+        );
+
+        const { rows: requests } = await client.query<{
+          id: string;
+          blood_type: BloodType;
+          units_needed: number;
+          urgency: Urgency;
+          hospital_name: string;
+          city: string;
+          contact_phone: string;
+          note: string | null;
+          status: RequestStatus;
+          created_at: Date;
+        }>(
+          `SELECT id, blood_type, units_needed, urgency, hospital_name, city,
+                  contact_phone, note, status, created_at
+           FROM blood_requests WHERE requester_id = $1
+           ORDER BY created_at DESC`,
+          [userId],
+        );
+
+        const { rows: notifications } = await client.query<{
+          request_id: string;
+          hospital_name: string;
+          city: string;
+          status: NotificationStatus;
+          created_at: Date;
+          sent_at: Date | null;
+        }>(
+          `SELECT nl.request_id, nl.status, nl.created_at, nl.sent_at,
+                  r.hospital_name, r.city
+           FROM notification_log nl
+           JOIN blood_requests r ON r.id = nl.request_id
+           WHERE nl.donor_id = $1
+           ORDER BY nl.created_at DESC`,
+          [userId],
+        );
+
+        const profile = profiles[0];
+        return {
+          exportedAt: new Date().toISOString(),
+          account: {
+            id: user.id,
+            email: user.email,
+            fullName: user.full_name,
+            phone: user.phone,
+            role: user.role,
+            emailVerified: user.email_verified,
+            createdAt: user.created_at.toISOString(),
+          },
+          donorProfile: profile
+            ? {
+                bloodType: profile.blood_type,
+                city: profile.city,
+                lastDonationDate: profile.last_donation_date,
+                isAvailable: profile.is_available,
+                notifyByEmail: profile.notify_by_email,
+              }
+            : null,
+          requests: requests.map((row) => ({
+            id: row.id,
+            bloodType: row.blood_type,
+            unitsNeeded: row.units_needed,
+            urgency: row.urgency,
+            hospitalName: row.hospital_name,
+            city: row.city,
+            contactPhone: row.contact_phone,
+            note: row.note,
+            status: row.status,
+            createdAt: row.created_at.toISOString(),
+          })),
+          notifications: notifications.map((row) => ({
+            requestId: row.request_id,
+            hospitalName: row.hospital_name,
+            city: row.city,
+            status: row.status,
+            createdAt: row.created_at.toISOString(),
+            sentAt: row.sent_at ? row.sent_at.toISOString() : null,
+          })),
+        };
+      }, db);
+    },
+
+    async deleteUser(userId) {
+      /* One statement. Every other table either cascades from here or has
+         already been told to null its reference — putting the list of what
+         to clean up in application code would be a second copy of the
+         schema's own answer, free to fall behind it. */
+      const { rowCount } = await db.query('DELETE FROM users WHERE id = $1', [userId]);
+      return (rowCount ?? 0) > 0;
     },
 
     async storeRefreshToken(userId, tokenHash, expiresAt) {

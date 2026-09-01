@@ -40,6 +40,19 @@ export const loginSchema = z.strictObject({
 export type LoginInput = z.infer<typeof loginSchema>;
 
 /**
+ * DELETE /api/me — the password, again.
+ *
+ * Deleting is irreversible and takes the donor's requests with it, so it is
+ * not something a borrowed tab should be able to do. Re-authenticating costs
+ * the person one field and costs somebody with a stolen session everything.
+ */
+export const deleteAccountSchema = z.strictObject({
+  password: z.string().min(1, 'Enter your password to confirm.'),
+});
+
+export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;
+
+/**
  * The token out of a confirmation link, on its way back to the API (§12).
  *
  * The web app posts this rather than the email linking straight at the API:

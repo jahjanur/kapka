@@ -123,3 +123,54 @@ export interface AuthedBloodRequest extends PublicBloodRequest {
   /** Absent unless the viewer is a donor: nobody else has a type on file. */
   fit?: DonorFit;
 }
+
+/**
+ * Everything this system holds about one person, as they may take it away.
+ *
+ * §12 gives a donor the right to their own data. The shape is deliberately
+ * the shape of the tables rather than something prettier: an export is a
+ * record of what is stored, and rearranging it into a nicer story would make
+ * it a worse answer to "what do you have about me".
+ */
+export interface DonorExport {
+  exportedAt: string;
+  account: {
+    id: string;
+    email: string;
+    fullName: string;
+    phone: string | null;
+    role: UserRole;
+    emailVerified: boolean;
+    createdAt: string;
+  };
+  /** Null for a requester or an admin, who never had one. */
+  donorProfile: {
+    bloodType: BloodType;
+    city: string;
+    lastDonationDate: string | null;
+    isAvailable: boolean;
+    notifyByEmail: boolean;
+  } | null;
+  /** Requests they posted. These are deleted with the account. */
+  requests: {
+    id: string;
+    bloodType: BloodType;
+    unitsNeeded: number;
+    urgency: Urgency;
+    hospitalName: string;
+    city: string;
+    contactPhone: string;
+    note: string | null;
+    status: RequestStatus;
+    createdAt: string;
+  }[];
+  /** Emails we sent them. These are anonymised, not deleted. */
+  notifications: {
+    requestId: string;
+    hospitalName: string;
+    city: string;
+    status: NotificationStatus;
+    createdAt: string;
+    sentAt: string | null;
+  }[];
+}

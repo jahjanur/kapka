@@ -323,3 +323,219 @@ describe('PATCH /api/me/donor-profile', () => {
     expect(response.status).toBe(404);
   });
 });
+
+describe('taking your data with you', () => {
+  /** A request posted by `id`, and a notification sent to them about one. */
+  async function history(id: string): Promise<{ requestId: string }> {
+    const { rows } = await db.pool.query<{ id: string }>(
+      `INSERT INTO blood_requests
+         (requester_id, blood_type, hospital_name, city, contact_phone, status)
+       VALUES ($1, 'O-', 'City General', 'Skopje', '+389 70 111 222', 'approved')
+       RETURNING id`,
+      [id],
+    );
+    const requestId = rows[0]?.id ?? '';
+    await db.pool.query(
+      `INSERT INTO notification_log (request_id, donor_id, status, sent_at)
+       VALUES ($1, $2, 'sent', now())`,
+      [requestId, id],
+    );
+    return { requestId };
+  }
+
+  const exportFor = async (header: string) => {
+    const response = await request(serverFor(app))
+      .get('/api/me/export')
+      .set('Authorization', header);
+    expect(response.status).toBe(200);
+    return response;
+  };
+
+  it('refuses an anonymous caller', async () => {
+    expect((await request(serverFor(app)).get('/api/me/export')).status).toBe(401);
+  });
+
+  it('hands over the account, the profile, the requests and the emails', async () => {
+    const person = await donor();
+    await history(person.id);
+
+    const body = z
+      .object({
+        exportedAt: z.string(),
+        account: z.object({ email: z.string(), fullName: z.string() }),
+        donorProfile: z.object({ bloodType: z.string(), city: z.string() }),
+        requests: z.array(
+          z.object({ hospitalName: z.string(), contactPhone: z.string() }),
+        ),
+        notifications: z.array(
+          z.object({ hospitalName: z.string(), status: z.string() }),
+        ),
+      })
+      .parse(JSON.parse((await exportFor(person.header)).text));
+
+    expect(body.account.email).toBe(`donor-1@example.test`);
+    expect(body.donorProfile.bloodType).toBe('O-');
+    expect(body.requests).toHaveLength(1);
+    expect(body.notifications).toHaveLength(1);
+  });
+
+  it('never includes the password hash', async () => {
+    // An export is what we hold about a person, not a head start on
+    // cracking their password.
+    const person = await donor();
+    const response = await exportFor(person.header);
+    expect(response.text).not.toMatch(/passwordHash|password_hash|\$2[aby]\$/);
+  });
+
+  it('comes as a file, and is never cached', async () => {
+    const response = await exportFor((await donor()).header);
+    expect(response.headers['content-disposition']).toMatch(/attachment; filename=/);
+    expect(response.headers['cache-control']).toBe('no-store');
+  });
+
+  it('contains nothing belonging to anybody else', async () => {
+    const ana = await donor();
+    const bojan = await donor();
+    await history(bojan.id);
+
+    const response = await exportFor(ana.header);
+    expect(response.text).not.toContain(`donor-2@example.test`);
+    const body = JSON.parse(response.text) as {
+      requests: unknown[];
+      notifications: unknown[];
+    };
+    expect(body.requests).toEqual([]);
+    expect(body.notifications).toEqual([]);
+  });
+});
+
+describe('deleting an account for real', () => {
+  const del = (header: string, password: string) =>
+    request(serverFor(app))
+      .delete('/api/me')
+      .set('Authorization', header)
+      .send({ password });
+
+  const countWhere = async (sql: string, params: unknown[]): Promise<number> => {
+    const { rows } = await db.pool.query<{ count: string }>(sql, params);
+    return Number(rows[0]?.count ?? '0');
+  };
+
+  it('refuses without the password', async () => {
+    const person = await donor();
+    const response = await request(serverFor(app))
+      .delete('/api/me')
+      .set('Authorization', person.header)
+      .send({});
+    expect(response.status).toBe(400);
+  });
+
+  it('refuses the wrong password, and deletes nothing', async () => {
+    /* The account is already authenticated here, so a borrowed tab is
+       exactly the threat this is for. */
+    const person = await donor();
+    expect((await del(person.header, 'not-my-password')).status).toBe(401);
+    expect(
+      await countWhere('SELECT count(*) FROM users WHERE id = $1', [person.id]),
+    ).toBe(1);
+  });
+
+  it('removes the account, the profile and the sessions', async () => {
+    const person = await donor();
+    expect((await del(person.header, PASSWORD)).status).toBe(204);
+
+    expect(
+      await countWhere('SELECT count(*) FROM users WHERE id = $1', [person.id]),
+    ).toBe(0);
+    expect(
+      await countWhere('SELECT count(*) FROM donor_profiles WHERE user_id = $1', [
+        person.id,
+      ]),
+    ).toBe(0);
+    expect(
+      await countWhere('SELECT count(*) FROM refresh_tokens WHERE user_id = $1', [
+        person.id,
+      ]),
+    ).toBe(0);
+  });
+
+  it('takes the requests they posted, and the phone number on them', async () => {
+    const person = await donor();
+    const { rows } = await db.pool.query<{ id: string }>(
+      `INSERT INTO blood_requests
+         (requester_id, blood_type, hospital_name, city, contact_phone)
+       VALUES ($1, 'O-', 'City General', 'Skopje', '+389 70 111 222') RETURNING id`,
+      [person.id],
+    );
+    await del(person.header, PASSWORD);
+
+    expect(
+      await countWhere('SELECT count(*) FROM blood_requests WHERE id = $1', [
+        rows[0]?.id,
+      ]),
+    ).toBe(0);
+  });
+
+  it('keeps the notification row and detaches the donor', async () => {
+    /*
+     * The whole point of the migration. dispatch counts today's sent rows
+     * against the free tier before deciding how many donors to email — rows
+     * vanishing would make that count read low, and the system would send
+     * past the ceiling on the day somebody needed blood.
+     */
+    const person = await donor();
+    const other = await donor();
+    const { rows } = await db.pool.query<{ id: string }>(
+      `INSERT INTO blood_requests
+         (requester_id, blood_type, hospital_name, city, contact_phone, status)
+       VALUES ($1, 'O-', 'City General', 'Skopje', '+389 70 111 222', 'approved')
+       RETURNING id`,
+      [other.id],
+    );
+    await db.pool.query(
+      `INSERT INTO notification_log (request_id, donor_id, status, sent_at)
+       VALUES ($1, $2, 'sent', now())`,
+      [rows[0]?.id, person.id],
+    );
+
+    await del(person.header, PASSWORD);
+
+    expect(await countWhere('SELECT count(*) FROM notification_log', [])).toBe(1);
+    expect(
+      await countWhere(
+        'SELECT count(*) FROM notification_log WHERE donor_id IS NULL',
+        [],
+      ),
+    ).toBe(1);
+  });
+
+  it('leaves the audit trail standing, without the actor', async () => {
+    // What happened is a record; who did it is personal data.
+    const person = await donor();
+    await db.pool.query(
+      `INSERT INTO audit_log (actor_id, action, entity_type) VALUES ($1, 'test.thing', 'user')`,
+      [person.id],
+    );
+    await del(person.header, PASSWORD);
+
+    expect(
+      await countWhere(`SELECT count(*) FROM audit_log WHERE action = 'test.thing'`, []),
+    ).toBe(1);
+    expect(
+      await countWhere(
+        `SELECT count(*) FROM audit_log WHERE action = 'test.thing' AND actor_id IS NULL`,
+        [],
+      ),
+    ).toBe(1);
+  });
+
+  it('ends the session it was called with', async () => {
+    const person = await donor();
+    await del(person.header, PASSWORD);
+    // The token still verifies, but the account behind it is gone.
+    expect(
+      (await request(serverFor(app)).get('/api/me').set('Authorization', person.header))
+        .status,
+    ).toBe(401);
+  });
+});
