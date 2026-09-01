@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { PublicBloodRequest } from '@kapka/shared';
+import type { ModerationQueueItem, PublicBloodRequest } from '@kapka/shared';
 import { api, ApiError, type ViewedRequest } from './api';
 
 interface Snapshot<T> {
@@ -95,5 +95,20 @@ export function useRequests(): QueryResult<PublicBloodRequest[]> {
 export function useRequest(id: string, accessToken?: string): QueryResult<ViewedRequest> {
   return useQuery(`requests/${id}/${accessToken ? 'authed' : 'public'}`, () =>
     api.getRequest(id, accessToken),
+  );
+}
+
+/**
+ * GET /api/admin/requests — the moderation queue (§9.6).
+ *
+ * Goes through the same useQuery as everything else, which is what keeps the
+ * fetch out of a synchronous setState inside an effect — see the note there.
+ * Without a token there is nothing to ask for and no request is made.
+ */
+export function usePendingRequests(
+  accessToken: string | undefined,
+): QueryResult<ModerationQueueItem[]> {
+  return useQuery(`admin/requests/${accessToken ?? 'anonymous'}`, () =>
+    accessToken ? api.listPendingRequests(accessToken) : Promise.resolve([]),
   );
 }

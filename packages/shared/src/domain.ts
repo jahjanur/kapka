@@ -80,6 +80,19 @@ export interface DonorFit {
   eligibleFrom: string | null;
 }
 
+/**
+ * One row of the moderation queue (§9.6).
+ *
+ * matchedDonors is the reach: how many donors approving this would email,
+ * right now. §9.6 wants that number in front of the admin BEFORE they
+ * confirm, because approving is irreversible and sends mail to strangers.
+ */
+export interface ModerationQueueItem extends AuthedBloodRequest {
+  /** Who posted it. An admin judging legitimacy needs to know. */
+  requesterName: string;
+  matchedDonors: number;
+}
+
 /** The extra fields an authenticated viewer is allowed to see. */
 export interface AuthedBloodRequest extends PublicBloodRequest {
   contactPhone: string;

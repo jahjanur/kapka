@@ -3,6 +3,7 @@ import type {
   AuthedBloodRequest,
   CreateRequestInput,
   DonorFit,
+  ModerationQueueItem,
   ErrorCode,
   PublicBloodRequest,
   RegisterInput,
@@ -61,6 +62,19 @@ export class ApiError extends Error {
   }
 }
 
+/** What approving actually did, once the emails have been attempted. */
+export interface ApprovalOutcome {
+  matchedDonors: number;
+  sent: number;
+  failed: number;
+  skipped: number;
+  queued: number;
+  budgetExhausted: boolean;
+  dailyBudgetRemaining: number;
+  /** A sentence to show as-is, or null. */
+  warning: string | null;
+}
+
 /** What the resend endpoint reports back. */
 export interface ResendResult {
   sent: boolean;
@@ -87,6 +101,11 @@ export interface ApiClient {
     input: CreateRequestInput,
     accessToken: string,
   ): Promise<AuthedBloodRequest>;
+  /** The moderation queue (§9.6). Admin-only; the API answers 403 otherwise. */
+  listPendingRequests(accessToken: string): Promise<ModerationQueueItem[]>;
+  /** Approves and dispatches. Returns what the dispatch actually managed. */
+  approveRequest(id: string, accessToken: string): Promise<ApprovalOutcome>;
+  rejectRequest(id: string, reason: string, accessToken: string): Promise<void>;
   /** Spends the token from a confirmation link. Returns the confirmed user. */
   verifyEmail(token: string): Promise<SessionUser>;
   /**
@@ -109,6 +128,12 @@ function isErrorBody(value: unknown): value is ApiErrorBody {
     typeof (value as ApiErrorBody).error === 'object'
   );
 }
+
+/** Content-Type plus a bearer token, for the calls that need one. */
+const authed = (accessToken: string) => ({
+  'Content-Type': 'application/json',
+  Authorization: `Bearer ${accessToken}`,
+});
 
 function createHttpClient(baseUrl: string): ApiClient {
   async function call<T>(path: string, init?: RequestInit): Promise<T> {
@@ -179,6 +204,26 @@ function createHttpClient(baseUrl: string): ApiClient {
         body: JSON.stringify(input),
       });
       return request;
+    },
+    async listPendingRequests(accessToken) {
+      const { requests } = await call<{ requests: ModerationQueueItem[] }>(
+        '/admin/requests',
+        { headers: authed(accessToken) },
+      );
+      return requests;
+    },
+    approveRequest(id, accessToken) {
+      return call<ApprovalOutcome>(`/admin/requests/${encodeURIComponent(id)}/approve`, {
+        method: 'POST',
+        headers: authed(accessToken),
+      });
+    },
+    async rejectRequest(id, reason, accessToken) {
+      await call(`/admin/requests/${encodeURIComponent(id)}/reject`, {
+        method: 'POST',
+        headers: authed(accessToken),
+        body: JSON.stringify({ reason }),
+      });
     },
     async verifyEmail(token) {
       const { user } = await call<{ user: SessionUser }>('/auth/verify-email', {
@@ -279,6 +324,33 @@ function createDemoClient(): ApiClient {
         createdAt: now.toISOString(),
         expiresAt: week.toISOString(),
       };
+    },
+    async listPendingRequests() {
+      await latency(null);
+      return SEED_REQUESTS.slice(0, 3).map((request, index) => ({
+        ...request,
+        status: 'pending' as const,
+        contactPhone: SEED_CONTACT,
+        requesterName:
+          ['Ana Petrovska', 'Bojan Ristov', 'Marija Ilieva'][index] ?? 'Someone',
+        matchedDonors: [23, 4, 0][index] ?? 0,
+      }));
+    },
+    async approveRequest() {
+      await latency(null);
+      return {
+        matchedDonors: 23,
+        sent: 23,
+        failed: 0,
+        skipped: 0,
+        queued: 0,
+        budgetExhausted: false,
+        dailyBudgetRemaining: 77,
+        warning: null,
+      };
+    },
+    async rejectRequest() {
+      await latency(null);
     },
     async verifyEmail(token) {
       await latency(null);

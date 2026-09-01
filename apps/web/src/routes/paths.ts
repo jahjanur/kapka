@@ -15,6 +15,8 @@ export const PATHS = {
    * render the detail screen looking for a request called "new".
    */
   postRequest: '/requests/new',
+  /** Admin-only, and the screen says so rather than pretending not to exist. */
+  admin: '/admin',
   register: '/register',
   howItWorks: '/how-it-works',
   /**

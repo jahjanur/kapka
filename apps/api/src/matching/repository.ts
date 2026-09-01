@@ -78,3 +78,21 @@ export async function findMatchingDonors(
 
 /** Exported so a test can assert the query itself, not only its results. */
 export const MATCHING_SQL = MATCHING_QUERY;
+
+/**
+ * How many donors a request would reach, without building the list.
+ *
+ * Wraps the matching query rather than restating its joins. A second copy of
+ * those five conditions would be a second answer to "who gets emailed", free
+ * to drift from the one that actually sends — which is the whole reason the
+ * compatibility matrix is a table and not code (§3).
+ */
+const MATCHING_COUNT_QUERY = `SELECT count(*)::int AS count FROM (${MATCHING_QUERY}) matched`;
+
+export async function countMatchingDonors(
+  requestId: string,
+  db: Queryable = pool,
+): Promise<number> {
+  const { rows } = await db.query<{ count: number }>(MATCHING_COUNT_QUERY, [requestId]);
+  return rows[0]?.count ?? 0;
+}

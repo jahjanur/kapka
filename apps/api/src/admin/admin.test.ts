@@ -137,6 +137,103 @@ async function auditRows(): Promise<
   return rows;
 }
 
+describe('GET /api/admin/requests — the queue', () => {
+  /** A pending request whose age can be set, so ordering is testable. */
+  async function pendingAged(hospital: string, minutesAgo: number): Promise<string> {
+    const requester = await signIn();
+    const { rows } = await db.pool.query<{ id: string }>(
+      `INSERT INTO blood_requests
+         (requester_id, blood_type, hospital_name, city, contact_phone, created_at)
+       VALUES ($1, 'O-', $2, 'Skopje', '+389 70 000 000',
+               now() - ($3 || ' minutes')::interval)
+       RETURNING id`,
+      [requester.id, hospital, String(minutesAgo)],
+    );
+    return rows[0]?.id ?? '';
+  }
+
+  const queueSchema = z.object({
+    requests: z.array(
+      z.object({
+        id: z.string(),
+        hospitalName: z.string(),
+        contactPhone: z.string(),
+        requesterName: z.string(),
+        matchedDonors: z.number(),
+      }),
+    ),
+  });
+
+  const queueFor = async (header: string) => {
+    const response = await request(serverFor(app))
+      .get('/api/admin/requests')
+      .set('Authorization', header);
+    expect(response.status).toBe(200);
+    return queueSchema.parse(response.body).requests;
+  };
+
+  it('refuses a donor', async () => {
+    // This is the one list in the product holding unapproved requests and
+    // every requester's phone number.
+    const donor = await signIn('donor');
+    const response = await request(serverFor(app))
+      .get('/api/admin/requests')
+      .set('Authorization', donor.header);
+    expect(response.status).toBe(403);
+  });
+
+  it('refuses an anonymous caller', async () => {
+    expect((await request(serverFor(app)).get('/api/admin/requests')).status).toBe(401);
+  });
+
+  it('lists what is waiting, oldest first', async () => {
+    /* The opposite order to the public feed. A queue is worked through, and
+       the one waiting longest is the one somebody is still waiting on. */
+    const admin = await signIn('admin');
+    const older = await pendingAged('Older', 90);
+    const newer = await pendingAged('Newer', 5);
+
+    expect((await queueFor(admin.header)).map((r) => r.id)).toEqual([older, newer]);
+  });
+
+  it('carries what an admin needs to judge it', async () => {
+    const admin = await signIn('admin');
+    await pendingRequest();
+    const [row] = await queueFor(admin.header);
+    expect(row?.contactPhone).toBe('+389 70 000 000');
+    expect(row?.requesterName).toBe('Test Person');
+  });
+
+  it('drops a request the moment it is decided', async () => {
+    const admin = await signIn('admin');
+    const waiting = await pendingRequest();
+    const decided = await pendingRequest();
+    await request(serverFor(app))
+      .post(`/api/admin/requests/${decided}/approve`)
+      .set('Authorization', admin.header);
+
+    expect((await queueFor(admin.header)).map((r) => r.id)).toEqual([waiting]);
+  });
+
+  it('says how many donors approving would reach', async () => {
+    /* §9.6 wants that number in front of the admin BEFORE they confirm.
+       Approving is irreversible and sends mail to strangers. */
+    const admin = await signIn('admin');
+    await eligibleDonor();
+    await eligibleDonor();
+    await pendingRequest();
+
+    expect((await queueFor(admin.header))[0]?.matchedDonors).toBe(2);
+  });
+
+  it('counts nobody when nobody matches', async () => {
+    const admin = await signIn('admin');
+    await eligibleDonor('AB+'); // cannot give to an O− patient
+    await pendingRequest('O-');
+    expect((await queueFor(admin.header))[0]?.matchedDonors).toBe(0);
+  });
+});
+
 describe('who may moderate', () => {
   it('refuses an anonymous caller', async () => {
     const id = await pendingRequest();

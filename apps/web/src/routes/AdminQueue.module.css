@@ -1,0 +1,272 @@
+/* ============================================================================
+   The moderation queue (§9.6).
+
+   One set of rows, two shapes. Below 64rem they are cards with everything a
+   decision needs on them; from 64rem a table with a drawer beside it. There
+   is no third state where a table scrolls sideways — §7.1 puts 360px as the
+   floor with no horizontal scroll, and the way to keep that is to not render
+   a table there, not to wrap one in an overflow box.
+   ========================================================================= */
+
+.page {
+  padding-block: var(--space-8) var(--space-24);
+}
+
+.head {
+  max-inline-size: var(--measure-narrow);
+  margin-block-end: var(--space-6);
+}
+
+.title {
+  font-size: var(--text-3xl);
+  letter-spacing: var(--tracking-tight);
+}
+
+.lead {
+  margin-block-start: var(--space-3);
+  font-size: var(--text-lg);
+  color: var(--fg-secondary);
+}
+
+.skeletons {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.layout {
+  display: grid;
+  gap: var(--space-6);
+}
+
+/* ── Cards, below 64rem ──────────────────────────────────────────────────── */
+.cards {
+  display: grid;
+  gap: var(--space-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.card {
+  padding: var(--space-5);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--elevation-1);
+}
+
+/* ── The table, from 64rem ───────────────────────────────────────────────── */
+.table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
+}
+
+.table th,
+.table td {
+  padding: var(--space-3);
+  text-align: start;
+  vertical-align: middle;
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.table thead th {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.table tbody tr:last-child th,
+.table tbody tr:last-child td {
+  border-block-end: 0;
+}
+
+/* A row is not clickable as a whole — see .rowButton — but it should look
+   like something the pointer is on, since one of its cells is. */
+@media (hover: hover) {
+  .row:hover {
+    background-color: var(--bg-surface-alt);
+  }
+}
+
+.rowOpen {
+  background-color: var(--bg-surface-alt);
+}
+
+.rowHospital {
+  font-weight: var(--weight-medium);
+}
+
+/* A real button rather than a clickable row: a <tr> with an onClick is
+   unreachable by keyboard and announces nothing. */
+.rowButton {
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.age {
+  color: var(--fg-secondary);
+  white-space: nowrap;
+}
+
+/* ── The drawer ──────────────────────────────────────────────────────────── */
+.drawer {
+  padding: var(--space-5);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--elevation-2);
+}
+
+.drawerOpen {
+  border-color: var(--border-default);
+}
+
+.drawerEmpty {
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+}
+
+/* ── One request, in a card or in the drawer ─────────────────────────────── */
+.detailTop {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block-end: var(--space-3);
+}
+
+.detailTitle {
+  font-size: var(--text-lg);
+  line-height: var(--leading-snug);
+}
+
+.detailMeta {
+  margin-block-start: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+}
+
+.facts {
+  display: grid;
+  gap: var(--space-2);
+  margin-block-start: var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.facts dt {
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.note {
+  margin-block-start: var(--space-4);
+  padding: var(--space-3);
+  font-size: var(--text-sm);
+  background-color: var(--bg-surface-alt);
+  border-radius: var(--radius-md);
+}
+
+/* The consequence, beside the button that causes it. */
+.reach {
+  display: flex;
+  align-items: start;
+  gap: var(--space-2);
+  margin-block-start: var(--space-4);
+  padding: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--warning-ink);
+  background-color: var(--warning-surface);
+  border-radius: var(--radius-md);
+}
+
+.reach svg {
+  flex: none;
+}
+
+.actionError {
+  margin-block-start: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--danger-ink);
+}
+
+.rejectBox {
+  display: grid;
+  gap: var(--space-2);
+  margin-block-start: var(--space-4);
+}
+
+.reasonLabel {
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-block-start: var(--space-4);
+}
+
+/* ── What happened, after approving ──────────────────────────────────────── */
+.outcome {
+  display: flex;
+  align-items: start;
+  gap: var(--space-3);
+  margin-block-end: var(--space-5);
+  padding: var(--space-4);
+  color: var(--success-ink);
+  background-color: var(--success-surface);
+  border-radius: var(--radius-lg);
+}
+
+.outcome svg {
+  flex: none;
+}
+
+.outcomeHeadline {
+  font-weight: var(--weight-semibold);
+}
+
+.outcomeBody,
+.outcomeWarning {
+  margin-block-start: var(--space-1);
+  font-size: var(--text-sm);
+}
+
+.outcomeWarning {
+  font-weight: var(--weight-semibold);
+}
+
+/* Two columns of cards once there is room, still no table. */
+@media (min-width: 48rem) {
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* The table and its drawer. */
+@media (min-width: 64rem) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 24rem);
+    align-items: start;
+  }
+
+  .drawer {
+    position: sticky;
+    inset-block-start: calc(var(--header-height) + var(--space-6));
+  }
+}

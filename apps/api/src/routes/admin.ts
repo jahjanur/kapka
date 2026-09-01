@@ -27,6 +27,17 @@ export function createAdminRouter(
 ): Router {
   const router = Router();
 
+  /**
+   * GET /api/admin/requests — the moderation queue (§9.6).
+   *
+   * Admin-only and checked against the database rather than the token's role
+   * claim, like everything else here: this is the one list in the product
+   * that contains unapproved requests and every requester's phone number.
+   */
+  router.get('/admin/requests', requireRole(auth, 'admin'), async (_req, res) => {
+    res.json({ requests: await admin.listPending() });
+  });
+
   /** Shared by both endpoints: the answers that are not a success. */
   function answerFailure(
     outcome: ModerationOutcome,
