@@ -1,0 +1,178 @@
+/* ============================================================================
+   Modal and sheet (§8).
+
+   One dialog, two shapes: a bottom sheet on a phone, a centred dialog from
+   48rem. Which shape is a question about the width of the screen rather than
+   of the component, so it is a media query (§7.2).
+
+   The base is the sheet. `centre` takes the other shape at every width and
+   `auto` takes it from 48rem — the two blocks are written out rather than
+   shared, because a selector list cannot span a media query and a custom
+   property switch would hide the one thing a reader comes here to find.
+   ========================================================================= */
+
+.dialog {
+  inline-size: 100%;
+  max-inline-size: 100%;
+  max-block-size: 100%;
+  margin: 0;
+  margin-block-start: auto;
+  padding: 0;
+  color: inherit;
+  background: none;
+  border: 0;
+  /* No z-index anywhere in this file. showModal() puts the dialog in the top
+     layer, which is above the sticky header and both fixed action bars by
+     definition rather than by arithmetic. */
+}
+
+.dialog::backdrop {
+  background-color: var(--backdrop);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  /* Never taller than the screen; the body scrolls inside it instead. */
+  max-block-size: 85vh;
+  padding-block-end: max(var(--space-5), env(safe-area-inset-bottom));
+  background-color: var(--bg-surface);
+  border-start-start-radius: var(--radius-xl);
+  border-start-end-radius: var(--radius-xl);
+  box-shadow: var(--elevation-4);
+}
+
+.grabber {
+  display: block;
+  inline-size: var(--space-10);
+  block-size: var(--space-1);
+  margin: var(--space-3) auto var(--space-1);
+  background-color: var(--border-default);
+  border-radius: var(--radius-full);
+}
+
+.head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5) var(--space-2);
+}
+
+.title {
+  font-size: var(--text-lg);
+  line-height: var(--leading-snug);
+}
+
+.close {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: var(--hit-min);
+  block-size: var(--hit-min);
+  margin: calc(var(--space-2) * -1);
+  color: var(--fg-secondary);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .close:hover {
+    background-color: var(--bg-surface-alt);
+  }
+}
+
+.body {
+  overflow-y: auto;
+  padding: var(--space-2) var(--space-5) var(--space-5);
+  font-size: var(--text-base);
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+/* An animation, not a transition: an element that has just been put into the
+   top layer has no previous state to transition from. Entry only — closing is
+   immediate, which is the right way round, because a dismissal should feel
+   done rather than negotiated. */
+.dialog[open] {
+  animation: sheetIn var(--dur-normal) var(--ease-out);
+}
+
+@keyframes sheetIn {
+  from {
+    translate: 0 100%;
+  }
+}
+
+@keyframes centreIn {
+  from {
+    opacity: 0;
+    scale: 0.97;
+  }
+}
+
+/* ── Centred, at every width ─────────────────────────────────────────────── */
+.centre {
+  inline-size: auto;
+  min-inline-size: 22rem;
+  max-inline-size: min(34rem, calc(100vw - var(--space-8)));
+  margin: auto;
+}
+
+.centre .panel {
+  max-block-size: min(85vh, 44rem);
+  padding-block-end: 0;
+  border-radius: var(--radius-xl);
+}
+
+.centre .grabber {
+  display: none;
+}
+
+.centre[open] {
+  animation-name: centreIn;
+}
+
+/* ── Centred from 48rem, a sheet below it ────────────────────────────────── */
+@media (min-width: 48rem) {
+  .auto {
+    inline-size: auto;
+    min-inline-size: 22rem;
+    max-inline-size: min(34rem, calc(100vw - var(--space-8)));
+    margin: auto;
+  }
+
+  .auto .panel {
+    max-block-size: min(85vh, 44rem);
+    padding-block-end: 0;
+    border-radius: var(--radius-xl);
+  }
+
+  .auto .grabber {
+    display: none;
+  }
+
+  .auto[open] {
+    animation-name: centreIn;
+  }
+}
+
+/* The base shape already is the sheet; the class exists so a caller can say
+   so, and so the stylesheet has a hook if that ever needs its own rule. */
+.sheet {
+  margin-block-start: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog[open] {
+    animation: none;
+  }
+}

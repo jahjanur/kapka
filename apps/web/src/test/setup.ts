@@ -34,3 +34,39 @@ window.matchMedia = (query: string): MediaQueryList =>
     removeListener: () => undefined,
     dispatchEvent: () => false,
   }) as MediaQueryList;
+
+/**
+ * jsdom implements <dialog> as an element and nothing else — showModal is not
+ * a function on it, so any component that opens one throws on render.
+ *
+ * This fills in the parts of the spec the tests need, and only those: the open
+ * state, the close event, and returning focus to whatever had it when the
+ * dialog opened. What it deliberately does NOT do is trap focus. That is the
+ * browser's job in the real product, it is the reason the components use
+ * showModal rather than a hand-rolled overlay, and a shim pretending to do it
+ * here would only produce tests that pass against this file.
+ */
+interface ShimmedDialog extends HTMLDialogElement {
+  __restoreFocusTo?: Element | null;
+}
+
+/* Assigned unconditionally, like matchMedia above: TypeScript's DOM types say
+   these methods always exist, so guarding on them is dead code the linter
+   rightly rejects. */
+HTMLDialogElement.prototype.showModal = function showModal(this: ShimmedDialog) {
+  this.__restoreFocusTo = document.activeElement;
+  this.open = true;
+  // The spec focuses the first focusable thing inside, or the dialog itself.
+  const target = this.querySelector<HTMLElement>(
+    '[autofocus], button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+  );
+  (target ?? this).focus();
+};
+
+HTMLDialogElement.prototype.close = function close(this: ShimmedDialog) {
+  if (!this.open) return;
+  this.open = false;
+  const restore = this.__restoreFocusTo;
+  if (restore instanceof HTMLElement) restore.focus();
+  this.dispatchEvent(new Event('close'));
+};

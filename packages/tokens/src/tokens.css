@@ -81,6 +81,7 @@
   --fg-onDanger:  var(--slate-0);
 
   --border-subtle:  var(--slate-200);
+  --backdrop:       rgb(0 0 0 / 55%);  /* behind a modal */
   --border-default: var(--slate-300);
   --border-strong:  var(--slate-400);
   /* For a control whose border is its only affordance — an input, a
@@ -150,6 +151,7 @@
     --fg-onAccent:  var(--slate-1000);
 
     --border-subtle:  oklch(0.30 0.018 265);
+    --backdrop:       rgb(0 0 0 / 70%);  /* behind a modal */
     --border-default: oklch(0.38 0.020 265);
     --border-strong:  oklch(0.48 0.020 265);
     --border-control: oklch(0.50 0.020 265);
@@ -215,6 +217,7 @@
   --fg-onAccent:  var(--slate-1000);
 
   --border-subtle:  oklch(0.30 0.018 265);
+  --backdrop:       rgb(0 0 0 / 70%);  /* behind a modal */
   --border-default: oklch(0.38 0.020 265);
   --border-strong:  oklch(0.48 0.020 265);
   --border-control: oklch(0.50 0.020 265);
