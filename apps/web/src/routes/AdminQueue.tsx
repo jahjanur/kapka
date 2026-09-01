@@ -314,11 +314,32 @@ export default function AdminQueue() {
           )}
 
           {!error && isLoading && (
-            <div className={styles.skeletons}>
+            /* Shaped like the card it stands in for, not a grey box of about
+               the right height — the point of a skeleton is that nothing
+               moves when the real thing lands (§9.7). */
+            <ul className={styles.cards}>
               {Array.from({ length: 3 }, (_, i) => (
-                <Skeleton key={i} width="100%" height="6rem" />
+                <li key={i} className={styles.card} aria-hidden="true">
+                  <div className={styles.detailTop}>
+                    <Skeleton width="4rem" height="2.25rem" shape="circle" />
+                    <Skeleton width="5.5rem" height="1.75rem" shape="circle" />
+                  </div>
+                  <Skeleton width="70%" height="1.4rem" />
+                  <div className={styles.skeletonMeta}>
+                    <Skeleton width="55%" shape="text" />
+                  </div>
+                  <div className={styles.facts}>
+                    <Skeleton width="8rem" shape="text" />
+                    <Skeleton width="10rem" shape="text" />
+                    <Skeleton width="6rem" shape="text" />
+                  </div>
+                  <div className={styles.actions}>
+                    <Skeleton width="11rem" height="2.75rem" />
+                    <Skeleton width="6rem" height="2.75rem" />
+                  </div>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
 
           {!error && queue?.length === 0 && (

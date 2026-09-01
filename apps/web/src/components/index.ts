@@ -16,6 +16,6 @@ export { ThemeToggle } from './ThemeToggle/ThemeToggle';
 export { AppHeader } from './AppHeader/AppHeader';
 export { EmptyState } from './EmptyState/EmptyState';
 export { FilterBar, FilterChip, FilterGroupLabel } from './FilterBar/FilterBar';
-export { RequestCard } from './RequestCard/RequestCard';
+export { RequestCard, RequestCardSkeleton } from './RequestCard/RequestCard';
 export { Skeleton } from './Skeleton/Skeleton';
 export { UrgencyPill } from './UrgencyPill/UrgencyPill';

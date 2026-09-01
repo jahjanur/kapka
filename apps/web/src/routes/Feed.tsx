@@ -12,8 +12,8 @@ import {
   Grid,
   Icon,
   RequestCard,
+  RequestCardSkeleton,
   Select,
-  Skeleton,
   Stack,
   UrgencyPill,
 } from '../components';
@@ -27,23 +27,6 @@ const URGENCIES: Urgency[] = ['critical', 'urgent', 'routine'];
 const URGENCY_RANK: Record<Urgency, number> = { critical: 0, urgent: 1, routine: 2 };
 
 const titleCase = (value: string) => (value[0] ?? '').toUpperCase() + value.slice(1);
-
-/** Shape-matched to RequestCard, so nothing jumps when the data arrives. */
-function SkeletonCard() {
-  return (
-    <div className={styles.skeletonCard}>
-      <div className={styles.skeletonTop}>
-        <Skeleton width="4rem" height="2.25rem" shape="circle" />
-        <Skeleton width="5.5rem" height="1.75rem" shape="circle" />
-      </div>
-      <Stack gap={2}>
-        <Skeleton width="80%" height="1.4rem" />
-        <Skeleton width="60%" height="1rem" />
-      </Stack>
-      <Skeleton width="9rem" height="2.5rem" />
-    </div>
-  );
-}
 
 export default function Feed() {
   const { data, isLoading, error, refetch } = useRequests();
@@ -263,7 +246,7 @@ export default function Feed() {
                 {isLoading && (
                   <Grid minColumn="19rem" gap={4}>
                     {Array.from({ length: 6 }, (_, index) => (
-                      <SkeletonCard key={index} />
+                      <RequestCardSkeleton key={index} />
                     ))}
                   </Grid>
                 )}

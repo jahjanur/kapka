@@ -2,6 +2,9 @@
    page (§9.7). Only opacity animates, so this stays cheap on mid-range
    Android (§6.6). */
 .skeleton {
+  /* Was an inline style. A static display value is not the caller's business
+     and does not belong in a style attribute. */
+  display: block;
   background-color: var(--bg-surface-alt);
   border-radius: var(--radius-sm);
   animation: pulse var(--dur-pulse) var(--ease-in-out) infinite;

@@ -28,9 +28,9 @@
   color: var(--fg-secondary);
 }
 
-.skeletons {
-  display: grid;
-  gap: var(--space-3);
+/* The meta line under a skeleton heading, matching .detailMeta's spacing. */
+.skeletonMeta {
+  margin-block-start: var(--space-1);
 }
 
 .layout {

@@ -142,9 +142,20 @@ export default function Dashboard() {
           </div>
 
           {isLoading && (
-            <div className={styles.skeletons}>
-              <Skeleton width="100%" height="7rem" />
-              <Skeleton width="100%" height="10rem" />
+            /* Two cards, shaped like the two that arrive — a heading, a line
+               of body, and the action that sits under it. */
+            <div className={styles.grid} aria-hidden="true">
+              {Array.from({ length: 2 }, (_, i) => (
+                <section key={i} className={styles.card}>
+                  <Skeleton width="55%" height="1.4rem" />
+                  <div className={styles.cardBody}>
+                    <Skeleton width="100%" shape="text" />
+                  </div>
+                  <div className={styles.cardActions}>
+                    <Skeleton width="9rem" height="2.75rem" />
+                  </div>
+                </section>
+              ))}
             </div>
           )}
 
@@ -373,10 +384,20 @@ export default function Dashboard() {
                 <h2 className={styles.cardTitle}>What we have emailed you about</h2>
 
                 {loadingHistory && (
-                  <div className={styles.skeletons}>
-                    <Skeleton width="100%" height="3rem" />
-                    <Skeleton width="100%" height="3rem" />
-                  </div>
+                  /* Shaped like a history row: a hospital name over a line of
+                     meta, with the same rule between them. */
+                  <ul className={styles.history} aria-hidden="true">
+                    {Array.from({ length: 2 }, (_, i) => (
+                      <li key={i} className={styles.historyRow}>
+                        <div className={styles.historyMain}>
+                          <Skeleton width="9rem" height="1.2rem" />
+                          <div className={styles.historyMeta}>
+                            <Skeleton width="12rem" shape="text" />
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
                 )}
 
                 {!loadingHistory && notifications?.length === 0 && (

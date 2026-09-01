@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Skeleton } from '../Skeleton/Skeleton';
 import { BloodTypeBadge } from '../BloodTypeBadge/BloodTypeBadge';
 import { announceBloodType } from '@kapka/shared';
 import { Icon } from '../Icon/Icon';
@@ -72,6 +73,45 @@ export function RequestCard({ request }: { request: PublicBloodRequest }) {
           <Icon name="chevronRight" />
         </span>
       </Link>
+    </div>
+  );
+}
+
+/**
+ * The card, before its request has arrived.
+ *
+ * It lives here, beside the card, and reuses the card's own classes — so the
+ * padding, the radius, the gaps and the container-query bands are not
+ * mimicked, they are the same rules. A skeleton written from memory in the
+ * screen that shows it drifts the first time the card changes, which is
+ * exactly what happened to the one that used to live in Feed.tsx: the card
+ * grew a shell and three width bands and the skeleton kept the old shape.
+ *
+ * Shape-matched is the whole point (§9.7). A grey box of roughly the right
+ * height still makes the page jump when the real content lands.
+ */
+export function RequestCardSkeleton() {
+  return (
+    <div className={styles.shell} aria-hidden="true">
+      <div className={styles.card}>
+        <span className={styles.stripe} />
+
+        <div className={styles.top}>
+          <Skeleton width="4rem" height="2.25rem" shape="circle" />
+          <Skeleton width="5.5rem" height="1.75rem" shape="circle" />
+        </div>
+
+        <Skeleton width="80%" height="1.4rem" />
+
+        <div className={styles.meta}>
+          <Skeleton width="6rem" shape="text" />
+          <Skeleton width="4rem" shape="text" />
+        </div>
+
+        <span className={styles.cta}>
+          <Skeleton width="7rem" shape="text" />
+        </span>
+      </div>
     </div>
   );
 }
