@@ -57,6 +57,59 @@
   box-shadow: var(--elevation-2);
 }
 
+/* ── Steps ───────────────────────────────────────────────────────────────
+   Phone only. The step chrome is not hidden at wider widths — it is never
+   rendered, because whether the form has steps at all is a decision the
+   component makes (see SINGLE_PAGE in Register.tsx), not a coat of paint.
+   ------------------------------------------------------------------------ */
+.progress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.stepCount {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--fg-secondary);
+}
+
+.pips {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pip {
+  inline-size: var(--space-8);
+  block-size: var(--space-1);
+  background-color: var(--border-subtle);
+  border-radius: var(--radius-full);
+}
+
+.pipOn {
+  background-color: var(--accent);
+}
+
+.group {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.stepTitle {
+  font-size: var(--text-lg);
+  letter-spacing: var(--tracking-tight);
+}
+
+/* Back sits beside the submit, which takes the rest of the row. */
+.actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
 .formError {
   display: flex;
   align-items: start;

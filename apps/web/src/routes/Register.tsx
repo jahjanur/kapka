@@ -1,4 +1,4 @@
-import { useState, type SyntheticEvent } from 'react';
+import { useEffect, useRef, useState, type SyntheticEvent } from 'react';
 import {
   AppHeader,
   BloodTypeLabel,
@@ -17,14 +17,42 @@ import {
   registerSchema,
   type BloodType,
 } from '@kapka/shared';
+import { BREAKPOINTS } from '@kapka/tokens';
 import { api, ApiError, type Session } from '../lib/api';
+import { cx } from '../lib/cx';
+import { useMediaQuery } from '../lib/useMediaQuery';
 import { useSession } from '../lib/session';
 import { PATHS } from './paths';
 import styles from './Register.module.css';
 
 type Errors = Partial<Record<string, string>>;
+type Step = 1 | 2;
 
 const TODAY = new Date().toISOString().slice(0, 10);
+
+/**
+ * From md upward the whole form fits on one page; below it, two short steps.
+ *
+ * Derived from the token rather than typed out again — Register.module.css
+ * uses the same width, and a form that steps while the CSS thinks it does not
+ * would be broken in a way nobody would think to check for.
+ */
+const SINGLE_PAGE = `(min-width: ${String(BREAKPOINTS.md / 16)}rem)`;
+
+/**
+ * Which field belongs to which step, so Continue can validate its own half and
+ * leave the rest alone. A donor should not be told their blood type is missing
+ * while looking at a screen that does not ask for it.
+ */
+const STEP_FIELDS: Record<Step, readonly string[]> = {
+  1: ['fullName', 'email', 'password', 'phone'],
+  2: ['bloodType', 'city', 'lastDonationDate'],
+};
+
+const STEP_TITLES: Record<Step, string> = {
+  1: 'About you',
+  2: 'Your blood',
+};
 
 /**
  * Donor registration (§9.2).
@@ -34,9 +62,16 @@ const TODAY = new Date().toISOString().slice(0, 10);
  * server rejects, this form has already caught, and anything only the server
  * can know (that an email is taken) comes back with a `field` and lands on
  * the input it belongs to.
+ *
+ * Fields are checked when they lose focus, never while they are being typed
+ * in. Validating on every keystroke tells someone their email is invalid
+ * three characters into typing it, which is both true and useless.
  */
 export default function Register() {
   const { signIn } = useSession();
+  const singlePage = useMediaQuery(SINGLE_PAGE);
+  const [step, setStep] = useState<Step>(1);
+
   /* The whole session, not just the address: asking for another confirmation
      link is an authenticated call, and this screen is where it is asked for. */
   const [registered, setRegistered] = useState<Session | null>(null);
@@ -57,11 +92,35 @@ export default function Register() {
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  async function handleSubmit(event: SyntheticEvent) {
-    event.preventDefault();
-    setFormError(null);
+  /* Focus has to move AFTER the render that shows the errors: nothing carries
+     aria-invalid until then, so looking for it in the handler that set them
+     finds the previous DOM and quietly focuses nothing. Bumping a counter is
+     what gets the search into an effect, where the DOM is current. */
+  const [focusRequest, setFocusRequest] = useState(0);
+  useEffect(() => {
+    if (focusRequest === 0) return;
+    document
+      .querySelector<HTMLElement>('[aria-invalid="true"]')
+      ?.focus({ preventScroll: false });
+  }, [focusRequest]);
 
-    const candidate = {
+  /* Changing step moves focus to the new step's heading, so a screen reader
+     announces where it now is rather than leaving the user on a button that
+     has just disappeared. Skipped on the first render, where it would drag
+     focus into the form before anyone asked. */
+  const stepHeading = useRef<HTMLHeadingElement>(null);
+  const mounted = useRef(false);
+  useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    stepHeading.current?.focus();
+  }, [step]);
+
+  /** Everything the schema wants, with any just-changed value applied. */
+  function candidate(overrides: Record<string, unknown> = {}) {
+    return {
       fullName,
       email,
       password,
@@ -69,23 +128,90 @@ export default function Register() {
       city,
       lastDonationDate: neverDonated ? null : lastDonationDate,
       ...(phone.trim() ? { phone } : {}),
+      ...overrides,
     };
+  }
 
-    const parsed = registerSchema.safeParse(candidate);
+  /**
+   * Checks one field against the whole schema.
+   *
+   * The whole schema, not a picked-apart piece of it, because a rule can span
+   * two fields — a donation date in the future is a refinement over the object
+   * — and it still has to land on the field it belongs to.
+   */
+  function checkField(field: string, overrides: Record<string, unknown> = {}) {
+    const parsed = registerSchema.safeParse(candidate(overrides));
+    const message = parsed.success
+      ? undefined
+      : parsed.error.issues.find((issue) => issue.path[0] === field)?.message;
+    setErrors((previous) => ({ ...previous, [field]: message }));
+  }
+
+  /**
+   * Drops a message for a field being edited, without checking anything.
+   *
+   * Not validation: it removes a sentence that has stopped describing what is
+   * on screen. Leaving "Enter a valid email address." under an address someone
+   * is halfway through fixing is just nagging. The real check runs on blur.
+   */
+  function clearError(field: string) {
+    setErrors((previous) =>
+      previous[field] ? { ...previous, [field]: undefined } : previous,
+    );
+  }
+
+  /** Messages for one step's fields. Empty means the step is complete. */
+  function stepErrors(which: Step): Errors {
+    const parsed = registerSchema.safeParse(candidate());
+    if (parsed.success) return {};
+    const found: Errors = {};
+    for (const issue of parsed.error.issues) {
+      const key = String(issue.path[0] ?? 'form');
+      // First message per field wins — a stack of three under one input is
+      // noise, and fixing the first usually clears the rest.
+      if (STEP_FIELDS[which].includes(key)) found[key] ??= issue.message;
+    }
+    return found;
+  }
+
+  function handleContinue() {
+    const found = stepErrors(1);
+    if (Object.keys(found).length > 0) {
+      setErrors((previous) => ({ ...previous, ...found }));
+      setFocusRequest((n) => n + 1);
+      return;
+    }
+    setStep(2);
+  }
+
+  async function handleSubmit(event: SyntheticEvent) {
+    event.preventDefault();
+
+    /* On a phone, step one has no submit button — but pressing Enter in a
+       text field still asks the form to submit. That means "next", not "send
+       me half a registration". */
+    if (!singlePage && step === 1) {
+      handleContinue();
+      return;
+    }
+
+    setFormError(null);
+
+    const parsed = registerSchema.safeParse(candidate());
     if (!parsed.success) {
       const next: Errors = {};
       for (const issue of parsed.error.issues) {
         const key = issue.path.map(String).join('.') || 'form';
-        // First message per field wins — a stack of three under one input is
-        // noise, and fixing the first usually clears the rest.
         next[key] ??= issue.message;
       }
       setErrors(next);
-      // Without this the page silently does nothing when the invalid field is
-      // scrolled off screen.
-      document
-        .querySelector<HTMLElement>('[aria-invalid="true"]')
-        ?.focus({ preventScroll: false });
+
+      /* Something invalid on the step that is not showing would otherwise be
+         a form that refuses to submit and says nothing anyone can see. */
+      const firstInvalid = String(parsed.error.issues[0]?.path[0] ?? '');
+      if (!singlePage && STEP_FIELDS[1].includes(firstInvalid)) setStep(1);
+
+      setFocusRequest((n) => n + 1);
       return;
     }
 
@@ -101,6 +227,7 @@ export default function Register() {
     } catch (error) {
       if (error instanceof ApiError && error.field) {
         setErrors({ [error.field]: error.message });
+        setFocusRequest((n) => n + 1);
       } else if (error instanceof ApiError) {
         setFormError(error.message);
       } else {
@@ -181,6 +308,10 @@ export default function Register() {
     );
   }
 
+  /* One page, or one step at a time. Unmounting the hidden step is safe:
+     every value lives in this component's state, not in the inputs. */
+  const showing = (which: Step) => singlePage || step === which;
+
   return (
     <>
       <AppHeader />
@@ -215,6 +346,16 @@ export default function Register() {
               onSubmit={(event) => void handleSubmit(event)}
               noValidate
             >
+              {!singlePage && (
+                <div className={styles.progress}>
+                  <p className={styles.stepCount}>Step {step} of 2</p>
+                  <ol className={styles.pips} aria-hidden="true">
+                    <li className={cx(styles.pip, styles.pipOn)} />
+                    <li className={cx(styles.pip, step === 2 && styles.pipOn)} />
+                  </ol>
+                </div>
+              )}
+
               {formError && (
                 <p className={styles.formError} role="alert">
                   <Icon name="alertCircle" />
@@ -222,143 +363,236 @@ export default function Register() {
                 </p>
               )}
 
-              <Field label="Full name" required error={errors.fullName}>
-                <Input
-                  autoComplete="name"
-                  value={fullName}
-                  onChange={(event) => setFullName(event.target.value)}
-                />
-              </Field>
-
-              <Field
-                label="Email"
-                required
-                error={errors.email}
-                help="Where the notifications go."
-              >
-                <Input
-                  type="email"
-                  inputMode="email"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                />
-              </Field>
-
-              <Field
-                label="Password"
-                required
-                error={errors.password}
-                help="At least 10 characters."
-              >
-                <div className={styles.password}>
-                  <Input
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="new-password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className={styles.reveal}
-                    onClick={() => setShowPassword((shown) => !shown)}
-                    aria-pressed={showPassword}
+              {showing(1) && (
+                <section className={styles.group} aria-labelledby="step-1-title">
+                  <h2
+                    id="step-1-title"
+                    className={styles.stepTitle}
+                    /* Focusable only as a target for the step change, never in
+                       the tab order. */
+                    tabIndex={-1}
+                    ref={step === 1 ? stepHeading : null}
                   >
-                    <Icon name={showPassword ? 'eyeOff' : 'eye'} />
-                    <span className="visually-hidden">
-                      {showPassword ? 'Hide password' : 'Show password'}
-                    </span>
-                  </button>
-                </div>
-              </Field>
+                    {STEP_TITLES[1]}
+                  </h2>
 
-              {/* Chips rather than a select: eight options, and the one thing
-                  on this form a donor must not get wrong. */}
-              <Field label="Blood type" required error={errors.bloodType}>
-                <div className={styles.types} role="group" aria-label="Blood type">
-                  {BLOOD_TYPES.map((type) => (
-                    <FilterChip
-                      key={type}
-                      selected={bloodType === type}
-                      onClick={() => setBloodType(type)}
-                    >
-                      <BloodTypeLabel type={type} />
-                    </FilterChip>
-                  ))}
-                </div>
-              </Field>
-
-              <Field
-                label="City"
-                required
-                error={errors.city}
-                help="We match donors to requests in the same city."
-              >
-                <Select
-                  placeholder="Choose your city"
-                  value={city}
-                  onChange={(event) => setCity(event.target.value)}
-                >
-                  {CITIES.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-
-              <fieldset className={styles.fieldset}>
-                <legend className={styles.legend}>Last donation</legend>
-                <p className={styles.legendHelp}>
-                  You become eligible again {DONATION_INTERVAL_DAYS} days after giving.
-                </p>
-
-                <label className={styles.check}>
-                  <input
-                    type="checkbox"
-                    checked={neverDonated}
-                    onChange={(event) => setNeverDonated(event.target.checked)}
-                  />
-                  I have never donated
-                </label>
-
-                {!neverDonated && (
-                  <Field label="Date of last donation" error={errors.lastDonationDate}>
+                  <Field label="Full name" required error={errors.fullName}>
                     <Input
-                      type="date"
-                      max={TODAY}
-                      value={lastDonationDate}
-                      onChange={(event) => setLastDonationDate(event.target.value)}
+                      autoComplete="name"
+                      value={fullName}
+                      onChange={(event) => {
+                        setFullName(event.target.value);
+                        clearError('fullName');
+                      }}
+                      onBlur={() => {
+                        checkField('fullName');
+                      }}
                     />
                   </Field>
-                )}
-              </fieldset>
 
-              <Field
-                label="Phone"
-                optional
-                error={errors.phone}
-                help="Only shared with a hospital you have agreed to help."
-              >
-                <Input
-                  type="tel"
-                  inputMode="tel"
-                  autoComplete="tel"
-                  value={phone}
-                  onChange={(event) => setPhone(event.target.value)}
-                />
-              </Field>
+                  <Field
+                    label="Email"
+                    required
+                    error={errors.email}
+                    help="Where the notifications go."
+                  >
+                    <Input
+                      type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      value={email}
+                      onChange={(event) => {
+                        setEmail(event.target.value);
+                        clearError('email');
+                      }}
+                      onBlur={() => {
+                        checkField('email');
+                      }}
+                    />
+                  </Field>
+
+                  <Field
+                    label="Password"
+                    required
+                    error={errors.password}
+                    help="At least 10 characters."
+                  >
+                    <div className={styles.password}>
+                      <Input
+                        type={showPassword ? 'text' : 'password'}
+                        autoComplete="new-password"
+                        value={password}
+                        onChange={(event) => {
+                          setPassword(event.target.value);
+                          clearError('password');
+                        }}
+                        onBlur={() => {
+                          checkField('password');
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className={styles.reveal}
+                        onClick={() => setShowPassword((shown) => !shown)}
+                        aria-pressed={showPassword}
+                      >
+                        <Icon name={showPassword ? 'eyeOff' : 'eye'} />
+                        <span className="visually-hidden">
+                          {showPassword ? 'Hide password' : 'Show password'}
+                        </span>
+                      </button>
+                    </div>
+                  </Field>
+
+                  <Field
+                    label="Phone"
+                    optional
+                    error={errors.phone}
+                    help="Only shared with a hospital you have agreed to help."
+                  >
+                    <Input
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      value={phone}
+                      onChange={(event) => {
+                        setPhone(event.target.value);
+                        clearError('phone');
+                      }}
+                      onBlur={() => {
+                        checkField('phone');
+                      }}
+                    />
+                  </Field>
+                </section>
+              )}
+
+              {showing(2) && (
+                <section className={styles.group} aria-labelledby="step-2-title">
+                  <h2
+                    id="step-2-title"
+                    className={styles.stepTitle}
+                    tabIndex={-1}
+                    ref={step === 2 ? stepHeading : null}
+                  >
+                    {STEP_TITLES[2]}
+                  </h2>
+
+                  {/* Chips rather than a select: eight options, and the one thing
+                      on this form a donor must not get wrong. */}
+                  <Field label="Blood type" required error={errors.bloodType}>
+                    <div className={styles.types} role="group" aria-label="Blood type">
+                      {BLOOD_TYPES.map((type) => (
+                        <FilterChip
+                          key={type}
+                          selected={bloodType === type}
+                          onClick={() => {
+                            setBloodType(type);
+                            /* A chip is a complete answer, not a keystroke, so
+                               checking it here is not validating as they type. */
+                            checkField('bloodType', { bloodType: type });
+                          }}
+                        >
+                          <BloodTypeLabel type={type} />
+                        </FilterChip>
+                      ))}
+                    </div>
+                  </Field>
+
+                  <Field
+                    label="City"
+                    required
+                    error={errors.city}
+                    help="We match donors to requests in the same city."
+                  >
+                    <Select
+                      placeholder="Choose your city"
+                      value={city}
+                      onChange={(event) => {
+                        setCity(event.target.value);
+                        checkField('city', { city: event.target.value });
+                      }}
+                    >
+                      {CITIES.map((name) => (
+                        <option key={name} value={name}>
+                          {name}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+
+                  <fieldset className={styles.fieldset}>
+                    <legend className={styles.legend}>Last donation</legend>
+                    <p className={styles.legendHelp}>
+                      You become eligible again {DONATION_INTERVAL_DAYS} days after
+                      giving.
+                    </p>
+
+                    <label className={styles.check}>
+                      <input
+                        type="checkbox"
+                        checked={neverDonated}
+                        onChange={(event) => {
+                          setNeverDonated(event.target.checked);
+                          // "Never donated" is always valid, and the date it
+                          // hides cannot still be complaining about itself.
+                          clearError('lastDonationDate');
+                        }}
+                      />
+                      I have never donated
+                    </label>
+
+                    {!neverDonated && (
+                      <Field
+                        label="Date of last donation"
+                        error={errors.lastDonationDate}
+                      >
+                        <Input
+                          type="date"
+                          max={TODAY}
+                          value={lastDonationDate}
+                          onChange={(event) => {
+                            setLastDonationDate(event.target.value);
+                            clearError('lastDonationDate');
+                          }}
+                          onBlur={() => {
+                            checkField('lastDonationDate');
+                          }}
+                        />
+                      </Field>
+                    )}
+                  </fieldset>
+                </section>
+              )}
 
               <div className={styles.submit}>
-                <Button
-                  type="submit"
-                  size="lg"
-                  fullWidth
-                  loading={submitting}
-                  loadingLabel="Creating your account…"
-                >
-                  Register as donor
-                </Button>
+                {!singlePage && step === 1 ? (
+                  <Button type="button" size="lg" fullWidth onClick={handleContinue}>
+                    Continue
+                  </Button>
+                ) : (
+                  <div className={styles.actions}>
+                    {!singlePage && (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="lg"
+                        onClick={() => setStep(1)}
+                      >
+                        Back
+                      </Button>
+                    )}
+                    <Button
+                      type="submit"
+                      size="lg"
+                      fullWidth
+                      loading={submitting}
+                      loadingLabel="Creating your account…"
+                    >
+                      Register as donor
+                    </Button>
+                  </div>
+                )}
               </div>
             </form>
           </div>
