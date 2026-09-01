@@ -305,7 +305,12 @@ export default function RequestDetail() {
               </a>
             ) : (
               <Button to={PATHS.register} className={styles.action} size="md">
-                Register to see the number
+                {/* Two labels, one shown. At 360px the long one and
+                    "Directions" together are wider than the screen, and the
+                    button that was cut in half was the call to action. The
+                    header solves it the same way. */}
+                <span className={styles.actionShort}>Register</span>
+                <span className={styles.actionLong}>Register to see the number</span>
               </Button>
             )}
           </Container>

@@ -141,3 +141,16 @@
     display: inline;
   }
 }
+
+/*
+   A phone on its side is 360px tall. A 57px sticky header, a sticky filter
+   strip and a fixed action bar between them left under half the screen for
+   the thing the reader came for — so on a short viewport the header stops
+   being pinned. It is one short scroll away, which is a better trade than
+   permanently spending a sixth of the screen on it.
+ */
+@media (max-height: 30rem) {
+  .header {
+    position: static;
+  }
+}

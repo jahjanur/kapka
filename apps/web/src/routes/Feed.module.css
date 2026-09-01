@@ -327,3 +327,17 @@
     max-inline-size: none;
   }
 }
+
+/* Landscape, or any short window: the filter strip wraps to three lines at
+   this width and pinning it costs half the viewport. It scrolls away with
+   the rest, and the thumb-zone CTA goes entirely — there is no thumb zone
+   worth protecting on a screen this short. */
+@media (max-height: 30rem) {
+  .filters {
+    position: static;
+  }
+
+  .mobileCta {
+    display: none;
+  }
+}

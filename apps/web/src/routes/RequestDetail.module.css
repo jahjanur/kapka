@@ -310,6 +310,10 @@
 .action {
   display: inline-flex;
   flex: 1;
+  /* A flex item will not shrink below its content without this — the default
+     min-inline-size is auto, which is what let a long label push the button
+     off the right edge of the screen rather than squeezing it. */
+  min-inline-size: 0;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
@@ -322,6 +326,21 @@
   background-color: var(--bg-surface);
   border: 1px solid var(--border-control);
   border-radius: var(--radius-md);
+}
+
+/* Long enough for the button to say what it does, short enough for two of
+   them to fit across 360px. */
+.actionLong {
+  display: none;
+}
+
+@media (min-width: 26rem) {
+  .actionShort {
+    display: none;
+  }
+  .actionLong {
+    display: inline;
+  }
 }
 
 .actionPrimary {
@@ -337,5 +356,14 @@
   .actionPrimary:hover {
     background-color: var(--accent-hover);
     border-color: var(--accent-hover);
+  }
+}
+
+/* The action bar stays — it is the point of the screen — but it does not
+   need to be this tall when the screen is 360px. */
+@media (max-height: 30rem) {
+  .actionBar {
+    padding-block-start: var(--space-2);
+    padding-block-end: max(var(--space-2), env(safe-area-inset-bottom));
   }
 }
