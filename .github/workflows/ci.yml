@@ -58,6 +58,26 @@ jobs:
       - name: Build
         run: npm run build
 
+      # Bytes are deterministic, so this is a hard gate and it is cheap: it
+      # reads dist/ and gzips it. §11's number, measured rather than asserted
+      # in a comment.
+      - name: Performance budget
+        run: npm run perf:budget
+
+      # LCP and CLS need a browser, so this is the slow one. Three runs per
+      # URL, median asserted — see lighthouserc.cjs for why each threshold is
+      # the number it is.
+      - name: Lighthouse
+        run: npm run perf:lighthouse
+
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse
+          path: .lighthouseci
+          retention-days: 7
+
       - name: Upload coverage
         if: always()
         uses: actions/upload-artifact@v4

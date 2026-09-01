@@ -238,6 +238,12 @@ export default function Feed() {
 
             <div className={styles.list}>
               <Stack gap={4}>
+                {/* The list needs a heading of its own. The spotlight above
+                    is the only h2 on this page and it is hidden on a phone,
+                    so the outline went straight from the h1 to the cards'
+                    h3s — a skipped level, and nothing for a screen reader to
+                    jump to when the thing it wants is "the requests". */}
+                <h2 className="visually-hidden">Requests</h2>
                 <p className={styles.resultCount} aria-live="polite">
                   {isLoading
                     ? 'Loading requests…'

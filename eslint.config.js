@@ -115,11 +115,31 @@ export default tseslint.config(
     },
   },
 
-  /* ── Config files ────────────────────────────────────────────────────── */
+  /* ── Config files and plain node scripts ─────────────────────────────────
+     Neither is in a tsconfig, so type-aware linting has no project to read
+     them against — and neither needs it. They are build-time tools, not
+     product code. */
   {
-    files: ['**/*.config.{js,ts}', 'eslint.config.js'],
-    languageOptions: { globals: globals.node },
+    files: ['**/*.config.{js,ts}', 'eslint.config.js', '**/scripts/**/*.mjs'],
     ...tseslint.configs.disableTypeChecked,
+    /* Merged into what disableTypeChecked sets, not laid over it: replacing
+       languageOptions wholesale also discards the parserOptions that turned
+       type-aware linting off, and the type-aware parser then fails on a file
+       that is in no tsconfig. */
+    languageOptions: {
+      ...tseslint.configs.disableTypeChecked.languageOptions,
+      globals: globals.node,
+    },
+  },
+  {
+    // The repo is type: module, so a .cjs has to be told what it is.
+    files: ['**/*.cjs'],
+    ...tseslint.configs.disableTypeChecked,
+    languageOptions: {
+      ...tseslint.configs.disableTypeChecked.languageOptions,
+      globals: globals.node,
+      sourceType: 'commonjs',
+    },
   },
 
   /* Must stay last: switches off every rule Prettier owns, so the two never

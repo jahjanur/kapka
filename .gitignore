@@ -33,3 +33,6 @@ test-results/
 
 # Rendered email fixtures — regenerate with npm run email:preview
 apps/api/preview/
+
+# Lighthouse CI reports — regenerated on every run.
+.lighthouseci/

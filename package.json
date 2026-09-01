@@ -31,13 +31,16 @@
     "migrate:create": "npm run migrate:create --workspace @kapka/api --",
     "migrate:status": "npm run migrate:status --workspace @kapka/api",
     "seed": "npm run seed --workspace @kapka/api",
-    "expire-requests": "npm run expire-requests --workspace @kapka/api"
+    "expire-requests": "npm run expire-requests --workspace @kapka/api",
+    "perf:budget": "npm run perf:budget --workspace @kapka/web",
+    "perf:lighthouse": "lhci autorun --config=lighthouserc.cjs"
   },
   "engines": {
     "node": ">=20"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@lhci/cli": "^0.15.1",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@types/supertest": "^7.2.1",
