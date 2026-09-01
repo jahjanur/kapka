@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { PublicBloodRequest } from '@kapka/shared';
-import { api, ApiError } from './api';
+import { api, ApiError, type ViewedRequest } from './api';
 
 interface Snapshot<T> {
   /** Which fetch this data belongs to. */
@@ -85,7 +85,15 @@ export function useRequests(): QueryResult<PublicBloodRequest[]> {
   return useQuery('requests', () => api.listRequests());
 }
 
-/** GET /api/requests/:id — one request (§9.4). */
-export function useRequest(id: string): QueryResult<PublicBloodRequest> {
-  return useQuery(`requests/${id}`, () => api.getRequest(id));
+/**
+ * GET /api/requests/:id — one request (§9.4).
+ *
+ * The token is part of the key, not just the call. Signing in changes what
+ * comes back — the contact number appears — so it has to be a different fetch
+ * rather than a stale hit on the anonymous one.
+ */
+export function useRequest(id: string, accessToken?: string): QueryResult<ViewedRequest> {
+  return useQuery(`requests/${id}/${accessToken ? 'authed' : 'public'}`, () =>
+    api.getRequest(id, accessToken),
+  );
 }

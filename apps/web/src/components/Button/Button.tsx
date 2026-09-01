@@ -16,7 +16,11 @@ interface CommonProps {
   variant?: ButtonVariant;
   size?: ButtonSize;
   fullWidth?: boolean;
-  className?: string;
+  /* `| undefined` spelled out: noUncheckedIndexedAccess types every
+     CSS-module lookup as `string | undefined`, and exactOptionalPropertyTypes
+     means a bare `className?: string` cannot be handed one. React's own
+     attribute types say it the same way. */
+  className?: string | undefined;
   children?: ReactNode;
 }
 

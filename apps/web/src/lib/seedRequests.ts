@@ -21,6 +21,12 @@ const row = (
  *
  * Synthetic only. No real personal data ever enters local or staging (§2).
  */
+/**
+ * The number the demo client hands a signed-in viewer. Invented, like the rest
+ * of this file — 555 is not a dialable Macedonian prefix, which is the point.
+ */
+export const SEED_CONTACT = '+389 2 555 0100';
+
 export const SEED_REQUESTS: PublicBloodRequest[] = [
   row({
     id: 'r1',
@@ -30,6 +36,11 @@ export const SEED_REQUESTS: PublicBloodRequest[] = [
     hospitalName: 'City General Hospital 8th September',
     city: 'Skopje',
     note: 'Road traffic accident, theatre is prepped and waiting on units.',
+    /* City centre, not a surveyed hospital entrance. This is a fixture so the
+       map and the directions link can be walked through with nothing else
+       running; a real request carries the pin its requester dropped. */
+    hospitalLat: 41.9981,
+    hospitalLng: 21.4254,
     createdAt: minutesAgo(12),
   }),
   row({
@@ -40,6 +51,8 @@ export const SEED_REQUESTS: PublicBloodRequest[] = [
     hospitalName: 'Clinical Hospital Dr. Trifun Panovski',
     city: 'Bitola',
     note: 'Scheduled surgery tomorrow morning.',
+    hospitalLat: 41.0297,
+    hospitalLng: 21.3292,
     createdAt: minutesAgo(48),
   }),
   row({

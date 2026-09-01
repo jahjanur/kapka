@@ -20,11 +20,15 @@ const PIN_ZOOM = 15;
 interface HospitalMapProps {
   lat: number | null;
   lng: number | null;
-  onPick: (lat: number, lng: number) => void;
+  /**
+   * Omit for a map that only shows. The detail screen displays where a
+   * request already is; only the form that creates one lets you move it.
+   */
+  onPick?: ((lat: number, lng: number) => void) | undefined;
 }
 
 /**
- * A map for putting one pin on a hospital (§9.3).
+ * A map showing one hospital, and — given onPick — for moving the pin (§9.3).
  *
  * Leaflet is driven directly rather than through react-leaflet: this is one
  * map with one marker and one event, and a wrapper library would be a second
@@ -67,7 +71,10 @@ export default function HospitalMap({ lat, lng, onPick }: HospitalMapProps) {
     }).addTo(instance);
 
     instance.on('click', (event: L.LeafletMouseEvent) => {
-      pick.current(event.latlng.lat, event.latlng.lng);
+      // Read through the ref every time, so a map that starts read-only and
+      // is later given a handler needs no rebuild — and one that never gets
+      // a handler quietly ignores the click.
+      pick.current?.(event.latlng.lat, event.latlng.lng);
     });
 
     map.current = instance;

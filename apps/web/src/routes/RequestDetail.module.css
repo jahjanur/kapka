@@ -3,6 +3,9 @@
    ========================================================================= */
 
 .page {
+  /* Room for the action bar, which is fixed and would otherwise sit on top of
+     the last thing on the page — usually the "before you go" advice. */
+  padding-block-end: var(--space-24);
   padding-block: var(--space-5) var(--space-24);
 }
 
@@ -207,5 +210,89 @@
   }
   .facts {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* ── The map ─────────────────────────────────────────────────────────────
+   Only rendered when the request carries a pin, so most of the laziness here
+   is that Leaflet is never fetched at all for one that does not.
+   ---------------------------------------------------------------------- */
+.mapLoading {
+  block-size: 16rem;
+  background-color: var(--bg-surface-alt);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
+}
+
+.mapNote {
+  margin-block-start: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+}
+
+.phoneLink {
+  color: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── The action bar ──────────────────────────────────────────────────────
+   Fixed rather than sticky-in-flow: this page is longer than a screen on a
+   phone, and the two things a donor does next must not scroll away. It stays
+   at every width — on a desktop it is the same two links, and having them in
+   one place beats having them in two.
+   ---------------------------------------------------------------------- */
+.actionBar {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: var(--z-sticky);
+  padding-block-start: var(--space-3);
+  /* Without the safe-area inset this sits under the iPhone home indicator. */
+  padding-block-end: max(var(--space-3), env(safe-area-inset-bottom));
+  background-color: color-mix(
+    in oklab,
+    var(--bg-surface) var(--tint-chrome),
+    transparent
+  );
+  backdrop-filter: blur(var(--blur-chrome));
+  border-block-start: 1px solid var(--border-subtle);
+  box-shadow: var(--elevation-4);
+}
+
+.actionBarInner {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.action {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-block-size: var(--hit-min);
+  padding-inline: var(--space-4);
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  color: var(--fg-primary);
+  text-decoration: none;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
+}
+
+.actionPrimary {
+  color: var(--fg-onAccent);
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+
+@media (hover: hover) {
+  .action:hover {
+    border-color: var(--border-strong);
+  }
+  .actionPrimary:hover {
+    background-color: var(--accent-hover);
+    border-color: var(--accent-hover);
   }
 }

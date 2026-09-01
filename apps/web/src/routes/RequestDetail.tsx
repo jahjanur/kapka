@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   AppHeader,
@@ -15,7 +16,17 @@ import { announceBloodType, DONATION_INTERVAL_DAYS } from '@kapka/shared';
 import { useRequest } from '../lib/useRequests';
 import { useSession } from '../lib/session';
 import { timeAgo } from '../lib/relativeTime';
+import { directionsUrl, isDiallable, telHref } from '../lib/directions';
+import { PATHS } from './paths';
 import styles from './RequestDetail.module.css';
+
+/**
+ * Leaflet is 150kB and this screen is opened from an email, on a phone, in a
+ * corridor. It is a separate chunk, and it is only asked for at all when the
+ * request actually carries a pin — most of the reason this is lazy is that
+ * for a request without coordinates it is never fetched.
+ */
+const HospitalMap = lazy(() => import('../components/HospitalMap/HospitalMap'));
 
 const longDate = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, {
@@ -27,8 +38,17 @@ const longDate = (iso: string) =>
 /** One request in full (§9.4). */
 export default function RequestDetail() {
   const { id = '' } = useParams();
-  const { data: request, isLoading, error, refetch } = useRequest(id);
   const { session } = useSession();
+  const {
+    data: request,
+    isLoading,
+    error,
+    refetch,
+  } = useRequest(id, session?.accessToken);
+
+  const phone = request?.contactPhone;
+  const hasPin =
+    typeof request?.hospitalLat === 'number' && typeof request.hospitalLng === 'number';
 
   return (
     <>
@@ -101,6 +121,24 @@ export default function RequestDetail() {
                   </section>
                 )}
 
+                {hasPin && (
+                  <section className={styles.section}>
+                    <h2 className={styles.sectionHeading}>Where to go</h2>
+                    <Suspense
+                      fallback={<div className={styles.mapLoading} aria-hidden="true" />}
+                    >
+                      <HospitalMap
+                        lat={request.hospitalLat ?? null}
+                        lng={request.hospitalLng ?? null}
+                      />
+                    </Suspense>
+                    <p className={styles.mapNote}>
+                      The pin is where the hospital put it. Directions open in your maps
+                      app.
+                    </p>
+                  </section>
+                )}
+
                 <section className={styles.section}>
                   <h2 className={styles.sectionHeading}>Details</h2>
                   <dl className={styles.facts}>
@@ -163,11 +201,12 @@ export default function RequestDetail() {
 
                   <div className={styles.contact}>
                     <h3 className={styles.contactHeading}>Hospital contact</h3>
-                    {session ? (
+                    {isDiallable(phone) ? (
                       <p className={styles.contactBody}>
                         <Icon name="phone" />
-                        Contact details are released to signed-in donors once the request
-                        is matched to you.
+                        <a href={telHref(phone)} className={styles.phoneLink}>
+                          {phone}
+                        </a>
                       </p>
                     ) : (
                       <p className={styles.contactBody}>
@@ -183,6 +222,46 @@ export default function RequestDetail() {
           )}
         </Container>
       </div>
+
+      {/*
+        The two things a donor who has decided actually does next, kept within
+        thumb reach the whole way down. Outside the scrolling page, because a
+        request read on a phone is longer than a screen and an action that has
+        scrolled away is an action that does not happen.
+
+        Directions is always here — it needs nothing but the address. Calling
+        needs the number, and the number needs a session (§12), so signed out
+        the second button is the way to get one rather than a dead tel: link.
+      */}
+      {request && (
+        <div className={styles.actionBar}>
+          <Container className={styles.actionBarInner}>
+            <a
+              className={styles.action}
+              href={directionsUrl(request)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Icon name="mapPin" />
+              Directions
+            </a>
+
+            {isDiallable(phone) ? (
+              <a
+                className={`${styles.action} ${styles.actionPrimary}`}
+                href={telHref(phone)}
+              >
+                <Icon name="phone" />
+                Call the hospital
+              </a>
+            ) : (
+              <Button to={PATHS.register} className={styles.action} size="md">
+                Register to see the number
+              </Button>
+            )}
+          </Container>
+        </div>
+      )}
     </>
   );
 }

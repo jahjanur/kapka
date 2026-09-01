@@ -7,7 +7,7 @@ import type {
   RegisterInput,
   UserRole,
 } from '@kapka/shared';
-import { SEED_REQUESTS } from './seedRequests';
+import { SEED_CONTACT, SEED_REQUESTS } from './seedRequests';
 
 export interface SessionUser {
   id: string;
@@ -21,6 +21,15 @@ export interface Session {
   user: SessionUser;
   accessToken: string;
 }
+
+/**
+ * A request as a viewer may see it.
+ *
+ * contactPhone is present only for a signed-in caller: the API selects the
+ * column at all only when there is a viewer (§12), so an anonymous request
+ * does not get a redacted number, it gets no field.
+ */
+export type ViewedRequest = PublicBloodRequest & { contactPhone?: string };
 
 /**
  * A failed call, carrying the API's own error envelope (§4).
@@ -52,7 +61,13 @@ export interface ResendResult {
 
 export interface ApiClient {
   listRequests(): Promise<PublicBloodRequest[]>;
-  getRequest(id: string): Promise<PublicBloodRequest>;
+  /**
+   * The token is optional and changes the answer: presented, the hospital's
+   * contact number comes back with the request. Without it the endpoint is
+   * still public — this is not authentication, it is how much of the row the
+   * caller is allowed to see.
+   */
+  getRequest(id: string, accessToken?: string): Promise<ViewedRequest>;
   register(input: RegisterInput): Promise<Session>;
   /**
    * Posts a request (§9.3). Signed in only — the API answers 401 otherwise.
@@ -126,9 +141,17 @@ function createHttpClient(baseUrl: string): ApiClient {
       const { requests } = await call<{ requests: PublicBloodRequest[] }>('/requests');
       return requests;
     },
-    async getRequest(id) {
-      const { request } = await call<{ request: PublicBloodRequest }>(
+    async getRequest(id, accessToken) {
+      const { request } = await call<{ request: ViewedRequest }>(
         `/requests/${encodeURIComponent(id)}`,
+        accessToken
+          ? {
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }
+          : undefined,
       );
       return request;
     },
@@ -186,11 +209,13 @@ function createDemoClient(): ApiClient {
 
   return {
     listRequests: () => latency([...SEED_REQUESTS]),
-    async getRequest(id) {
+    async getRequest(id, accessToken) {
       const found = SEED_REQUESTS.find((request) => request.id === id);
       await latency(null);
       if (!found) throw new ApiError('NOT_FOUND', 'That request does not exist.', 404);
-      return found;
+      // Mirrors the API: the number exists only for a caller who presented a
+      // token, so the signed-out screen can be walked through as it really is.
+      return accessToken ? { ...found, contactPhone: SEED_CONTACT } : found;
     },
     async register(input) {
       await latency(null);
