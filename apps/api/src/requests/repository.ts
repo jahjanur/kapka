@@ -2,6 +2,7 @@ import type {
   AuthedBloodRequest,
   BloodType,
   CreateRequestInput,
+  DonorFit,
   PublicBloodRequest,
   RequestFilterInput,
   Urgency,
@@ -27,6 +28,11 @@ interface RequestRow {
   created_at: Date;
   expires_at: Date;
   contact_phone?: string;
+  /* Only selected by findById, and only for a viewer who is a donor. */
+  donor_type?: BloodType | null;
+  compatible?: boolean | null;
+  /* Text, not Date: see the note in toFit. */
+  eligible_from?: string | null;
 }
 
 /**
@@ -65,6 +71,25 @@ function toPublic(row: RequestRow): PublicBloodRequest {
 
 function toAuthed(row: RequestRow): AuthedBloodRequest {
   return { ...toPublic(row), contactPhone: row.contact_phone ?? '' };
+}
+
+/**
+ * The donor's own relationship to this request, or nothing.
+ *
+ * Nothing when the viewer has no donor profile — a requester or an admin has
+ * no blood type on file, and inventing one would be worse than saying less.
+ */
+function toFit(row: RequestRow): DonorFit | null {
+  if (!row.donor_type) return null;
+  return {
+    bloodType: row.donor_type,
+    compatible: row.compatible === true,
+    /* Already a string, formatted by Postgres. A DATE column comes back from
+       node-pg as a Date at LOCAL midnight, so toISOString() on it returns the
+       previous day everywhere east of UTC — the date is right and the string
+       is wrong. The database formats the day; nothing here reinterprets it. */
+    eligibleFrom: row.eligible_from ?? null,
+  };
 }
 
 /** Never return an unbounded feed; §11 measures the payload on a 3G phone. */
@@ -154,15 +179,57 @@ export function createPgRequestsRepository(db: Queryable = pool): RequestsReposi
     },
 
     async findById(id, viewer) {
-      const columns = viewer ? AUTHED_COLUMNS : PUBLIC_COLUMNS;
+      if (!viewer) {
+        const { rows } = await db.query<RequestRow>(
+          `SELECT ${PUBLIC_COLUMNS} FROM blood_requests r
+           WHERE r.id = $1 AND r.status = 'approved'`,
+          [id],
+        );
+        return rows[0] ? toPublic(rows[0]) : null;
+      }
+
+      /*
+       * READ THE DIRECTION. bc.recipient_type is what the PATIENT needs, and
+       * bc.donor_type is the person looking at the page. Swapped, this tells
+       * an O− donor they cannot help with an O− request and an AB+ donor they
+       * can help with everything — a system that runs and is medically wrong
+       * (§5.1). It is the same direction the matching query joins in, against
+       * the same table, because there must be exactly one answer to this
+       * question in the codebase.
+       *
+       * The 56-day interval and CURRENT_DATE are both evaluated here rather
+       * than in JavaScript, for the reason §5.2 gives: otherwise the server's
+       * timezone decides who is eligible.
+       */
       const { rows } = await db.query<RequestRow>(
-        `SELECT ${columns} FROM blood_requests r
+        `SELECT ${AUTHED_COLUMNS},
+                dp.blood_type AS donor_type,
+                EXISTS (
+                  SELECT 1 FROM blood_compatibility bc
+                  WHERE bc.recipient_type = r.blood_type
+                    AND bc.donor_type = dp.blood_type
+                ) AS compatible,
+                CASE
+                  WHEN dp.last_donation_date IS NULL
+                    OR dp.last_donation_date <= CURRENT_DATE - INTERVAL '56 days'
+                  THEN NULL
+                  ELSE to_char(
+                         (dp.last_donation_date + INTERVAL '56 days')::date,
+                         'YYYY-MM-DD')
+                END AS eligible_from
+         FROM blood_requests r
+         LEFT JOIN donor_profiles dp ON dp.user_id = $2
          WHERE r.id = $1 AND r.status = 'approved'`,
-        [id],
+        [id, viewer.userId],
       );
+
       const row = rows[0];
       if (!row) return null;
-      return viewer ? toAuthed(row) : toPublic(row);
+
+      const fit = toFit(row);
+      // exactOptionalPropertyTypes: absent and undefined are different
+      // answers, so the key is added only when there is one.
+      return fit ? { ...toAuthed(row), fit } : toAuthed(row);
     },
   };
 }

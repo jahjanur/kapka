@@ -188,6 +188,65 @@ describe('one request in full', () => {
     expect(await screen.findByText('stub map 41.9981,21.4254')).toBeInTheDocument();
   });
 
+  it('tells a compatible donor their own type can help, by name', async () => {
+    getRequest.mockResolvedValue({
+      ...REQUEST,
+      contactPhone: '+389 2 555 0100',
+      fit: { bloodType: 'O-', compatible: true, eligibleFrom: null },
+    });
+    renderAt('r2', { signedIn: true });
+
+    const banner = await screen.findByText(/can help here/);
+    expect(banner.textContent).toContain('O−');
+    expect(await screen.findByText(/eligible to give now/)).toBeInTheDocument();
+  });
+
+  it('does not send a donor who cannot give yet', async () => {
+    /* Compatible and 21 days into the interval. Saying only the first half
+       sends them to a hospital that will turn them away at the door. */
+    getRequest.mockResolvedValue({
+      ...REQUEST,
+      fit: { bloodType: 'O-', compatible: true, eligibleFrom: '2026-10-06' },
+    });
+    renderAt('r2', { signedIn: true });
+
+    await screen.findByText(/can help here/);
+    expect(screen.getByText(/eligible to give again/)).toBeInTheDocument();
+    expect(screen.queryByText(/eligible to give now/)).toBeNull();
+  });
+
+  it('reads a bare date as the day it says, not the day before', async () => {
+    // 'YYYY-MM-DD' parses as UTC midnight, which formats as the previous day
+    // for anyone west of Greenwich.
+    getRequest.mockResolvedValue({
+      ...REQUEST,
+      fit: { bloodType: 'O-', compatible: true, eligibleFrom: '2026-10-06' },
+    });
+    renderAt('r2', { signedIn: true });
+    expect(await screen.findByText(/6 October 2026|October 6, 2026/)).toBeInTheDocument();
+  });
+
+  it('tells an incompatible donor plainly, without scolding them', async () => {
+    getRequest.mockResolvedValue({
+      ...REQUEST,
+      fit: { bloodType: 'AB+', compatible: false, eligibleFrom: null },
+    });
+    renderAt('r2', { signedIn: true });
+
+    const banner = await screen.findByText(/cannot receive/);
+    expect(banner.textContent).toContain('AB+');
+    expect(screen.getByText(/you will be emailed the moment/i)).toBeInTheDocument();
+  });
+
+  it('shows no banner to a viewer the API said nothing about', async () => {
+    // Anonymous, or signed in with no donor profile. The screen never guesses
+    // — the compatibility answer belongs to the API and the table it reads.
+    renderAt();
+    await screen.findByText('City General Hospital, Skopje');
+    expect(screen.queryByText(/can help here/)).toBeNull();
+    expect(screen.queryByText(/cannot receive/)).toBeNull();
+  });
+
   it('says plainly when the request is not there', async () => {
     getRequest.mockRejectedValue(
       new ApiError('NOT_FOUND', 'That request does not exist.', 404, undefined),

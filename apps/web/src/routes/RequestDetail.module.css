@@ -213,6 +213,49 @@
   }
 }
 
+/* ── The compatibility banner ────────────────────────────────────────────
+   Directly under the hero, because for a signed-in donor it is the answer to
+   the question they opened the page with.
+   ---------------------------------------------------------------------- */
+.fit {
+  display: flex;
+  align-items: start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid transparent;
+}
+
+.fit svg {
+  flex: none;
+}
+
+.fitYes {
+  color: var(--success-ink);
+  background-color: var(--success-surface);
+  border-color: var(--success);
+}
+
+/* Not a warning. Nothing has gone wrong and the donor has done nothing
+   wrong — this one is information, and colouring it like an error would say
+   otherwise to someone who came here to help. */
+.fitNo {
+  color: var(--fg-secondary);
+  background-color: var(--bg-surface-alt);
+  border-color: var(--border-subtle);
+}
+
+.fitHeadline {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+}
+
+.fitBody {
+  margin-block-start: var(--space-1);
+  font-size: var(--text-sm);
+}
+
 /* ── The map ─────────────────────────────────────────────────────────────
    Only rendered when the request carries a pin, so most of the laziness here
    is that Leaflet is never fetched at all for one that does not.

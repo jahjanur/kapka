@@ -58,7 +58,31 @@ export interface PublicBloodRequest {
   expiresAt: string;
 }
 
-/** The extra field an authenticated viewer is allowed to see. */
+/**
+ * How this request relates to the donor who is looking at it.
+ *
+ * Computed by the API against blood_compatibility — the same table the
+ * matching query in §5.1 reads to decide who gets emailed. It is deliberately
+ * not derivable in the browser: a second copy of a medical rule is free to
+ * drift from the one that actually sends the emails, and the direction of the
+ * comparison is the single most common bug in this kind of system (§3).
+ */
+export interface DonorFit {
+  /** The donor's own type, so the answer can name it rather than assert it. */
+  bloodType: BloodType;
+  /** Their type is on the donor side of the matrix for this patient. */
+  compatible: boolean;
+  /**
+   * Null when they can give today. Otherwise the date the 56-day interval is
+   * up — a banner that says "you can help" to somebody three weeks past a
+   * donation sends them to a hospital that will turn them away.
+   */
+  eligibleFrom: string | null;
+}
+
+/** The extra fields an authenticated viewer is allowed to see. */
 export interface AuthedBloodRequest extends PublicBloodRequest {
   contactPhone: string;
+  /** Absent unless the viewer is a donor: nobody else has a type on file. */
+  fit?: DonorFit;
 }

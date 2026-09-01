@@ -28,8 +28,15 @@ import styles from './RequestDetail.module.css';
  */
 const HospitalMap = lazy(() => import('../components/HospitalMap/HospitalMap'));
 
+/**
+ * A date, written out. Accepts a full timestamp or a bare YYYY-MM-DD.
+ *
+ * A bare day is parsed by Date as UTC midnight, which then formats as the
+ * previous day for anyone west of Greenwich. Appending a time makes it local,
+ * which is what a day with no time attached means to the person reading it.
+ */
 const longDate = (iso: string) =>
-  new Date(iso).toLocaleDateString(undefined, {
+  new Date(iso.length === 10 ? `${iso}T00:00:00` : iso).toLocaleDateString(undefined, {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -47,6 +54,7 @@ export default function RequestDetail() {
   } = useRequest(id, session?.accessToken);
 
   const phone = request?.contactPhone;
+  const fit = request?.fit;
   const hasPin =
     typeof request?.hospitalLat === 'number' && typeof request.hospitalLng === 'number';
 
@@ -114,6 +122,59 @@ export default function RequestDetail() {
                   </span>
                 </header>
 
+                {/*
+                  The answer comes from the API, which reads the same
+                  blood_compatibility table the matching query reads. It is
+                  not worked out here on purpose: a second copy of a medical
+                  rule is free to drift from the one that actually decides who
+                  gets emailed, and getting its direction backwards produces a
+                  screen that runs and is wrong (§3, §5.1).
+                */}
+                {fit && (
+                  <aside
+                    className={`${styles.fit} ${fit.compatible ? styles.fitYes : styles.fitNo}`}
+                  >
+                    <Icon name={fit.compatible ? 'checkCircle' : 'info'} />
+                    <div>
+                      {fit.compatible ? (
+                        <>
+                          <p className={styles.fitHeadline}>
+                            Your <BloodTypeLabel type={fit.bloodType} /> can help here
+                          </p>
+                          {fit.eligibleFrom ? (
+                            /* Compatible and cannot give yet. Saying only the
+                               first half sends somebody to a hospital that
+                               will turn them away at the door. */
+                            <p className={styles.fitBody}>
+                              You are eligible to give again on{' '}
+                              <time dateTime={fit.eligibleFrom}>
+                                {longDate(fit.eligibleFrom)}
+                              </time>
+                              , {DONATION_INTERVAL_DAYS} days after your last donation.
+                            </p>
+                          ) : (
+                            <p className={styles.fitBody}>
+                              You are eligible to give now. The hospital's number is at
+                              the bottom of this page.
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <p className={styles.fitHeadline}>
+                            This patient cannot receive{' '}
+                            <BloodTypeLabel type={fit.bloodType} />
+                          </p>
+                          <p className={styles.fitBody}>
+                            Nothing to do here — but you will be emailed the moment a
+                            request your type can help with is approved near you.
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  </aside>
+                )}
+
                 {request.note && (
                   <section className={styles.section}>
                     <h2 className={styles.sectionHeading}>From the hospital</h2>
@@ -169,14 +230,6 @@ export default function RequestDetail() {
                   </dl>
                 </section>
 
-                {/*
-                  There is deliberately no "who else can give" panel here.
-                  Working the compatibility matrix out in the browser would
-                  put a second copy of a medical rule in the codebase, free to
-                  drift from the one in the database that actually decides who
-                  gets emailed (§3). If this is worth showing, it comes from
-                  the API that reads that table — not from a re-derivation.
-                */}
                 <section className={styles.section}>
                   <h2 className={styles.sectionHeading}>Before you go</h2>
                   <p className={styles.sectionLead}>

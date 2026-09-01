@@ -144,11 +144,17 @@ export function createPgAuthRepository(db: pg.Pool = pool): AuthRepository {
       const { rows } = await db.query<{
         blood_type: BloodType;
         city: string;
-        last_donation_date: Date | null;
+        last_donation_date: string | null;
         is_available: boolean;
         notify_by_email: boolean;
       }>(
-        `SELECT blood_type, city, last_donation_date, is_available, notify_by_email
+        /* to_char, not the bare column. node-pg parses a DATE into a Date at
+           LOCAL midnight, so toISOString() on it gives the previous day in
+           every timezone east of UTC — this returned 2026-08-10 for a
+           donation recorded on the 11th. Postgres formats the day instead. */
+        `SELECT blood_type, city,
+                to_char(last_donation_date, 'YYYY-MM-DD') AS last_donation_date,
+                is_available, notify_by_email
          FROM donor_profiles WHERE user_id = $1`,
         [userId],
       );
@@ -157,10 +163,7 @@ export function createPgAuthRepository(db: pg.Pool = pool): AuthRepository {
       return {
         bloodType: row.blood_type,
         city: row.city,
-        // A DATE column comes back as a Date; the API speaks ISO days.
-        lastDonationDate: row.last_donation_date
-          ? row.last_donation_date.toISOString().slice(0, 10)
-          : null,
+        lastDonationDate: row.last_donation_date,
         isAvailable: row.is_available,
         notifyByEmail: row.notify_by_email,
       };

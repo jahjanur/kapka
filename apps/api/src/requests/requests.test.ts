@@ -7,6 +7,7 @@ import { createPgAuthRepository } from '../auth/repository';
 import { startTestDatabase, type TestDatabase } from '../test/database';
 import { createPgRequestsRepository } from './repository';
 import { noVerificationEmail } from '../test/mail';
+import { signAccessToken } from '../auth/tokens';
 
 /**
  * The three request endpoints, over real HTTP against a real PostgreSQL.
@@ -320,6 +321,119 @@ describe('GET /api/requests?compatibleWithMe', () => {
       '/api/requests?compatibleWithMe=true',
     );
     expect(response.status).toBe(401);
+  });
+});
+
+describe('GET /api/requests/:id — does this donor fit', () => {
+  /*
+   * The banner on the detail screen is the reason this exists, and the join
+   * direction is the reason it is tested against the real matrix rather than
+   * a fixture. Reversed, every assertion below still returns a boolean and
+   * every one of them is wrong: §5.1 calls it the single most common bug in
+   * this kind of system, and it is invisible unless the pairs are asymmetric.
+   *
+   * O− gives to everyone and receives only from O−. AB+ is the mirror. So the
+   * two cases below have opposite answers, and swapping recipient_type for
+   * donor_type swaps both.
+   */
+  const fitSchema = z.object({
+    bloodType: z.string(),
+    compatible: z.boolean(),
+    eligibleFrom: z.string().nullable(),
+  });
+
+  const fitFor = async (donorType: string, patientNeeds: string) => {
+    const id = await seedRequest({ bloodType: patientNeeds, status: 'approved' });
+    const response = await request(serverFor(app))
+      .get(`/api/requests/${id}`)
+      .set('Authorization', await bearer(donorType));
+    expect(response.status).toBe(200);
+    return z.object({ request: z.object({ fit: fitSchema }) }).parse(response.body)
+      .request.fit;
+  };
+
+  it('tells an O− donor they can help an AB+ patient', async () => {
+    // O− is the universal donor.
+    expect((await fitFor('O-', 'AB+')).compatible).toBe(true);
+  });
+
+  it('tells an AB+ donor they cannot help an O− patient', async () => {
+    // The same pair the other way round. If this says true, the join is
+    // backwards and the banner is lying to everyone.
+    expect((await fitFor('AB+', 'O-')).compatible).toBe(false);
+  });
+
+  it('matches a donor with their own type', async () => {
+    expect((await fitFor('B-', 'B-')).compatible).toBe(true);
+  });
+
+  it('names the donor their own blood type', async () => {
+    // The banner says "your A+ can help", not "your blood type can help".
+    expect((await fitFor('A+', 'A+')).bloodType).toBe('A+');
+  });
+
+  it('says nothing about eligibility for a donor who has never given', async () => {
+    expect((await fitFor('O-', 'O-')).eligibleFrom).toBeNull();
+  });
+
+  it('gives the date a recent donor becomes eligible again', async () => {
+    /* Someone three weeks past a donation is compatible and cannot give. A
+       banner that says only the first half sends them to a hospital that will
+       turn them away. */
+    const token = await bearer('O-');
+    const { rows } = await db.pool.query<{ user_id: string }>(
+      `UPDATE donor_profiles SET last_donation_date = CURRENT_DATE - 21
+       WHERE user_id = (SELECT user_id FROM donor_profiles ORDER BY created_at DESC LIMIT 1)
+       RETURNING user_id`,
+    );
+    expect(rows).toHaveLength(1);
+
+    const id = await seedRequest({ bloodType: 'O-', status: 'approved' });
+    const response = await request(serverFor(app))
+      .get(`/api/requests/${id}`)
+      .set('Authorization', token);
+    const fit = z.object({ request: z.object({ fit: fitSchema }) }).parse(response.body)
+      .request.fit;
+
+    expect(fit.compatible).toBe(true);
+
+    /* The expected date is computed in SQL, not in JavaScript. CURRENT_DATE is
+       session-local, and "today" in this process is a different day from
+       "today" in the database for some hours of every day — which is exactly
+       what made eligibility.test.ts fail only before 11:00 UTC. */
+    const { rows: expected } = await db.pool.query<{ day: string }>(
+      `SELECT to_char((CURRENT_DATE - 21 + INTERVAL '56 days')::date, 'YYYY-MM-DD') AS day`,
+    );
+    expect(fit.eligibleFrom).toBe(expected[0]?.day);
+  });
+
+  it('says nothing at all to a viewer with no donor profile', async () => {
+    // A requester or an admin has no blood type on file, and inventing one
+    // would be worse than saying less.
+    const id = await seedRequest({ status: 'approved' });
+    const { rows } = await db.pool.query<{ id: string }>(
+      `INSERT INTO users (email, password_hash, full_name, role)
+       VALUES ('no-profile@example.test', 'x', 'Requester', 'requester') RETURNING id`,
+    );
+    const userId = rows[0]?.id ?? '';
+    const token = await signAccessToken(userId, 'requester');
+
+    const response = await request(serverFor(app))
+      .get(`/api/requests/${id}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(response.status).toBe(200);
+    expect(
+      (response.body as { request: Record<string, unknown> }).request,
+    ).not.toHaveProperty('fit');
+  });
+
+  it('tells an anonymous reader nothing about fit', async () => {
+    const id = await seedRequest({ status: 'approved' });
+    const response = await request(serverFor(app)).get(`/api/requests/${id}`);
+    expect(response.status).toBe(200);
+    expect(
+      (response.body as { request: Record<string, unknown> }).request,
+    ).not.toHaveProperty('fit');
   });
 });
 

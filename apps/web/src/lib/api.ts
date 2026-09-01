@@ -2,6 +2,7 @@ import type {
   ApiErrorBody,
   AuthedBloodRequest,
   CreateRequestInput,
+  DonorFit,
   ErrorCode,
   PublicBloodRequest,
   RegisterInput,
@@ -29,7 +30,14 @@ export interface Session {
  * column at all only when there is a viewer (§12), so an anonymous request
  * does not get a redacted number, it gets no field.
  */
-export type ViewedRequest = PublicBloodRequest & { contactPhone?: string };
+export type ViewedRequest = PublicBloodRequest & {
+  contactPhone?: string;
+  /**
+   * Whether this donor's blood can help, answered by the API against the
+   * compatibility table. Deliberately not computed here — see DonorFit.
+   */
+  fit?: DonorFit;
+};
 
 /**
  * A failed call, carrying the API's own error envelope (§4).
@@ -215,7 +223,14 @@ function createDemoClient(): ApiClient {
       if (!found) throw new ApiError('NOT_FOUND', 'That request does not exist.', 404);
       // Mirrors the API: the number exists only for a caller who presented a
       // token, so the signed-out screen can be walked through as it really is.
-      return accessToken ? { ...found, contactPhone: SEED_CONTACT } : found;
+      if (!accessToken) return found;
+      /* The demo donor is O−, which can help with anything — enough to walk
+         the banner through locally. The real answer comes from the matrix. */
+      return {
+        ...found,
+        contactPhone: SEED_CONTACT,
+        fit: { bloodType: 'O-' as const, compatible: true, eligibleFrom: null },
+      };
     },
     async register(input) {
       await latency(null);
