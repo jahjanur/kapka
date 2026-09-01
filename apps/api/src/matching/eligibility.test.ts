@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { DONATION_INTERVAL_DAYS } from '@kapka/shared';
 import { startTestDatabase, type TestDatabase } from '../test/database';
+import type { Queryable } from '../db';
 import { findMatchingDonors } from './repository';
 
 /**
@@ -25,16 +26,25 @@ afterAll(async () => {
 
 let sequence = 0;
 
-/** A donor whose last donation was `daysAgo` days ago. Negative is the future. */
-async function addDonor(daysAgo: number | null): Promise<string> {
+/**
+ * A donor whose last donation was `daysAgo` days ago. Negative is the future.
+ *
+ * `on` is which connection writes the row. It matters only to the timezone
+ * test below, and it matters there completely: CURRENT_DATE is session-local,
+ * so the date is only comparable to a threshold computed in the same session.
+ */
+async function addDonor(
+  daysAgo: number | null,
+  on: Queryable = db.pool,
+): Promise<string> {
   sequence += 1;
-  const { rows } = await db.pool.query<{ id: string }>(
+  const { rows } = await on.query<{ id: string }>(
     `INSERT INTO users (email, password_hash, full_name, is_active, email_verified)
      VALUES ($1, 'x', 'Donor', TRUE, TRUE) RETURNING id`,
     [`donor-${String(sequence)}@seed.test`],
   );
   const id = rows[0]?.id ?? '';
-  await db.pool.query(
+  await on.query(
     `INSERT INTO donor_profiles (user_id, blood_type, city, last_donation_date)
      VALUES ($1, 'O-', 'Skopje',
              CASE WHEN $2::int IS NULL THEN NULL
@@ -198,20 +208,37 @@ describe('who decides the date', () => {
   });
 
   it('gives the same answer whatever timezone the session claims', async () => {
-    // A donor exactly on the boundary must not flip to ineligible because a
-    // connection happened to be in a different zone.
-    const donorId = await addDonor(DONATION_INTERVAL_DAYS);
+    /*
+     * A donor exactly on the boundary must not flip to ineligible because a
+     * connection happened to be in a different zone.
+     *
+     * The donor is CREATED on the zoned connection as well as matched on it,
+     * and that is the whole point rather than a detail. CURRENT_DATE is
+     * session-local by definition: storing a date under UTC and comparing it
+     * under UTC-11 is a day out for eleven hours of every day, and no query
+     * can make that stable. What §5.2 promises is narrower and is what is
+     * checked here — the eligibility answer is decided by the database, so it
+     * does not move with the application's clock.
+     *
+     * Written the other way, this test failed on any run started before
+     * 11:00 UTC and passed after it, which is the worst kind of red: one
+     * nobody can reproduce in the afternoon.
+     */
     for (const zone of ['UTC', 'Pacific/Kiritimati', 'Pacific/Niue']) {
       const client = await db.pool.connect();
       try {
         await client.query(`SET TIME ZONE '${zone}'`);
+        const donorId = await addDonor(DONATION_INTERVAL_DAYS, client);
         const matched = await findMatchingDonors(requestId, client);
         expect(
           matched.some((d) => d.id === donorId),
           zone,
         ).toBe(true);
       } finally {
-        client.release();
+        /* Destroyed rather than returned: pg does not reset session state, so
+           releasing this normally would hand the next caller a connection
+           still sitting in Pacific/Niue. */
+        client.release(true);
       }
     }
   });
