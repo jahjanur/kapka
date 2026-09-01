@@ -75,7 +75,7 @@ const URGENCY_HELP: Record<Urgency, string> = {
  * same schema the API validates with — see useFieldErrors.
  */
 export default function PostRequest() {
-  const { session } = useSession();
+  const { session, restoring } = useSession();
   const wide = useMediaQuery(WIDE);
 
   /* Read once, before the first render, so a restored form is simply what is
@@ -205,6 +205,9 @@ export default function PostRequest() {
      Posting is authenticated (§4), and there is no sign-in screen yet. Saying
      so plainly beats a form that collects two minutes of typing and then
      answers 401.                                                            */
+  // Not before the boot refresh has answered — see SessionProvider.
+  if (restoring) return <AppHeader />;
+
   if (!session) {
     return (
       <>

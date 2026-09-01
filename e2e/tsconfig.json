@@ -1,0 +1,13 @@
+{
+  /* The end-to-end suite is not an npm workspace — it drives the built
+     product from outside — but it is TypeScript like everything else, so it
+     gets the same strictness and the same type-aware linting. Without this
+     file ESLint's project service cannot find a project for these files and
+     refuses to parse them at all. */
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM"],
+    "types": ["node"]
+  },
+  "include": [".", "../playwright.config.ts"]
+}

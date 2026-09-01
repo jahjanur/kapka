@@ -118,6 +118,11 @@ export default function Register() {
   useEffect(() => {
     if (previousStep.current === step) return;
     previousStep.current = step;
+    /* Unless the step changed in order to show a problem. The effect above
+       has already put focus on the offending input — it is declared first, so
+       it runs first — and announcing "About you" while taking focus off the
+       field that is wrong helps nobody. */
+    if (document.querySelector('[aria-invalid="true"]')) return;
     stepHeading.current?.focus();
   }, [step]);
 
@@ -191,6 +196,15 @@ export default function Register() {
     } catch (error) {
       if (error instanceof ApiError && error.field) {
         setErrors({ [error.field]: error.message });
+
+        /* Same rule as the local check above, for the same reason. "That
+           email already has an account" is the one rejection only the server
+           can make, and it names a step-one field — so on a phone it would
+           otherwise be written onto an input that is not rendered, leaving
+           the donor on step two pressing a button that appears to do nothing
+           at all. The end-to-end test at 390 is what found this. */
+        if (!singlePage && STEP_FIELDS[1].includes(error.field)) setStep(1);
+
         setFocusRequest((n) => n + 1);
       } else if (error instanceof ApiError) {
         setFormError(error.message);

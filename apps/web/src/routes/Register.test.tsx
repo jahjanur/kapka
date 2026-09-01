@@ -152,6 +152,45 @@ describe('donor registration', () => {
     expect(screen.getByLabelText(/^Email/)).toHaveAttribute('aria-invalid', 'true');
   });
 
+  it('steps a phone back to the field the server rejected, and keeps the message', async () => {
+    /*
+     * On a phone the email is on step one and the submit button is on step
+     * two, so a rejection naming `email` was being written onto an input that
+     * was not on screen: the donor sat on step two pressing a button that
+     * appeared to do nothing at all. The end-to-end test at 390 found it.
+     *
+     * The message surviving is the second half, and it is not free. Stepping
+     * back moves focus, which blurs the email — and blur re-runs the schema,
+     * which is perfectly happy with a well-formed address and used to erase
+     * the one sentence explaining why the form would not submit. See the note
+     * about external errors in useFieldErrors.
+     */
+    setViewport('phone');
+    register.mockRejectedValue(
+      new ApiError('EMAIL_TAKEN', 'That email is already registered.', 409, 'email'),
+    );
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.type(screen.getByLabelText(/Full name/), 'Ana Petrovska');
+    await user.type(screen.getByLabelText(/^Email/), 'ana@example.com');
+    await user.type(screen.getByLabelText(/^Password/), 'a-long-enough-password');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    await user.click(await screen.findByRole('button', { name: 'O negative' }));
+    await user.selectOptions(screen.getByLabelText(/City/), 'Skopje');
+    await submit(user);
+
+    expect(
+      await screen.findByText('That email is already registered.'),
+    ).toBeInTheDocument();
+    const field = screen.getByLabelText(/^Email/);
+    expect(field).toHaveAttribute('aria-invalid', 'true');
+    // Focus lands on the problem, not on the step heading above it.
+    await waitFor(() => {
+      expect(document.activeElement).toBe(field);
+    });
+  });
+
   it('shows an unreachable server as a message, not a blank page', async () => {
     register.mockRejectedValue(
       new ApiError('INTERNAL', 'We could not reach the server.', 0, undefined),

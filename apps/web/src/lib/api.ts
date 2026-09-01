@@ -113,6 +113,18 @@ export interface ApiClient {
   getRequest(id: string, accessToken?: string): Promise<ViewedRequest>;
   register(input: RegisterInput): Promise<Session>;
   /**
+   * The session this browser already has, if it has one.
+   *
+   * The access token lives in memory and dies with the tab (§12); the refresh
+   * cookie is httpOnly and does not. This trades the cookie for a fresh
+   * access token on boot, which is the only reason a reload is not a sign-out.
+   *
+   * `null` for "no session", never an error: arriving signed out is the
+   * ordinary case, not a failure worth a message. Anything that genuinely
+   * went wrong — an unreachable server — still throws.
+   */
+  restoreSession(): Promise<Session | null>;
+  /**
    * Posts a request (§9.3). Signed in only — the API answers 401 otherwise.
    *
    * It lands as `pending`: nothing reaches a donor until an admin approves it,
@@ -240,6 +252,18 @@ function createHttpClient(baseUrl: string): ApiClient {
         body: JSON.stringify(input),
       });
     },
+    async restoreSession() {
+      try {
+        return await call<Session>('/auth/refresh', { method: 'POST' });
+      } catch (error) {
+        /* 401 is the answer for every way of not having a session — no
+           cookie, expired, revoked, deactivated account — and none of them
+           are worth interrupting someone who was only opening the feed. A
+           dropped connection is a different thing and still throws. */
+        if (error instanceof ApiError && error.status === 401) return null;
+        throw error;
+      }
+    },
     async createRequest(input, accessToken) {
       const { request } = await call<{ request: AuthedBloodRequest }>('/requests', {
         method: 'POST',
@@ -366,6 +390,12 @@ function createDemoClient(): ApiClient {
         contactPhone: SEED_CONTACT,
         fit: { bloodType: 'O-' as const, compatible: true, eligibleFrom: null },
       };
+    },
+    restoreSession() {
+      /* No cookies here — the demo client never talked to a server, so it has
+         no session to restore and says so immediately. Waiting on a fake
+         round trip would only put a spinner in front of the seed data. */
+      return Promise.resolve(null);
     },
     async register(input) {
       await latency(null);

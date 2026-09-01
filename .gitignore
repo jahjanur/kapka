@@ -29,6 +29,9 @@ yarn-error.log*
 coverage/
 playwright-report/
 test-results/
+
+# The embedded database and mailbox the end-to-end stack writes while it runs.
+e2e/.tmp/
 .vite/
 
 # Rendered email fixtures — regenerate with npm run email:preview

@@ -46,7 +46,7 @@ const longDate = (day: string) =>
 
 /** The donor's own dashboard (§9.5). */
 export default function Dashboard() {
-  const { session, signOut } = useSession();
+  const { session, restoring, signOut } = useSession();
   const navigate = useNavigate();
   const token = session?.accessToken;
   const { data, isLoading, error, refetch } = useMe(token);
@@ -160,6 +160,11 @@ export default function Dashboard() {
     }
     void save(parsed.data, 'Your details are saved.');
   }
+
+  /* Only once the boot refresh has answered: null means "not known yet"
+     until then, and telling a signed-in donor to sign in is a worse first
+     frame than a moment of nothing. */
+  if (restoring) return <AppHeader />;
 
   if (!session) {
     return (

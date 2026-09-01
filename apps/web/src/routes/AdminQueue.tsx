@@ -35,7 +35,7 @@ const TABLE = `(min-width: ${String(BREAKPOINTS.lg / 16)}rem)`;
 
 /** Moderation queue (§9.6). */
 export default function AdminQueue() {
-  const { session } = useSession();
+  const { session, restoring } = useSession();
   const showTable = useMediaQuery(TABLE);
 
   const [openId, setOpenId] = useState<string | null>(null);
@@ -117,8 +117,12 @@ export default function AdminQueue() {
   /* ── Not an admin ───────────────────────────────────────────────────────
      Said plainly rather than 404'd. Hiding the route from someone who is
      signed in and simply lacks the role wastes their time; the API refuses
-     them regardless, which is where access control actually lives (§12).  */
-  if (!isAdmin) {
+     them regardless, which is where access control actually lives (§12).
+
+     Not while the session is still being restored, though: on a reload the
+     role is not known for a moment, and refusing an admin and then letting
+     them in reads as a bug. Waiting shows the skeleton below instead.      */
+  if (!restoring && !isAdmin) {
     return (
       <>
         <AppHeader />
@@ -307,7 +311,7 @@ export default function AdminQueue() {
 
           {error && <ErrorState error={error} subject="the queue" onRetry={refetch} />}
 
-          {!error && isLoading && (
+          {!error && (restoring || isLoading) && (
             /* Shaped like the card it stands in for, not a grey box of about
                the right height — the point of a skeleton is that nothing
                moves when the real thing lands (§9.7). */
@@ -336,7 +340,7 @@ export default function AdminQueue() {
             </ul>
           )}
 
-          {!error && queue?.length === 0 && (
+          {!error && !restoring && queue?.length === 0 && (
             <EmptyState
               icon="checkCircle"
               headline="Nothing is waiting"

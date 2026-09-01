@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { ZodType } from 'zod';
 
 export type FieldErrors = Partial<Record<string, string>>;
@@ -42,6 +42,19 @@ export function useFieldErrors(
 ): FieldErrorsApi {
   const [errors, setErrors] = useState<FieldErrors>({});
 
+  /*
+   * Fields holding a message the schema did not produce — a rejection only
+   * the server can make, like an address that already has an account.
+   *
+   * Blur must leave those alone. Re-running the schema over a perfectly
+   * well-formed email finds nothing wrong and would delete the only sentence
+   * explaining why the form will not submit; the end-to-end test at 390 found
+   * exactly that, because moving focus to the new step's heading blurs the
+   * input the server had just complained about. Editing the field is what
+   * clears them, since editing is the only thing that can make them untrue.
+   */
+  const external = useRef<Set<string>>(new Set());
+
   /** First message per field: a stack of three under one input is noise, and
       fixing the first usually clears the rest. */
   const messages = useCallback(
@@ -61,12 +74,15 @@ export function useFieldErrors(
   const check = useCallback(
     (field: string, overrides?: Record<string, unknown>) => {
       const message = messages(overrides)[field];
+      if (message === undefined && external.current.has(field)) return;
+      external.current.delete(field);
       setErrors((previous) => ({ ...previous, [field]: message }));
     },
     [messages],
   );
 
   const clear = useCallback((field: string) => {
+    external.current.delete(field);
     setErrors((previous) =>
       previous[field] ? { ...previous, [field]: undefined } : previous,
     );
@@ -74,6 +90,8 @@ export function useFieldErrors(
 
   const checkAll = useCallback(() => {
     const found = messages();
+    // A submit re-derives everything, so nothing external survives it.
+    external.current.clear();
     setErrors(found);
     return found;
   }, [messages]);
@@ -85,11 +103,23 @@ export function useFieldErrors(
       for (const [key, message] of Object.entries(all)) {
         if (fields.includes(key) && message !== undefined) found[key] = message;
       }
+      // The schema now has its own opinion about these, so they are its.
+      for (const key of Object.keys(found)) external.current.delete(key);
       setErrors((previous) => ({ ...previous, ...found }));
       return found;
     },
     [messages],
   );
 
-  return { errors, check, clear, checkAll, checkSome, set: setErrors };
+  /** Messages from outside the schema: whatever the API said. */
+  const set = useCallback((next: FieldErrors) => {
+    external.current = new Set(
+      Object.entries(next)
+        .filter(([, message]) => message !== undefined)
+        .map(([key]) => key),
+    );
+    setErrors(next);
+  }, []);
+
+  return { errors, check, clear, checkAll, checkSome, set };
 }
