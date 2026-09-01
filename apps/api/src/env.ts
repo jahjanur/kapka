@@ -39,6 +39,20 @@ const envSchema = z.object({
    */
   APP_BASE_URL: z.url().default('http://localhost:5173'),
 
+  /**
+   * How many reverse proxies sit in front of this app.
+   *
+   * Getting it wrong is a security bug in both directions. Too few and
+   * req.ip is the proxy's address, so every user on the internet shares one
+   * rate-limit bucket — five failed logins a minute would lock out everyone.
+   * Too many and a client can spoof X-Forwarded-For to look like a different
+   * address on every request, which is the rate limit gone entirely.
+   *
+   * Render puts one proxy in front of a service, so one. A deployment behind
+   * a CDN as well needs two.
+   */
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(1),
+
   MAIL_TRANSPORT: z.enum(['smtp', 'sendgrid']).default('smtp'),
   SMTP_HOST: z.string().default('localhost'),
   SMTP_PORT: z.coerce.number().int().positive().default(1025),

@@ -68,6 +68,51 @@ describe('a limiter that is switched on', () => {
   });
 });
 
+describe('who a limit applies to', () => {
+  /*
+   * express-rate-limit keys on req.ip, and behind a reverse proxy req.ip is
+   * the proxy unless the app is told how many hops to trust. That is not a
+   * tuning detail: without it every user on the internet shares one bucket,
+   * and five failed logins in a minute lock out everybody at once.
+   *
+   * The app sets this from TRUST_PROXY_HOPS. These two tests are what the
+   * setting is for.
+   */
+  function appWithProxyTrust(trust: number | false) {
+    const app = express();
+    app.set('trust proxy', trust);
+    app.use(limiter(60_000, 1, { enabled: true }));
+    app.get('/thing', (_req, res) => {
+      res.json({ ok: true });
+    });
+    return app;
+  }
+
+  /* One entry, which is what a single proxy in front of the app produces:
+     it appends the address it accepted the connection from, and is itself
+     the socket peer. Adding a second hop here would make both requests look
+     like they came from that hop — my first version of this test did, and
+     it failed for that reason rather than for the code's. */
+  const from = (app: express.Express, client: string) =>
+    request(serverFor(app)).get('/thing').set('X-Forwarded-For', client);
+
+  it('gives two clients behind a proxy their own allowance', async () => {
+    const app = appWithProxyTrust(1);
+    expect((await from(app, '203.0.113.9')).status).toBe(200);
+    // A different client, still within its own first request.
+    expect((await from(app, '198.51.100.4')).status).toBe(200);
+  });
+
+  it('would otherwise let one client use up everybody else’s', async () => {
+    /* The bug this guards against, demonstrated: with no proxy trusted both
+       requests are attributed to the same address and the second is refused
+       — a stranger's failed login locking out a donor. */
+    const app = appWithProxyTrust(false);
+    expect((await from(app, '203.0.113.9')).status).toBe(200);
+    expect((await from(app, '198.51.100.4')).status).toBe(429);
+  });
+});
+
 describe('a limiter that is switched off', () => {
   it('never refuses, which is why the suite is not order-dependent', async () => {
     const app = express();

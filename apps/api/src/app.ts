@@ -38,6 +38,21 @@ export function createApp(
 ): Express {
   const app = express();
 
+  /*
+   * What counts as the client's address.
+   *
+   * express-rate-limit keys on req.ip, and without this req.ip behind a
+   * reverse proxy is the proxy — one bucket for the entire internet, so five
+   * failed logins a minute would lock every user out at once. Trusting a
+   * fixed number of hops rather than `true`: `true` walks the whole
+   * X-Forwarded-For chain, and a client can write that header itself and
+   * appear to be a new address on every request.
+   *
+   * Off entirely outside production, where there is no proxy and trusting
+   * one would let a local request claim any address it liked.
+   */
+  app.set('trust proxy', env.isProduction ? env.TRUST_PROXY_HOPS : false);
+
   // §12: helmet, a strict CORS allow-list, and a real CSP.
   app.use(helmet());
   app.use(
