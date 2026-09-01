@@ -53,6 +53,23 @@ const envSchema = z.object({
    */
   TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(1),
 
+  /**
+   * Where errors are reported. Empty means no reporting at all, which is the
+   * right default everywhere except a deployed environment — see
+   * observability/sentry.ts.
+   */
+  SENTRY_DSN: z.string().default(''),
+
+  /**
+   * Which deployment an error came from.
+   *
+   * Its own variable rather than NODE_ENV, because staging runs
+   * NODE_ENV=production deliberately (render.yaml explains why) and so cannot
+   * be told apart from production by it. Defaults to NODE_ENV, which is
+   * correct on a laptop.
+   */
+  SENTRY_ENVIRONMENT: z.string().default(''),
+
   MAIL_TRANSPORT: z.enum(['smtp', 'sendgrid']).default('smtp'),
   SMTP_HOST: z.string().default('localhost'),
   SMTP_PORT: z.coerce.number().int().positive().default(1025),

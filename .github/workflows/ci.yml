@@ -55,8 +55,15 @@ jobs:
 
       # Last, because a broken build is the slowest thing to discover and the
       # rarest to hit once the checks above pass.
+      # The placeholder DSN is not decoration. Vite inlines
+      # import.meta.env.VITE_SENTRY_DSN, so a build without one tree-shakes the
+      # Sentry SDK out entirely — and the budget below would then measure an
+      # app 29kB lighter than the one production ships, which is exactly the
+      # regression it exists to catch.
       - name: Build
         run: npm run build
+        env:
+          VITE_SENTRY_DSN: https://ci-placeholder@o0.ingest.sentry.io/0
 
       # Chromium only. The two end-to-end flows are about what the product
       # does, not about browser differences — the unit suite and the

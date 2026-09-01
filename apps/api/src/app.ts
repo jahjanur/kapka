@@ -19,7 +19,7 @@ import { generalRateLimit } from './middleware/rateLimit';
 import { env } from './env';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { citiesRouter } from './routes/cities';
-import { healthRouter } from './routes/health';
+import { createHealthRouter } from './routes/health';
 import { createRequestsRouter } from './routes/requests';
 
 /**
@@ -70,7 +70,10 @@ export function createApp(
   // parsed before any route can read it.
   app.use(cookieParser());
 
-  app.use('/api', healthRouter);
+  /* Before the rate limiter, deliberately. An uptime monitor polls these on a
+     schedule and must never be throttled into reporting an outage that is not
+     one. */
+  app.use('/api', createHealthRouter());
   app.use('/api', generalRateLimit);
   app.use('/api', createAuthRouter(repository, sendVerification));
   app.use('/api', createMeRouter(repository));

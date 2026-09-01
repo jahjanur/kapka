@@ -61,6 +61,11 @@ dashboard:
 | `kapka-api-staging` | `SMTP_HOST`, `SMTP_PORT` | A mail catcher. Mailtrap or equivalent. This is the only thing stopping staging emailing real people.                                                                        |
 | `kapka-api`         | `SENDGRID_API_KEY`       | The live key. `env.ts` refuses to boot with `MAIL_TRANSPORT=sendgrid` and no key, so a missing one is a failed deploy rather than a silent evening of nobody being notified. |
 
+Two more, for error reporting — `SENTRY_DSN` on each API service and
+`VITE_SENTRY_DSN` on each static site. Both are `sync: false`. The web one is
+read at **build time**, so setting it needs a redeploy to take effect. See
+[monitoring.md](monitoring.md).
+
 Also confirm before applying:
 
 - **`preDeployCommand` is available on the instance type you choose.** It is
@@ -137,6 +142,9 @@ Carried from earlier work, and all of it is a production concern:
 - `MAIL_FROM` is `no-reply@kapka.mk`. SendGrid will not deliver from a domain
   it has not verified — do the sender authentication before the first approval,
   not after.
+- The uptime check itself is not set up: it needs an account somewhere
+  off-platform, watching `/api/ready`. `monitoring.md` says what to configure
+  and why it must not run on Render.
 - The two protocols in this directory, `device-pass.md` and
   `usability-sessions.md`, are both unrun and both are about the phone in
   somebody's hand. Staging is the first URL they can be run against.

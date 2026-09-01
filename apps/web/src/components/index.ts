@@ -21,3 +21,4 @@ export { FilterBar, FilterChip, FilterGroupLabel } from './FilterBar/FilterBar';
 export { RequestCard, RequestCardSkeleton } from './RequestCard/RequestCard';
 export { Skeleton } from './Skeleton/Skeleton';
 export { UrgencyPill } from './UrgencyPill/UrgencyPill';
+export { ErrorBoundary } from './ErrorBoundary/ErrorBoundary';

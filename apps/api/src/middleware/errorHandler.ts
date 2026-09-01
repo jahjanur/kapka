@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { apiError } from '@kapka/shared';
 import { env } from '../env';
 import { redact } from '../redact';
+import { captureError } from '../observability/sentry';
 
 /** Every unmatched path gets the same envelope as everything else. */
 export function notFound(_req: Request, res: Response): void {
@@ -14,7 +15,7 @@ export function notFound(_req: Request, res: Response): void {
  */
 export function errorHandler(
   error: unknown,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction,
 ): void {
@@ -22,6 +23,11 @@ export function errorHandler(
   // Authorization header or a user record would otherwise put the secret
   // straight into the log (§12).
   console.error('[api] unhandled error:', redact(error));
+
+  /* Reported with the method and the route and nothing else. Not the query
+     string, which carries the email-verification token, and not the body,
+     which on one endpoint is a password. A no-op unless SENTRY_DSN is set. */
+  captureError(error, { method: req.method, route: req.path });
   if (res.headersSent) return;
   res
     .status(500)
