@@ -1,4 +1,5 @@
 import { useState, type SyntheticEvent } from 'react';
+import { Link } from 'react-router-dom';
 import {
   BLOOD_TYPES,
   CITIES,
@@ -21,7 +22,8 @@ import {
 } from '../components';
 import { api, ApiError, type DonorProfile } from '../lib/api';
 import { cx } from '../lib/cx';
-import { useMe } from '../lib/useRequests';
+import { timeAgo } from '../lib/relativeTime';
+import { useMe, useMyNotifications } from '../lib/useRequests';
 import { useSession } from '../lib/session';
 import { PATHS } from './paths';
 import styles from './Dashboard.module.css';
@@ -44,6 +46,7 @@ export default function Dashboard() {
   const { session } = useSession();
   const token = session?.accessToken;
   const { data, isLoading, error, refetch } = useMe(token);
+  const { data: notifications, isLoading: loadingHistory } = useMyNotifications(token);
 
   /* The server's answer, then whatever this page has changed since. Kept
      locally rather than refetched: the PATCH returns the profile as it now
@@ -357,6 +360,69 @@ export default function Dashboard() {
                       </Button>
                     </div>
                   </>
+                )}
+              </section>
+              {/* ── What we have sent ─────────────────────────────────────
+                  §9.5. A donor asked to give blood by an automated system is
+                  owed a plain answer to "what have you sent me". The delivery
+                  status is here rather than tidied away: a queued row is one
+                  the free-tier ceiling held back (§5.3) and a failed one
+                  never arrived, and calling either of them sent would be a
+                  list of emails they never got.                             */}
+              <section className={cx(styles.card, styles.cardWide)}>
+                <h2 className={styles.cardTitle}>What we have emailed you about</h2>
+
+                {loadingHistory && (
+                  <div className={styles.skeletons}>
+                    <Skeleton width="100%" height="3rem" />
+                    <Skeleton width="100%" height="3rem" />
+                  </div>
+                )}
+
+                {!loadingHistory && notifications?.length === 0 && (
+                  <p className={styles.cardBody}>
+                    Nothing yet. When an admin approves a request your blood type can help
+                    with in {profile.city}, it will appear here — and in your inbox.
+                  </p>
+                )}
+
+                {notifications && notifications.length > 0 && (
+                  <ul className={styles.history}>
+                    {notifications.map((row) => (
+                      <li key={row.requestId} className={styles.historyRow}>
+                        <div className={styles.historyMain}>
+                          <Link
+                            to={PATHS.request(row.requestId)}
+                            className={styles.historyLink}
+                          >
+                            {row.hospitalName}
+                          </Link>
+                          <p className={styles.historyMeta}>
+                            <BloodTypeLabel type={row.bloodType} /> · {row.city} ·{' '}
+                            <time dateTime={row.createdAt}>{timeAgo(row.createdAt)}</time>
+                          </p>
+                        </div>
+                        <div className={styles.historyTags}>
+                          {row.status !== 'sent' && (
+                            <span className={styles.historyWarn}>
+                              {row.status === 'queued'
+                                ? 'Queued — not sent yet'
+                                : 'We could not reach you'}
+                            </span>
+                          )}
+                          {row.requestStatus !== 'approved' && (
+                            <span className={styles.historyState}>
+                              {row.requestStatus === 'fulfilled'
+                                ? 'Fulfilled'
+                                : row.requestStatus === 'expired'
+                                  ? 'Expired'
+                                  : 'Closed'}
+                            </span>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </section>
             </div>

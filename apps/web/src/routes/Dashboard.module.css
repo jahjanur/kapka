@@ -178,6 +178,69 @@
   accent-color: var(--accent);
 }
 
+/* ── What we have sent ───────────────────────────────────────────────────── */
+.history {
+  display: grid;
+  gap: var(--space-1);
+  margin-block-start: var(--space-4);
+  list-style: none;
+  padding: 0;
+}
+
+.historyRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-block: var(--space-3);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.historyRow:last-child {
+  border-block-end: 0;
+}
+
+.historyMain {
+  min-inline-size: 0;
+}
+
+.historyLink {
+  font-weight: var(--weight-medium);
+  color: inherit;
+}
+
+.historyMeta {
+  margin-block-start: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+}
+
+.historyTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.historyState,
+.historyWarn {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-xs);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+.historyState {
+  color: var(--fg-secondary);
+  background-color: var(--bg-surface-alt);
+}
+
+/* Not decoration: this one says an email did not arrive. */
+.historyWarn {
+  color: var(--warning-ink);
+  background-color: var(--warning-surface);
+}
+
 .note {
   display: flex;
   align-items: center;

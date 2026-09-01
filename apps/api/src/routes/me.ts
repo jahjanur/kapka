@@ -43,6 +43,18 @@ export function createMeRouter(repository: AuthRepository): Router {
   });
 
   /**
+   * GET /api/me/notifications — what we have contacted this donor about (§9.5).
+   *
+   * Their own rows only, scoped in the query. A donor asked to give blood by
+   * an automated system is owed a plain answer to "what have you sent me".
+   */
+  router.get('/me/notifications', requireAuth(repository), async (_req, res) => {
+    const auth = getAuth(res);
+    if (!auth) return;
+    res.json({ notifications: await repository.listNotifications(auth.userId) });
+  });
+
+  /**
    * PATCH /api/me/donor-profile — the donor's own settings (§9.5).
    *
    * Every field optional, at least one required, enforced by the schema. The

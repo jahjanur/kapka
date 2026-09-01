@@ -1,4 +1,12 @@
-import type { BloodType, DonorProfilePatchInput, UserRole } from '@kapka/shared';
+import type {
+  BloodType,
+  DonorNotification,
+  DonorProfilePatchInput,
+  NotificationStatus,
+  RequestStatus,
+  Urgency,
+  UserRole,
+} from '@kapka/shared';
 import type pg from 'pg';
 import { pool, withTransaction } from '../db';
 import { eligibleFromSql } from '../matching/eligibility';
@@ -78,6 +86,8 @@ export interface AuthRepository {
     userId: string,
     patch: DonorProfilePatch,
   ): Promise<DonorProfileRecord | null>;
+  /** Everything this donor has been contacted about, newest first (§9.5). */
+  listNotifications(userId: string): Promise<DonorNotification[]>;
   /** Creates the user and the donor profile in one transaction (§4). */
   createUser(input: RegisterInput): Promise<UserRecord>;
   storeRefreshToken(userId: string, tokenHash: string, expiresAt: Date): Promise<string>;
@@ -158,6 +168,21 @@ const toProfile = (row: ProfileRow): DonorProfileRecord => ({
   notifyByEmail: row.notify_by_email,
   eligibleFrom: row.eligible_from,
 });
+
+/** A donor is unlikely to read past this, and it bounds the payload (§11). */
+export const NOTIFICATION_HISTORY_LIMIT = 50;
+
+interface NotificationRow {
+  request_id: string;
+  blood_type: BloodType;
+  urgency: Urgency;
+  hospital_name: string;
+  city: string;
+  request_status: RequestStatus;
+  status: NotificationStatus;
+  created_at: Date;
+  sent_at: Date | null;
+}
 
 const USER_COLUMNS =
   'id, email, password_hash, role, full_name, is_active, email_verified';
@@ -250,6 +275,41 @@ export function createPgAuthRepository(db: pg.Pool = pool): AuthRepository {
         );
         return toUser(row);
       }, db);
+    },
+
+    async listNotifications(userId) {
+      /*
+       * Rides idx_notification_donor, which exists for this and until now had
+       * nothing to serve: the UNIQUE (request_id, donor_id) constraint cannot
+       * answer a lookup by donor alone, because donor_id is its second column.
+       *
+       * Scoped to the caller in the WHERE clause, not filtered afterwards.
+       * This joins one donor's rows to requests; there is no shape of this
+       * query that returns somebody else's and gets trimmed later.
+       */
+      const { rows } = await db.query<NotificationRow>(
+        `SELECT nl.request_id, nl.status, nl.created_at, nl.sent_at,
+                r.blood_type, r.urgency, r.hospital_name, r.city,
+                r.status AS request_status
+         FROM notification_log nl
+         JOIN blood_requests r ON r.id = nl.request_id
+         WHERE nl.donor_id = $1
+         ORDER BY nl.created_at DESC
+         LIMIT ${String(NOTIFICATION_HISTORY_LIMIT)}`,
+        [userId],
+      );
+
+      return rows.map((row) => ({
+        requestId: row.request_id,
+        bloodType: row.blood_type,
+        urgency: row.urgency,
+        hospitalName: row.hospital_name,
+        city: row.city,
+        requestStatus: row.request_status,
+        status: row.status,
+        createdAt: row.created_at.toISOString(),
+        sentAt: row.sent_at ? row.sent_at.toISOString() : null,
+      }));
     },
 
     async storeRefreshToken(userId, tokenHash, expiresAt) {

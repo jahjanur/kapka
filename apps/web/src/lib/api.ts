@@ -4,6 +4,7 @@ import type {
   AuthedBloodRequest,
   CreateRequestInput,
   DonorFit,
+  DonorNotification,
   DonorProfilePatchInput,
   ModerationQueueItem,
   ErrorCode,
@@ -127,6 +128,8 @@ export interface ApiClient {
     patch: DonorProfilePatchInput,
     accessToken: string,
   ): Promise<DonorProfile>;
+  /** What this donor has been contacted about (§9.5). Their own rows only. */
+  listMyNotifications(accessToken: string): Promise<DonorNotification[]>;
   /** The moderation queue (§9.6). Admin-only; the API answers 403 otherwise. */
   listPendingRequests(accessToken: string): Promise<ModerationQueueItem[]>;
   /** Approves and dispatches. Returns what the dispatch actually managed. */
@@ -240,6 +243,13 @@ function createHttpClient(baseUrl: string): ApiClient {
         { method: 'PATCH', headers: authed(accessToken), body: JSON.stringify(patch) },
       );
       return donorProfile;
+    },
+    async listMyNotifications(accessToken) {
+      const { notifications } = await call<{ notifications: DonorNotification[] }>(
+        '/me/notifications',
+        { headers: authed(accessToken) },
+      );
+      return notifications;
     },
     async listPendingRequests(accessToken) {
       const { requests } = await call<{ requests: ModerationQueueItem[] }>(
@@ -402,6 +412,37 @@ function createDemoClient(): ApiClient {
           : { notifyByEmail: patch.notifyByEmail }),
       };
       return { ...demoProfile };
+    },
+    async listMyNotifications() {
+      await latency(null);
+      const [first, second] = SEED_REQUESTS;
+      if (!first || !second) return [];
+      return [
+        {
+          requestId: first.id,
+          bloodType: first.bloodType,
+          urgency: first.urgency,
+          hospitalName: first.hospitalName,
+          city: first.city,
+          requestStatus: 'approved' as const,
+          status: 'sent' as const,
+          createdAt: first.createdAt,
+          sentAt: first.createdAt,
+        },
+        {
+          requestId: second.id,
+          bloodType: second.bloodType,
+          urgency: second.urgency,
+          hospitalName: second.hospitalName,
+          city: second.city,
+          // Fulfilled and queued, so both of the cases worth seeing are on
+          // screen locally without contriving them.
+          requestStatus: 'fulfilled' as const,
+          status: 'queued' as const,
+          createdAt: second.createdAt,
+          sentAt: null,
+        },
+      ];
     },
     async listPendingRequests() {
       await latency(null);

@@ -3,7 +3,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DonorProfilePatchInput } from '@kapka/shared';
+import type { DonorNotification, DonorProfilePatchInput } from '@kapka/shared';
 import { ThemeProvider } from '../lib/ThemeProvider';
 import { SessionProvider } from '../lib/SessionProvider';
 import { useSession } from '../lib/session';
@@ -11,6 +11,7 @@ import { ApiError, type DonorProfile, type Me, type Session } from '../lib/api';
 import Dashboard from './Dashboard';
 
 const getMe = vi.fn<(token: string) => Promise<Me>>();
+const listMyNotifications = vi.fn<(token: string) => Promise<DonorNotification[]>>();
 const updateDonorProfile =
   vi.fn<(patch: DonorProfilePatchInput, token: string) => Promise<DonorProfile>>();
 
@@ -20,6 +21,7 @@ vi.mock('../lib/api', async () => {
     ...actual,
     api: {
       getMe: (token: string) => getMe(token),
+      listMyNotifications: (token: string) => listMyNotifications(token),
       updateDonorProfile: (patch: DonorProfilePatchInput, token: string) =>
         updateDonorProfile(patch, token),
     },
@@ -77,7 +79,22 @@ function renderDashboard({ signedIn = true } = {}) {
   );
 }
 
+const notification = (over: Partial<DonorNotification> = {}): DonorNotification => ({
+  requestId: 'r1',
+  bloodType: 'O-',
+  urgency: 'critical',
+  hospitalName: 'City General',
+  city: 'Skopje',
+  requestStatus: 'approved',
+  status: 'sent',
+  createdAt: new Date(Date.now() - 60 * 60_000).toISOString(),
+  sentAt: new Date(Date.now() - 60 * 60_000).toISOString(),
+  ...over,
+});
+
 beforeEach(() => {
+  listMyNotifications.mockReset();
+  listMyNotifications.mockResolvedValue([]);
   getMe.mockReset();
   updateDonorProfile.mockReset();
   getMe.mockResolvedValue(me());
@@ -223,5 +240,58 @@ describe('accounts this does not apply to', () => {
     getMe.mockRejectedValue(new ApiError('INTERNAL', 'Nope.', 0));
     renderDashboard();
     expect(await screen.findByText(/couldn’t load your settings/)).toBeInTheDocument();
+  });
+});
+
+describe('what we have emailed them about', () => {
+  it('lists it, and links each one to the request', async () => {
+    listMyNotifications.mockResolvedValue([notification()]);
+    renderDashboard();
+
+    const link = await screen.findByRole('link', { name: 'City General' });
+    expect(link).toHaveAttribute('href', '/requests/r1');
+  });
+
+  it('says nothing has been sent, rather than showing an empty box', async () => {
+    renderDashboard();
+    expect(await screen.findByText(/Nothing yet/)).toBeInTheDocument();
+  });
+
+  it('does not call a queued notification sent', async () => {
+    /* Beyond the day's ceiling the row is written as queued and goes
+       tomorrow (§5.3). Showing it as sent would be a list of emails the
+       donor never received, presented as ones they did. */
+    listMyNotifications.mockResolvedValue([
+      notification({ status: 'queued', sentAt: null }),
+    ]);
+    renderDashboard();
+    expect(await screen.findByText(/Queued — not sent yet/)).toBeInTheDocument();
+  });
+
+  it('tells a donor when an email did not reach them', async () => {
+    // Actionable: their address may be wrong.
+    listMyNotifications.mockResolvedValue([notification({ status: 'failed' })]);
+    renderDashboard();
+    expect(await screen.findByText(/could not reach you/)).toBeInTheDocument();
+  });
+
+  it('says what became of the request, which is what donors ask', async () => {
+    listMyNotifications.mockResolvedValue([notification({ requestStatus: 'fulfilled' })]);
+    renderDashboard();
+    expect(await screen.findByText('Fulfilled')).toBeInTheDocument();
+  });
+
+  it('marks nothing on a request that is still open', async () => {
+    listMyNotifications.mockResolvedValue([notification()]);
+    renderDashboard();
+    await screen.findByRole('link', { name: 'City General' });
+    expect(screen.queryByText('Fulfilled')).toBeNull();
+    expect(screen.queryByText(/Queued|could not reach/)).toBeNull();
+  });
+
+  it('asks for nothing when nobody is signed in', async () => {
+    renderDashboard({ signedIn: false });
+    await screen.findByText(/Sign in to see your donor settings/);
+    expect(listMyNotifications).not.toHaveBeenCalled();
   });
 });

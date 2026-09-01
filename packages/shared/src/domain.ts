@@ -81,6 +81,30 @@ export interface DonorFit {
 }
 
 /**
+ * One request a donor was contacted about (§9.5).
+ *
+ * Carries the delivery status as well as the request, because "we emailed
+ * you" is not always true: a notification beyond the day's free-tier ceiling
+ * is written as queued and sent later (§5.3), and one that bounced never
+ * arrived at all. A history that showed those as sent would be a list of
+ * emails the donor never got, presented as ones they did.
+ */
+export interface DonorNotification {
+  requestId: string;
+  bloodType: BloodType;
+  urgency: Urgency;
+  hospitalName: string;
+  city: string;
+  /** What has become of the request since. Donors ask how it ended. */
+  requestStatus: RequestStatus;
+  status: NotificationStatus;
+  /** When the row was written. */
+  createdAt: string;
+  /** When it actually went, or null if it has not. */
+  sentAt: string | null;
+}
+
+/**
  * One row of the moderation queue (§9.6).
  *
  * matchedDonors is the reach: how many donors approving this would email,

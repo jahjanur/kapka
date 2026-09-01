@@ -126,6 +126,116 @@ describe('when a donor can give again', () => {
   });
 });
 
+describe('GET /api/me/notifications', () => {
+  const historySchema = z.object({
+    notifications: z.array(
+      z.object({
+        requestId: z.string(),
+        bloodType: z.string(),
+        hospitalName: z.string(),
+        city: z.string(),
+        requestStatus: z.string(),
+        status: z.string(),
+        createdAt: z.string(),
+        sentAt: z.string().nullable(),
+      }),
+    ),
+  });
+
+  /** A request, and a notification row against it for `donorId`. */
+  async function notified(
+    donorId: string,
+    over: { hospital?: string; status?: string; requestStatus?: string } = {},
+  ): Promise<string> {
+    const {
+      hospital = 'City General',
+      status = 'sent',
+      requestStatus = 'approved',
+    } = over;
+    const { rows: requester } = await db.pool.query<{ id: string }>(
+      `INSERT INTO users (email, password_hash, full_name, role)
+       VALUES ($1, 'x', 'Requester', 'requester') RETURNING id`,
+      [`req-${hospital}-${String(Math.random())}@example.test`],
+    );
+    const { rows } = await db.pool.query<{ id: string }>(
+      `INSERT INTO blood_requests
+         (requester_id, blood_type, hospital_name, city, contact_phone, status)
+       VALUES ($1, 'O-', $2, 'Skopje', '+389 70 000 000', $3::request_status)
+       RETURNING id`,
+      [requester[0]?.id, hospital, requestStatus],
+    );
+    const requestId = rows[0]?.id ?? '';
+    await db.pool.query(
+      `INSERT INTO notification_log (request_id, donor_id, status, sent_at)
+       VALUES ($1, $2, $3::notification_status,
+               CASE WHEN $3 = 'sent' THEN now() ELSE NULL END)`,
+      [requestId, donorId, status],
+    );
+    return requestId;
+  }
+
+  const history = async (header: string) => {
+    const response = await request(serverFor(app))
+      .get('/api/me/notifications')
+      .set('Authorization', header);
+    expect(response.status).toBe(200);
+    return historySchema.parse(response.body).notifications;
+  };
+
+  it('refuses an anonymous caller', async () => {
+    expect((await request(serverFor(app)).get('/api/me/notifications')).status).toBe(401);
+  });
+
+  it('is empty for a donor nobody has contacted', async () => {
+    expect(await history((await donor()).header)).toEqual([]);
+  });
+
+  it('lists what they were contacted about, newest first', async () => {
+    const person = await donor();
+    await notified(person.id, { hospital: 'Older' });
+    await notified(person.id, { hospital: 'Newer' });
+
+    const rows = await history(person.header);
+    expect(rows.map((r) => r.hospitalName)).toEqual(['Newer', 'Older']);
+  });
+
+  it('shows another donor nothing of this one', async () => {
+    /* Scoped in the WHERE clause. There is no shape of this query that
+       returns somebody else's rows and trims them afterwards. */
+    const ana = await donor();
+    const bojan = await donor();
+    await notified(ana.id, { hospital: "Ana's" });
+
+    expect(await history(bojan.header)).toEqual([]);
+    expect(await history(ana.header)).toHaveLength(1);
+  });
+
+  it('says what became of the request, which is what donors ask', async () => {
+    const person = await donor();
+    await notified(person.id, { requestStatus: 'fulfilled' });
+    expect((await history(person.header))[0]?.requestStatus).toBe('fulfilled');
+  });
+
+  it('does not call a queued notification sent', async () => {
+    /* Beyond the day's free-tier ceiling the row is written as queued and
+       goes tomorrow (§5.3). Showing it as sent would be a list of emails the
+       donor never received, presented as ones they did. */
+    const person = await donor();
+    await notified(person.id, { status: 'queued' });
+
+    const row = (await history(person.header))[0];
+    expect(row?.status).toBe('queued');
+    expect(row?.sentAt).toBeNull();
+  });
+
+  it('keeps a failed delivery visible rather than hiding it', async () => {
+    // A donor whose address bounces should be able to see that it did.
+    const person = await donor();
+    await notified(person.id, { status: 'failed' });
+    expect((await history(person.header))[0]?.status).toBe('failed');
+  });
+});
+
 describe('PATCH /api/me/donor-profile', () => {
   it('refuses an anonymous caller', async () => {
     expect(

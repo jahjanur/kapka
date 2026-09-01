@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { ModerationQueueItem, PublicBloodRequest } from '@kapka/shared';
+import type {
+  DonorNotification,
+  ModerationQueueItem,
+  PublicBloodRequest,
+} from '@kapka/shared';
 import { api, ApiError, type Me, type ViewedRequest } from './api';
 
 interface Snapshot<T> {
@@ -119,5 +123,14 @@ export function useMe(accessToken: string | undefined): QueryResult<Me> {
     accessToken
       ? api.getMe(accessToken)
       : Promise.reject(new ApiError('UNAUTHENTICATED', 'Sign in to continue.', 401)),
+  );
+}
+
+/** GET /api/me/notifications — what this donor has been contacted about (§9.5). */
+export function useMyNotifications(
+  accessToken: string | undefined,
+): QueryResult<DonorNotification[]> {
+  return useQuery(`me/notifications/${accessToken ?? 'anonymous'}`, () =>
+    accessToken ? api.listMyNotifications(accessToken) : Promise.resolve([]),
   );
 }

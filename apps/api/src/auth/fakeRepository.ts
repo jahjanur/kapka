@@ -1,3 +1,4 @@
+import type { DonorNotification } from '@kapka/shared';
 import type {
   AuthRepository,
   DonorProfileRecord,
@@ -20,6 +21,7 @@ export function createFakeAuthRepository(): AuthRepository & {
   profiles: Map<string, DonorProfileRecord>;
   tokens: Map<string, RefreshRecord & { tokenHash: string; replacedBy: string | null }>;
   verifications: Map<string, VerificationRecord & { tokenHash: string; createdAt: Date }>;
+  notifications: (DonorNotification & { donorId: string })[];
   addUser(
     user: Partial<UserRecord> & Pick<UserRecord, 'email' | 'passwordHash'>,
   ): UserRecord;
@@ -34,6 +36,7 @@ export function createFakeAuthRepository(): AuthRepository & {
     string,
     VerificationRecord & { tokenHash: string; createdAt: Date }
   >();
+  const notifications: (DonorNotification & { donorId: string })[] = [];
   let sequence = 0;
   const nextId = () => `id-${String(++sequence)}`;
 
@@ -58,6 +61,7 @@ export function createFakeAuthRepository(): AuthRepository & {
     profiles,
     tokens,
     verifications,
+    notifications,
     addUser,
 
     findDonorProfile(userId) {
@@ -114,6 +118,15 @@ export function createFakeAuthRepository(): AuthRepository & {
         eligibleFrom: null,
       });
       return Promise.resolve(user);
+    },
+
+    listNotifications(userId) {
+      // Newest first, like the query it stands in for.
+      return Promise.resolve(
+        notifications
+          .filter((row) => row.donorId === userId)
+          .map(({ donorId: _donorId, ...row }) => row),
+      );
     },
 
     storeRefreshToken(userId, tokenHash, expiresAt) {
