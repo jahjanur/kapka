@@ -6,6 +6,33 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
+    <!--
+      Content Security Policy (§12). Shipped in the document so it applies
+      wherever this is hosted, rather than depending on a header the host
+      may or may not be configured to send.
+
+      script-src carries a hash, not 'unsafe-inline': the one inline script
+      here is the theme applied before first paint, and its hash is checked
+      against the script by bundle/csp.test.ts — edit one without the other
+      and the build fails rather than the page silently breaking.
+
+      style-src has to allow inline. The layout primitives pass their values
+      through the style attribute by design (Grid's --col-min, Skeleton's
+      width), which is a shape no hash can cover.
+
+      img-src allows OpenStreetMap because the map tiles come from there.
+      connect-src is 'self' because the API is served from the same origin;
+      a deployment that splits them has to add the API origin here.
+
+      frame-ancestors is deliberately absent: a browser ignores it in a meta
+      element and says so in the console on every load. It lives in
+      public/_headers, with the other directives only a real header can
+      carry.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-DwRj04hfjcXprycgjHSADDS+mzHOtGteZyc+l7YEWHQ='; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.tile.openstreetmap.org; font-src 'self'; connect-src 'self';"
+    />
     <title>Kapka</title>
     <meta
       name="description"

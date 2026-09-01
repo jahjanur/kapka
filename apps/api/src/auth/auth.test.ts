@@ -140,6 +140,74 @@ describe('POST /api/auth/register', () => {
   });
 });
 
+describe('login cannot be used to find out who has an account', () => {
+  /*
+   * §12. The whole property is that a wrong password and an email nobody has
+   * registered are indistinguishable — otherwise the login form is a
+   * membership oracle, and for this product membership means "is a blood
+   * donor", which is health-adjacent information about a named person.
+   *
+   * Asserted on the whole response rather than on the code alone, because a
+   * difference anywhere — status, message, field, headers — leaks it just as
+   * well as a different code would.
+   */
+  const registration = {
+    fullName: 'Ana Petrovska',
+    email: 'ana@example.com',
+    password: PASSWORD,
+    bloodType: 'O-',
+    city: 'Bitola',
+  };
+
+  it('answers a wrong password and an unknown email identically', async () => {
+    await request(serverFor(app)).post('/api/auth/register').send(registration);
+
+    const wrongPassword = await request(serverFor(app))
+      .post('/api/auth/login')
+      .send({ email: 'ana@example.com', password: 'not-the-password' });
+    const unknownEmail = await request(serverFor(app))
+      .post('/api/auth/login')
+      .send({ email: 'nobody@example.com', password: PASSWORD });
+
+    expect(wrongPassword.status).toBe(unknownEmail.status);
+    expect(wrongPassword.body).toEqual(unknownEmail.body);
+  });
+
+  it('says the same thing to a deactivated account', async () => {
+    // A third case that must not be its own answer: "your account is
+    // disabled" tells a stranger the account exists.
+    const created = repository.addUser({
+      email: 'paused@example.com',
+      passwordHash: await hashPassword(PASSWORD),
+      isActive: false,
+    });
+    expect(created.isActive).toBe(false);
+
+    const deactivated = await request(serverFor(app))
+      .post('/api/auth/login')
+      .send({ email: 'paused@example.com', password: PASSWORD });
+    const unknown = await request(serverFor(app))
+      .post('/api/auth/login')
+      .send({ email: 'nobody@example.com', password: PASSWORD });
+
+    expect(deactivated.status).toBe(unknown.status);
+    expect(deactivated.body).toEqual(unknown.body);
+  });
+
+  it('still tells a registering user that an email is taken', async () => {
+    /* The mirror of the rule, and not a contradiction of it: registration
+       cannot hide a duplicate — the person has to be told why it failed —
+       and login is where enumeration is worth preventing. */
+    await request(serverFor(app)).post('/api/auth/register').send(registration);
+    const second = await request(serverFor(app))
+      .post('/api/auth/register')
+      .send(registration);
+
+    expect(second.status).toBe(409);
+    expect(errorBody(second).error.code).toBe('EMAIL_TAKEN');
+  });
+});
+
 describe('POST /api/auth/login', () => {
   beforeEach(async () => {
     repository.addUser({

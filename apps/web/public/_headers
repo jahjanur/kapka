@@ -1,0 +1,25 @@
+# Headers a <meta> element cannot carry.
+#
+# The Content Security Policy itself is in index.html, so that it applies
+# wherever this is served — including a local preview — rather than depending
+# on a host being configured. What is here is the remainder: directives a
+# browser ignores in a meta element, and headers that are not CSP at all.
+#
+# This file is the Netlify/Cloudflare Pages convention, matching _redirects
+# beside it. A host that does not read it loses these and keeps the CSP.
+
+/*
+  # Nothing may frame this. Ignored in a meta element, which is why it is here.
+  Content-Security-Policy: frame-ancestors 'none'
+  # The pre-CSP spelling of the same rule, for anything that predates it.
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  # A hospital's URL should not travel to third parties in a referer.
+  Referrer-Policy: strict-origin-when-cross-origin
+  # This app asks for none of these. Saying so stops an injected script asking.
+  Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=(), usb=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+
+# Hashed filenames, so these can be cached forever.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

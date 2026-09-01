@@ -9,6 +9,7 @@ import {
 } from '@kapka/shared';
 import { getAuth } from '../auth/context';
 import { optionalAuth, requireAuth } from '../middleware/auth';
+import { createRequestRateLimit } from '../middleware/rateLimit';
 import { validateBody, validateQuery } from '../middleware/validate';
 import type { AuthRepository } from '../auth/repository';
 import type { RequestsRepository, Viewer } from '../requests/repository';
@@ -34,6 +35,9 @@ export function createRequestsRouter(
    */
   router.post(
     '/requests',
+    /* Before the auth check, so a flood costs us a counter lookup rather
+       than a token verification and a database read per attempt. */
+    createRequestRateLimit,
     requireAuth(auth),
     validateBody(createRequestSchema),
     async (req, res) => {
