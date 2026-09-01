@@ -8,7 +8,11 @@ export function FilterBar({
   label,
 }: {
   children: ReactNode;
-  className?: string;
+  /* `| undefined` explicitly: noUncheckedIndexedAccess types every CSS-module
+     lookup as `string | undefined`, and exactOptionalPropertyTypes means a
+     bare `className?: string` cannot be handed one. React's own attribute
+     types spell it out the same way. */
+  className?: string | undefined;
   label: string;
 }) {
   return (

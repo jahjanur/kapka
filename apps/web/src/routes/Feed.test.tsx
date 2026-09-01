@@ -136,6 +136,46 @@ describe('the public feed', () => {
     expect(within(strip).getByText('3')).toBeInTheDocument();
   });
 
+  it('puts every filter on screen, behind no toggle', async () => {
+    /* The chips used to fold away behind a "Filters" button on a phone. They
+       are a scrolling strip now, so there is nothing to open — and a filter
+       nobody can see is a filter nobody uses. */
+    renderFeed();
+    await screen.findByText('3 open requests');
+
+    expect(screen.queryByRole('button', { name: /^Filters/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Critical' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'O negative' })).toBeInTheDocument();
+    expect(screen.getByLabelText('City')).toBeInTheDocument();
+  });
+
+  it('names each set of chips for a screen reader', async () => {
+    // Eleven toggle buttons in a row need saying which is which. The chips
+    // themselves are only "Critical" or "O negative".
+    renderFeed();
+    await screen.findByText('3 open requests');
+
+    const urgency = screen.getByRole('group', { name: 'Filter by urgency' });
+    expect(within(urgency).getByRole('button', { name: 'Routine' })).toBeInTheDocument();
+
+    const types = screen.getByRole('group', { name: 'Filter by blood type' });
+    expect(
+      within(types).getByRole('button', { name: 'A B positive' }),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps the filters in their own labelled region beside the list', async () => {
+    /* The rail at 64rem and the strip below it are the same element — this is
+       the part of that arrangement a test can actually hold down. */
+    renderFeed();
+    await screen.findByText('3 open requests');
+
+    const filters = screen.getByRole('complementary', { name: 'Filter requests' });
+    expect(within(filters).getByLabelText('City')).toBeInTheDocument();
+    // The cards are not inside it.
+    expect(within(filters).queryByRole('link', { name: /Mother Teresa/ })).toBeNull();
+  });
+
   it('shows a retry when the list cannot be loaded', async () => {
     listRequests.mockRejectedValue(
       new ApiError('INTERNAL', 'We could not reach the server.', 0, undefined),

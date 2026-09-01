@@ -158,110 +158,81 @@
   }
 }
 
-/* ── Filter toolbar ──────────────────────────────────────────────────────── */
-/* Was a left rail. A rail costs 16rem of width on every screen and leaves the
-   card grid at two columns on a monitor that fits three. */
-.toolbar {
+/* ── Filters ─────────────────────────────────────────────────────────────
+   One element, two shapes. On a phone it is a sticky strip above the cards
+   whose chips scroll sideways; from 64rem it is the sticky rail beside them
+   and the same chips wrap into stacked groups.
+   ---------------------------------------------------------------------- */
+.filters {
   position: sticky;
   inset-block-start: var(--header-height);
   z-index: var(--z-sticky);
+  display: grid;
+  gap: var(--space-2);
+  /* Out to the screen edges, so cards pass under the chrome rather than
+     appearing beside it. The gutter is given back as padding, which also
+     lets the first chip start flush with the text above it. */
+  margin-inline: calc(var(--container-gutter) * -1);
+  padding: var(--space-2) var(--container-gutter);
   background-color: color-mix(in oklab, var(--bg-canvas) var(--tint-chrome), transparent);
   backdrop-filter: blur(var(--blur-chrome));
   border-block-end: 1px solid var(--border-subtle);
 }
 
-.toolbarInner {
-  padding-block: var(--space-3);
-}
-
-/* The phone control: one button, and the filters fold away behind it. */
-.filterToggle {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-block-size: var(--hit-min);
-  padding-inline: var(--space-4);
-  font: inherit;
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  color: var(--fg-primary);
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-control);
-  border-radius: var(--radius-full);
-  cursor: pointer;
-}
-
-.filterCount {
-  display: grid;
-  place-items: center;
-  min-inline-size: 1.25rem;
-  block-size: 1.25rem;
-  padding-inline: var(--space-1);
-  font-size: var(--text-xs);
-  font-variant-numeric: tabular-nums;
-  color: var(--fg-onAccent);
-  background-color: var(--accent);
-  border-radius: var(--radius-full);
-}
-
-.filterChevron {
-  transition: rotate var(--dur-fast) var(--ease-out);
-}
-.filterToggle[aria-expanded='true'] .filterChevron {
-  rotate: 180deg;
-}
-
-.panel {
-  display: none;
-  gap: var(--space-3);
-  padding-block-start: var(--space-3);
-}
-
-.panelOpen {
-  display: grid;
-}
-
+/* A group is one flex item of the scroller, so the strip scrolls across both
+   of them as one movement rather than snapping between two scrollers. */
 .group {
   display: flex;
+  flex: none;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-2);
+}
+
+.groupLabel {
+  flex: none;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--fg-muted);
 }
 
 .divider {
-  display: none;
+  flex: none;
+  align-self: stretch;
+  inline-size: 1px;
+  margin-inline: var(--space-1);
+  background-color: var(--border-subtle);
 }
 
-.cityField {
+/* City and Clear, outside the scroller: city is the filter most people reach
+   for, and it must never be somewhere you have to swipe to. */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.controls > *:first-child {
+  flex: 1;
   max-inline-size: 18rem;
 }
 
-/* From here the toolbar is one row and the toggle is redundant. */
-@media (min-width: 48rem) {
-  .filterToggle {
-    display: none;
-  }
-  .panel {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-2) var(--space-3);
-    padding-block-start: 0;
-  }
-  .divider {
-    display: block;
-    inline-size: 1px;
-    align-self: stretch;
-    background-color: var(--border-subtle);
-  }
-  .cityField {
-    max-inline-size: 12rem;
-    margin-inline-start: auto;
-  }
-}
-
-/* ── List ────────────────────────────────────────────────────────────────── */
 .page {
   padding-block: var(--space-6) var(--space-24);
+}
+
+/* One column on a phone — filters above, cards below. Two from 64rem. */
+.layout {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* Without this the card grid cannot shrink below its own content width and
+   pushes the column wider than the track it was given. */
+.list {
+  min-inline-size: 0;
 }
 
 .resultCount {
@@ -317,5 +288,58 @@
 @media (min-width: 48rem) {
   .mobileCta {
     display: none;
+  }
+}
+
+/* ── The rail (§9.1, 64rem and up) ───────────────────────────────────────
+   The filters stop being chrome laid over the feed and become a column
+   beside it. Same element, same chips, same sticky rule — only the shape
+   changes.
+   ---------------------------------------------------------------------- */
+@media (min-width: 64rem) {
+  .layout {
+    --rail-width: 14rem;
+    grid-template-columns: minmax(0, var(--rail-width)) minmax(0, 1fr);
+    gap: var(--space-8);
+    /* Required, not cosmetic: a stretched grid item is as tall as its row,
+       so it has no room to move within it and sticky does nothing. */
+    align-items: start;
+  }
+
+  .filters {
+    /* Nothing scrolls underneath a column, so the chrome comes off. */
+    margin-inline: 0;
+    padding: 0;
+    background: none;
+    backdrop-filter: none;
+    border-block-end: 0;
+    gap: var(--space-5);
+    inset-block-start: calc(var(--header-height) + var(--space-6));
+
+    /* There is nothing to swipe with in a 14rem column, so the strip is told
+       to wrap instead of scroll. FilterBar exposes these three for exactly
+       this case — see the note in FilterBar.module.css. */
+    --filter-wrap: wrap;
+    --filter-overflow: visible;
+    --filter-snap: none;
+  }
+
+  /* Each group takes its own line, with its label above its chips. */
+  .group,
+  .groupLabel {
+    flex-basis: 100%;
+  }
+
+  /* The stacking already separates them. */
+  .divider {
+    display: none;
+  }
+
+  .controls {
+    flex-wrap: wrap;
+  }
+
+  .controls > *:first-child {
+    max-inline-size: none;
   }
 }

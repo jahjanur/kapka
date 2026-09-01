@@ -7,6 +7,7 @@ import {
   Container,
   EmptyState,
   Field,
+  FilterBar,
   FilterChip,
   Grid,
   Icon,
@@ -50,7 +51,6 @@ export default function Feed() {
   const [urgency, setUrgency] = useState<Urgency | null>(null);
   const [bloodType, setBloodType] = useState<BloodType | null>(null);
   const [city, setCity] = useState('');
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -177,62 +177,58 @@ export default function Feed() {
         </Container>
       </section>
 
-      {/* ── Filter toolbar ────────────────────────────────────────────────── */}
-      <div className={styles.toolbar}>
+      {/* ── Filters and list ───────────────────────────────────────────────
+          One grid holds both, so the filters can be a strip above the cards
+          on a phone and a column beside them on a wide screen without the
+          markup changing. Sticky in both places, from the same rule.       */}
+      <div className={styles.page}>
         <Container>
-          <div className={styles.toolbarInner}>
-            <button
-              type="button"
-              className={styles.filterToggle}
-              aria-expanded={filtersOpen}
-              aria-controls="filter-panel"
-              onClick={() => setFiltersOpen((open) => !open)}
-            >
-              <Icon name="filter" />
-              Filters
-              {activeFilters > 0 && (
-                <span className={styles.filterCount} data-numeric>
-                  {activeFilters}
-                </span>
-              )}
-              <Icon name="chevronDown" className={styles.filterChevron} />
-            </button>
+          <div className={styles.layout}>
+            <aside className={styles.filters} aria-label="Filter requests">
+              {/*
+                One swipeable strip on a phone: eleven chips will not fit
+                across 360px, and stacking them costs the space the first
+                request needs. In the rail there is nothing to swipe with, so
+                the same row is told to wrap instead — FilterBar exposes
+                --filter-wrap for exactly this.
+              */}
+              <FilterBar label="Urgency and blood type">
+                <div className={styles.group} role="group" aria-label="Filter by urgency">
+                  <span className={styles.groupLabel}>Urgency</span>
+                  {URGENCIES.map((level) => (
+                    <FilterChip
+                      key={level}
+                      selected={urgency === level}
+                      onClick={() => setUrgency(urgency === level ? null : level)}
+                    >
+                      {titleCase(level)}
+                    </FilterChip>
+                  ))}
+                </div>
 
-            <div
-              id="filter-panel"
-              className={`${styles.panel} ${filtersOpen ? styles.panelOpen : ''}`}
-            >
-              <div className={styles.group} role="group" aria-label="Filter by urgency">
-                {URGENCIES.map((level) => (
-                  <FilterChip
-                    key={level}
-                    selected={urgency === level}
-                    onClick={() => setUrgency(urgency === level ? null : level)}
-                  >
-                    {titleCase(level)}
-                  </FilterChip>
-                ))}
-              </div>
+                <span className={styles.divider} aria-hidden="true" />
 
-              <div className={styles.divider} aria-hidden="true" />
+                <div
+                  className={styles.group}
+                  role="group"
+                  aria-label="Filter by blood type"
+                >
+                  <span className={styles.groupLabel}>Blood type</span>
+                  {BLOOD_TYPES.map((type) => (
+                    <FilterChip
+                      key={type}
+                      selected={bloodType === type}
+                      onClick={() => setBloodType(bloodType === type ? null : type)}
+                    >
+                      <BloodTypeLabel type={type} />
+                    </FilterChip>
+                  ))}
+                </div>
+              </FilterBar>
 
-              <div
-                className={styles.group}
-                role="group"
-                aria-label="Filter by blood type"
-              >
-                {BLOOD_TYPES.map((type) => (
-                  <FilterChip
-                    key={type}
-                    selected={bloodType === type}
-                    onClick={() => setBloodType(bloodType === type ? null : type)}
-                  >
-                    <BloodTypeLabel type={type} />
-                  </FilterChip>
-                ))}
-              </div>
-
-              <div className={styles.cityField}>
+              {/* Outside the scroller. City is the filter most people reach
+                  for, and it should never be somewhere you have to swipe to. */}
+              <div className={styles.controls}>
                 <Field label="City" hideLabel>
                   <Select
                     placeholder="Anywhere"
@@ -246,76 +242,73 @@ export default function Feed() {
                     ))}
                   </Select>
                 </Field>
-              </div>
 
-              {activeFilters > 0 && (
-                <Button variant="ghost" size="sm" onClick={clearFilters}>
-                  <Icon name="close" />
-                  Clear
-                </Button>
-              )}
+                {activeFilters > 0 && (
+                  <Button variant="ghost" size="sm" onClick={clearFilters}>
+                    <Icon name="close" />
+                    Clear
+                  </Button>
+                )}
+              </div>
+            </aside>
+
+            <div className={styles.list}>
+              <Stack gap={4}>
+                <p className={styles.resultCount} aria-live="polite">
+                  {isLoading
+                    ? 'Loading requests…'
+                    : `${filtered.length} open ${filtered.length === 1 ? 'request' : 'requests'}`}
+                </p>
+
+                {isLoading && (
+                  <Grid minColumn="19rem" gap={4}>
+                    {Array.from({ length: 6 }, (_, index) => (
+                      <SkeletonCard key={index} />
+                    ))}
+                  </Grid>
+                )}
+
+                {error && (
+                  <EmptyState
+                    icon="alertTriangle"
+                    headline="We couldn’t load the requests"
+                    body="The connection dropped on the way. Nothing is lost — try again."
+                    action={<Button onClick={refetch}>Try again</Button>}
+                  />
+                )}
+
+                {!isLoading &&
+                  !error &&
+                  filtered.length === 0 &&
+                  (activeFilters > 0 ? (
+                    <EmptyState
+                      icon="filter"
+                      headline="No requests match these filters"
+                      body="Widen the search and the open requests will reappear."
+                      action={
+                        <Button variant="secondary" onClick={clearFilters}>
+                          Clear filters
+                        </Button>
+                      }
+                    />
+                  ) : (
+                    <EmptyState
+                      headline="No open requests right now"
+                      body="That is good news. Register as a donor and we will email you the moment someone with your blood type needs help."
+                      action={<Button to={PATHS.register}>Register as donor</Button>}
+                    />
+                  ))}
+
+                {!isLoading && !error && filtered.length > 0 && (
+                  <Grid minColumn="19rem" gap={4}>
+                    {filtered.map((request) => (
+                      <RequestCard key={request.id} request={request} />
+                    ))}
+                  </Grid>
+                )}
+              </Stack>
             </div>
           </div>
-        </Container>
-      </div>
-
-      {/* ── The list ──────────────────────────────────────────────────────── */}
-      <div className={styles.page}>
-        <Container>
-          <Stack gap={4}>
-            <p className={styles.resultCount} aria-live="polite">
-              {isLoading
-                ? 'Loading requests…'
-                : `${filtered.length} open ${filtered.length === 1 ? 'request' : 'requests'}`}
-            </p>
-
-            {isLoading && (
-              <Grid minColumn="19rem" gap={4}>
-                {Array.from({ length: 6 }, (_, index) => (
-                  <SkeletonCard key={index} />
-                ))}
-              </Grid>
-            )}
-
-            {error && (
-              <EmptyState
-                icon="alertTriangle"
-                headline="We couldn’t load the requests"
-                body="The connection dropped on the way. Nothing is lost — try again."
-                action={<Button onClick={refetch}>Try again</Button>}
-              />
-            )}
-
-            {!isLoading &&
-              !error &&
-              filtered.length === 0 &&
-              (activeFilters > 0 ? (
-                <EmptyState
-                  icon="filter"
-                  headline="No requests match these filters"
-                  body="Widen the search and the open requests will reappear."
-                  action={
-                    <Button variant="secondary" onClick={clearFilters}>
-                      Clear filters
-                    </Button>
-                  }
-                />
-              ) : (
-                <EmptyState
-                  headline="No open requests right now"
-                  body="That is good news. Register as a donor and we will email you the moment someone with your blood type needs help."
-                  action={<Button to={PATHS.register}>Register as donor</Button>}
-                />
-              ))}
-
-            {!isLoading && !error && filtered.length > 0 && (
-              <Grid minColumn="19rem" gap={4}>
-                {filtered.map((request) => (
-                  <RequestCard key={request.id} request={request} />
-                ))}
-              </Grid>
-            )}
-          </Stack>
         </Container>
       </div>
 
