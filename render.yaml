@@ -1,0 +1,241 @@
+# Kapka on Render — staging and production.
+#
+# Six services and two databases. Staging is not a cheaper production; it is
+# the same shape with a different database and mail that cannot reach anybody,
+# so that what passes there means something.
+#
+# Read docs/deploy.md before applying this. There are four values it cannot
+# carry — the two SendGrid keys and the two SMTP catcher hosts — and one that
+# has to be corrected by hand if a custom domain is ever added.
+
+databases:
+  - name: kapka-db-staging
+    databaseName: kapka
+    user: kapka
+    region: frankfurt
+    postgresMajorVersion: '17' # Matches compose.yaml, so local and deployed agree.
+
+  - name: kapka-db
+    databaseName: kapka
+    user: kapka
+    region: frankfurt
+    postgresMajorVersion: '17'
+
+services:
+  # ══ Staging ══════════════════════════════════════════════════════════════
+  - name: kapka-api-staging
+    type: web
+    runtime: node
+    region: frankfurt
+    branch: main
+    # No --include=dev. Nothing in devDependencies runs the server: `start` is
+    # `tsx src/index.ts` and tsx is a runtime dependency for exactly that
+    # reason. The web build below is the one that needs them.
+    buildCommand: npm ci
+    # Runs before the new instance takes traffic and blocks the deploy if it
+    # fails, which is the only safe place for a schema change.
+    preDeployCommand: npm run migrate:deploy --workspace @kapka/api
+    startCommand: npm start --workspace @kapka/api
+    healthCheckPath: /api/health
+    envVars:
+      # Production, deliberately, on staging too. Any other value hands out the
+      # development signing key that is committed to this repo — on a public
+      # URL that is an admin token for anyone who reads it — and it also turns
+      # off rate limiting and the bcrypt cost floor. Staging that skips the
+      # security code is staging that cannot vouch for it.
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kapka-db-staging
+          property: connectionString
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: APP_BASE_URL
+        value: https://kapka-staging.onrender.com
+      - key: CORS_ORIGINS
+        value: https://kapka-staging.onrender.com
+      # env.ts: "Render puts one proxy in front of a service, so one." More
+      # and a client can spoof its way out of every rate limit; fewer and the
+      # whole internet shares one bucket.
+      - key: TRUST_PROXY_HOPS
+        value: 1
+      # smtp, never sendgrid. This is what stops staging emailing real people:
+      # everything it sends goes to the catcher below and stops there.
+      - key: MAIL_TRANSPORT
+        value: smtp
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: MAIL_FROM
+        value: no-reply@staging.kapka.mk
+
+  - name: kapka-staging
+    type: web
+    runtime: static
+    branch: main
+    buildCommand: npm ci --include=dev && npm run build --workspace @kapka/web
+    staticPublishPath: apps/web/dist
+    envVars:
+      # Relative, so the browser only ever talks to this origin. Not optional:
+      # index.html ships connect-src 'self', which refuses a cross-origin API
+      # outright, and the refresh cookie is SameSite=Strict, which a
+      # cross-origin request would never carry. The rewrite below is what makes
+      # one origin out of two services.
+      - key: VITE_API_URL
+        value: /api
+    routes:
+      # Order matters. /api/* has to be matched before the catch-all, or every
+      # API call is answered with index.html and the app sees HTML where it
+      # expects JSON.
+      - type: rewrite
+        source: /api/*
+        destination: https://kapka-api-staging.onrender.com/api/*
+      # Client-side routing: every deep link is served the app.
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      # apps/web/public/_headers is the Netlify and Cloudflare Pages
+      # convention. Render does not read it, so these are the same rules said
+      # in the way Render listens to. Change one, change both.
+      - path: /*
+        name: Content-Security-Policy
+        value: frame-ancestors 'none'
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: Permissions-Policy
+        value: geolocation=(), camera=(), microphone=(), payment=(), usb=()
+      - path: /*
+        name: Strict-Transport-Security
+        value: max-age=31536000; includeSubDomains
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+
+  - name: kapka-expire-staging
+    type: cron
+    runtime: node
+    region: frankfurt
+    branch: main
+    # 03:00 UTC, which is the middle of the night in Skopje. Expiring a request
+    # removes it from the feed, and nobody should watch that happen.
+    schedule: '0 3 * * *'
+    buildCommand: npm ci
+    startCommand: npm run expire-requests --workspace @kapka/api
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kapka-db-staging
+          property: connectionString
+      # Not used by the job, but env.ts parses the whole schema at import and
+      # refuses to start without them in production.
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: APP_BASE_URL
+        value: https://kapka-staging.onrender.com
+
+  # ══ Production ═══════════════════════════════════════════════════════════
+  - name: kapka-api
+    type: web
+    runtime: node
+    region: frankfurt
+    branch: main
+    buildCommand: npm ci
+    preDeployCommand: npm run migrate:deploy --workspace @kapka/api
+    startCommand: npm start --workspace @kapka/api
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kapka-db
+          property: connectionString
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: APP_BASE_URL
+        value: https://kapka.onrender.com
+      - key: CORS_ORIGINS
+        value: https://kapka.onrender.com
+      - key: TRUST_PROXY_HOPS
+        value: 1
+      # The one place real donors are emailed. env.ts refuses to start with
+      # sendgrid and no key, so a missing key is a failed deploy rather than a
+      # silent evening of nobody being notified.
+      - key: MAIL_TRANSPORT
+        value: sendgrid
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        value: no-reply@kapka.mk
+
+  - name: kapka
+    type: web
+    runtime: static
+    branch: main
+    buildCommand: npm ci --include=dev && npm run build --workspace @kapka/web
+    staticPublishPath: apps/web/dist
+    envVars:
+      - key: VITE_API_URL
+        value: /api
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://kapka-api.onrender.com/api/*
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: Content-Security-Policy
+        value: frame-ancestors 'none'
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: Permissions-Policy
+        value: geolocation=(), camera=(), microphone=(), payment=(), usb=()
+      - path: /*
+        name: Strict-Transport-Security
+        value: max-age=31536000; includeSubDomains
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+
+  - name: kapka-expire
+    type: cron
+    runtime: node
+    region: frankfurt
+    branch: main
+    schedule: '0 3 * * *'
+    buildCommand: npm ci
+    startCommand: npm run expire-requests --workspace @kapka/api
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kapka-db
+          property: connectionString
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: APP_BASE_URL
+        value: https://kapka.onrender.com

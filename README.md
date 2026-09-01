@@ -947,9 +947,18 @@ Supporting conventions, all enforced in the components already here:
 
 ## Deployment note
 
-`web/public/_redirects` sends all paths to `index.html` so client-side routes
-survive a refresh on the static host. Verify it applies on Render before the
-first deploy.
+`apps/web/public/_redirects` sends all paths to `index.html` so client-side
+routes survive a refresh on the static host, and `_headers` beside it carries
+the security headers a `<meta>` element cannot.
+
+**Render reads neither.** Both files are the Netlify and Cloudflare Pages
+convention. On Render the same two rules live in `render.yaml`, as `routes` and
+`headers` on the static site — so they are said twice, and changing one means
+changing both. Without them every deep link would 404 and every security header
+would be lost.
+
+The whole deployment — staging and production, and the order to apply them in
+— is `render.yaml` and [docs/deploy.md](docs/deploy.md).
 
 ## Tests and CI
 

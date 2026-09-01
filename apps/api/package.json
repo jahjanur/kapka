@@ -9,6 +9,7 @@
     "typecheck": "tsc -p tsconfig.json",
     "build": "tsc -p tsconfig.json",
     "migrate:up": "node-pg-migrate up --envPath .env -m migrations",
+    "migrate:deploy": "node-pg-migrate up -m migrations --no-check-order",
     "migrate:down": "node-pg-migrate down --envPath .env -m migrations",
     "migrate:create": "node-pg-migrate create --envPath .env -m migrations -j sql",
     "migrate:status": "node-pg-migrate up --envPath .env -m migrations --dry-run",
@@ -29,6 +30,7 @@
     "node-pg-migrate": "^9.0.0",
     "nodemailer": "^9.1.0",
     "pg": "^8.23.0",
+    "tsx": "^4.23.13",
     "zod": "^4.5.4"
   },
   "devDependencies": {
@@ -38,7 +40,6 @@
     "@types/node": "^26.4.0",
     "@types/nodemailer": "^8.0.1",
     "@types/pg": "^8.23.1",
-    "embedded-postgres": "^18.4.0-beta.17",
-    "tsx": "^4.23.13"
+    "embedded-postgres": "^18.4.0-beta.17"
   }
 }
