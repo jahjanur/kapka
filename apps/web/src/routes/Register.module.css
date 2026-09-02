@@ -146,27 +146,28 @@
   gap: var(--space-2);
 }
 
-/* ── Last donation ───────────────────────────────────────────────────────── */
-/* min-inline-size: 0 is load-bearing, twice over. A <fieldset> defaults to
-   min-content, and a grid item defaults to auto — so the widest thing inside
-   this form set the width of the form, and the form set the width of the
-   card. In a wide two-column page nothing showed; in the auth card the blood
-   chips, the city help and the buttons all ran off the right edge. */
+/* ── Last donation ───────────────────────────────────────────────────────
+   Not a panel. It was a grey box inside a white card with its legend sitting
+   half outside the box — a <legend> is rendered on the border of its
+   fieldset, so styling the fieldset as a surface always puts the label in
+   that awkward notch. It is a group of two controls, so it stays a fieldset;
+   it just looks like the fields above it now.
+   ---------------------------------------------------------------------- */
 .fieldset {
   display: grid;
   min-inline-size: 0;
   gap: var(--space-3);
   margin: 0;
-  padding: var(--space-4);
-  background-color: var(--bg-surface-alt);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-lg);
+  padding: 0;
+  border: 0;
 }
 
+/* Sized and weighted like a Field's label, because that is what it is. */
 .legend {
   padding-inline: 0;
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
+  color: var(--fg-primary);
 }
 
 .legendHelp {
@@ -174,13 +175,39 @@
   color: var(--fg-secondary);
 }
 
+/* The choice itself: a row that is the whole hit area, and reads as chosen
+   rather than merely ticked. */
 .check {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-3);
   min-block-size: var(--hit-min);
+  padding-inline: var(--space-4);
   font-size: var(--text-base);
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
   cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+
+.check:has(input:checked) {
+  color: var(--accent-ink);
+  background-color: var(--accent-surface);
+  border-color: var(--accent);
+}
+
+.check:has(input:focus-visible) {
+  border-color: var(--accent);
+  box-shadow: var(--glow-soft);
+}
+
+@media (hover: hover) {
+  .check:hover {
+    border-color: var(--fg-secondary);
+  }
 }
 
 .check input {
