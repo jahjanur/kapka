@@ -1,6 +1,19 @@
 import '@testing-library/jest-dom/vitest';
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
 import { afterEach } from 'vitest';
+
+/**
+ * Every findBy / waitFor gets five seconds rather than one.
+ *
+ * Not a papering-over: the routes are lazily imported, so a navigation in a
+ * test is a dynamic import, a Suspense boundary and a fetch before anything
+ * can be asserted. On this machine that lands in well under a second; on a CI
+ * runner, instrumented for coverage and sharing a box, it does not — and the
+ * failure it produced was two "unable to find" errors for elements that were
+ * on their way. A generous ceiling costs nothing when the wait ends as soon
+ * as the element appears.
+ */
+configure({ asyncUtilTimeout: 5_000 });
 
 /**
  * Testing Library only registers its own cleanup when Vitest globals are on.
@@ -18,14 +31,21 @@ afterEach(() => {
  * jsdom gap rather than a defect in the component, so it is filled here rather
  * than defended against in the code.
  *
- * Defaults to "no match", i.e. the light theme, which is the neutral answer.
+ * "No match" for everything except prefers-reduced-motion, which answers yes:
+ * a test runs in a document with no layout, no paint and no compositor, and
+ * anything that animates there is spending real time to change nothing that
+ * can be observed. The stat strip counts up over animation frames, and on a
+ * loaded CI runner that loop was still running while the next assertion was
+ * waiting for a lazily imported route — which is a slow test suite and, twice,
+ * a red build. Answering the way a reader who has asked for less motion would
+ * makes every test deterministic and exercises a path real people use.
  *
  * Assigned unconditionally: TypeScript's DOM types say matchMedia always
  * exists, so guarding on it is dead code the linter rightly rejects.
  */
 window.matchMedia = (query: string): MediaQueryList =>
   ({
-    matches: false,
+    matches: query.includes('prefers-reduced-motion'),
     media: query,
     onchange: null,
     addEventListener: () => undefined,
