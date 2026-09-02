@@ -65,7 +65,7 @@
   position: relative;
   display: grid;
   /* The copy leads and the drop takes what is left, at every width. */
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: center;
   gap: var(--space-2);
 }
@@ -122,10 +122,14 @@
    silhouette. */
 .heroArt {
   display: block;
-  /* Wider than the column it is in, so it runs past the gutter rather than
-     sitting in a box of its own. */
-  inline-size: 150%;
+  /* Bigger than the column it sits in, and bleeding out of it on three
+     sides: past the gutter to the right, and over the band's own padding
+     top and bottom. The negative block margins are what let it be taller
+     than the row without making the row taller — the hero clips it, which
+     is the crop the design wants. */
+  inline-size: 165%;
   block-size: auto;
+  margin-block: calc(var(--space-8) * -1);
   margin-inline-start: auto;
   margin-inline-end: calc(var(--container-gutter) * -1);
   mix-blend-mode: var(--image-blend);

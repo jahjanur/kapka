@@ -187,8 +187,8 @@ export default function Feed() {
               className={styles.heroArt}
               src="/img/hero-drop.jpg"
               alt=""
-              width={804}
-              height={900}
+              width={1072}
+              height={1200}
               /* The largest thing on the first screen, so it is fetched with
                  the markup rather than after it. */
               fetchPriority="high"
