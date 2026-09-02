@@ -48,28 +48,31 @@ export function AuthLayout({
   return (
     <div className={cx(styles.page, centred && styles.pageCentred)}>
       <div className={styles.band}>
+        {/* Both of these sit in the screen's corners rather than in the
+            card's column: a back arrow an inch from the title reads as part
+            of the title, and on a wide screen it floated in the middle of a
+            red field with nothing to anchor it. */}
+        {back && (
+          <Link to={back} className={styles.back} aria-label="Back">
+            <Icon name="chevronRight" className={styles.backIcon} />
+          </Link>
+        )}
+        {progress && (
+          /* Two of the same fact: the shorthand for whoever is looking at it,
+             and the sentence for whoever is listening. "1 slash 2" is not
+             something to hear read out. */
+          <p className={styles.count}>
+            <span aria-hidden="true">
+              {progress.step}/{progress.of}
+            </span>
+            <span className="visually-hidden">
+              Step {progress.step} of {progress.of}
+            </span>
+          </p>
+        )}
+
         <div className={styles.bandInner}>
-          <div className={styles.top}>
-            {back && (
-              <Link to={back} className={styles.back} aria-label="Back">
-                <Icon name="chevronRight" className={styles.backIcon} />
-              </Link>
-            )}
-            <h1 className={cx(styles.title, !back && styles.titleCentred)}>{title}</h1>
-            {progress && (
-              /* Two of the same fact: the shorthand for whoever is looking at
-                 it, and the sentence for whoever is listening. "1 slash 2" is
-                 not something to hear read out. */
-              <p className={styles.count}>
-                <span aria-hidden="true">
-                  {progress.step}/{progress.of}
-                </span>
-                <span className="visually-hidden">
-                  Step {progress.step} of {progress.of}
-                </span>
-              </p>
-            )}
-          </div>
+          <h1 className={styles.title}>{title}</h1>
 
           {/* The bar repeats what the count says, for everyone who reads the
               shape of a page before its words. Both are hidden from screen

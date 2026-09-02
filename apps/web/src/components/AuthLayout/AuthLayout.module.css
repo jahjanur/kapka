@@ -72,21 +72,17 @@
   margin-inline: auto;
 }
 
-.top {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  min-block-size: var(--hit-min);
-}
-
-/* The arrow is a link, so it can be opened in a new tab and read as one. */
+/* The arrow is a link, so it can be opened in a new tab and read as one. It
+   is pinned to the corner of the screen, where a back control belongs. */
 .back {
+  position: absolute;
+  inset-block-start: var(--space-4);
+  inset-inline-start: var(--space-3);
+  z-index: 1;
   display: inline-grid;
   place-items: center;
-  flex: none;
   inline-size: var(--hit-min);
   block-size: var(--hit-min);
-  margin-inline-start: calc(var(--space-3) * -1);
   color: var(--fg-onAccent);
   border-radius: var(--radius-full);
 }
@@ -102,20 +98,23 @@
   rotate: 180deg;
 }
 
+/* Centred on the screen, and kept clear of the two corners at the narrow end
+   where the arrow and the count would otherwise meet it. */
 .title {
-  flex: 1 1 auto;
+  min-block-size: var(--hit-min);
+  padding-inline: var(--space-10);
   font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
+  line-height: var(--hit-min);
   text-align: center;
 }
 
-/* Centred against the whole width when there is no arrow to balance. */
-.titleCentred {
-  padding-inline-end: 0;
-}
-
 .count {
-  flex: none;
+  position: absolute;
+  inset-block-start: var(--space-4);
+  inset-inline-end: var(--container-gutter);
+  z-index: 1;
+  line-height: var(--hit-min);
   font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
   color: var(--fg-onAccent);
