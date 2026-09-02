@@ -144,51 +144,63 @@ export default function Feed() {
         <Container>
           <div className={styles.heroGrid}>
             <div className={styles.heroCopy}>
-              <p className={styles.eyebrow}>
-                <span className={styles.pulse} aria-hidden="true" />
-                Live in North Macedonia
-              </p>
-              <h1 className={styles.heroTitle}>
-                Someone nearby <span className={styles.heroTitleInk}>needs blood.</span>
-              </h1>
-              <p className={styles.heroLead}>
-                Register once with your blood type and city. When a matching request is
-                approved, we email you — no searching, no phone tree.
-              </p>
-              <div className={styles.heroActions}>
-                {/* Read on the session as it stands rather than waiting for
-                    the boot refresh: signed out is both the common case and
-                    what the header assumes, so the pair of buttons is stable
-                    for most readers instead of appearing a moment late. */}
-                {heroPrimary && (
-                  <Button to={heroPrimary.to} size="lg">
-                    {heroPrimary.label}
+              {/* Everything above the fold that is words. One element, so the
+                  band's spare height falls between the copy and the numbers
+                  rather than being shared out between every paragraph. */}
+              <div className={styles.heroLede}>
+                <p className={styles.eyebrow}>
+                  <span className={styles.pulse} aria-hidden="true" />
+                  Live in North Macedonia
+                </p>
+                <h1 className={styles.heroTitle}>
+                  Someone nearby <span className={styles.heroTitleInk}>needs blood.</span>
+                </h1>
+                <p className={styles.heroLead}>
+                  Register once with your blood type and city. When a matching request is
+                  approved, we email you — no searching, no phone tree.
+                </p>
+                <div className={styles.heroActions}>
+                  {/* Read on the session as it stands rather than waiting for
+                      the boot refresh: signed out is both the common case and
+                      what the header assumes, so the pair of buttons is stable
+                      for most readers instead of appearing a moment late. */}
+                  {heroPrimary && (
+                    <Button to={heroPrimary.to} size="lg">
+                      {heroPrimary.label}
+                    </Button>
+                  )}
+                  {/* The hero speaks to donors, but the person whose relative
+                      needs blood lands here too, and the header nav that would
+                      take them on is hidden on a phone. It leads when there is
+                      nothing above it. */}
+                  <Button
+                    to={PATHS.postRequest}
+                    variant={heroPrimary ? 'secondary' : 'primary'}
+                    size="lg"
+                  >
+                    Post a request
+                    <Icon name="arrowRight" />
                   </Button>
-                )}
-                {/* The hero speaks to donors, but the person whose relative
-                    needs blood lands here too, and the header nav that would
-                    take them on is hidden on a phone. It leads when there is
-                    nothing above it. */}
-                <Button
-                  to={PATHS.postRequest}
-                  variant={heroPrimary ? 'secondary' : 'primary'}
-                  size="lg"
-                >
-                  Post a request
-                  <Icon name="arrowRight" />
-                </Button>
+                </div>
+
+                {/* The trace is the product's pulse, and it belongs where the
+                    numbers are: this strip is the only part of the page that
+                    says how much is happening right now. */}
               </div>
 
-              {/* The trace is the product's pulse, and it belongs where the
-                  numbers are: this strip is the only part of the page that
-                  says how much is happening right now. */}
-              <VitalSign className={styles.vital} />
+              {/* The trace and the numbers travel together, at the foot of
+                  the screen: on a phone the hero is the whole first view, and
+                  a group anchored to the bottom of it is what turns the height
+                  it fills into a composition rather than a gap. */}
+              <div className={styles.heroFoot}>
+                <VitalSign className={styles.vital} />
 
-              <dl className={styles.stats}>
-                <Stat label="Open requests" value={stats.open} loading={isLoading} />
-                <Stat label="Critical" value={stats.critical} loading={isLoading} />
-                <Stat label="Cities" value={stats.cities} loading={isLoading} />
-              </dl>
+                <dl className={styles.stats}>
+                  <Stat label="Open requests" value={stats.open} loading={isLoading} />
+                  <Stat label="Critical" value={stats.critical} loading={isLoading} />
+                  <Stat label="Cities" value={stats.cities} loading={isLoading} />
+                </dl>
+              </div>
             </div>
 
             {/*

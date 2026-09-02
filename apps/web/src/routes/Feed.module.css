@@ -15,10 +15,12 @@
      it. dvh rather than vh — on a phone the browser's own chrome comes and
      goes, and vh measures the screen as if it never did.
 
-     Centred within that, so the height it gains is shared above and below the
-     copy rather than left as a gap under the stat strip. */
+     The content stretches to fill it rather than sitting centred in it: the
+     copy holds the top and the numbers the foot, and the height the band
+     gains falls between them. Centred, it left the same slack above the
+     eyebrow and below the strip, which is a tall band with a small page
+     floating in it. */
   display: grid;
-  align-content: center;
   min-block-size: 100dvh;
   /* Pulled up under the header and given the height back as padding, so the
      wash runs to the very top of the screen rather than starting under a
@@ -81,12 +83,33 @@
   position: relative;
   display: grid;
   gap: var(--space-6);
+  /* Passes the band's full height down to .heroCopy, which is what its
+     space-between has to divide. */
+  block-size: 100%;
 }
 
 /* min-inline-size: 0 so a long word in the lead cannot push the grid column
-   wider than its track and squeeze the spotlight beside it. */
+   wider than its track and squeeze the spotlight beside it.
+
+   On a phone it is also the thing that fills the viewport-tall band: the copy
+   sits at the top of that height and the numbers at the bottom of it, rather
+   than the whole group floating in the middle with a hundred pixels of
+   nothing above and below. */
 .heroCopy {
   min-inline-size: 0;
+  display: grid;
+  align-content: space-between;
+  /* start, or a grid stretches the eyebrow pill to the full width of the
+     screen and it stops being a pill. */
+  justify-items: start;
+  gap: var(--space-8);
+  block-size: 100%;
+}
+
+/* Two children, so the height goes between them and nowhere else. */
+.heroLede,
+.heroFoot {
+  inline-size: 100%;
 }
 
 /* A pill rather than a line of text: it is the one element that says the data
@@ -170,7 +193,6 @@
   /* A graphic, not a rule across the page: at full width on a desktop the
      beat is stretched into a shallow wobble and stops reading as one. */
   max-inline-size: 24rem;
-  margin-block-start: var(--space-8);
   /* Fades at both ends so it reads as a window onto something continuous
      rather than a line that starts and stops in the layout. */
   mask-image: linear-gradient(
@@ -182,30 +204,37 @@
   );
 }
 
-/* ── Stat strip ──────────────────────────────────────────────────────────── */
-/* Three tiles, side by side at 360px. A wrapping flex row put "Cities" on a
-   line of its own at the narrow end, which read as a fourth thing rather than
-   the third. */
+/* ── Stat strip ──────────────────────────────────────────────────────────
+   One strip divided into three, not three separate boxes: at this size the
+   boxes were mostly border, and "Open requests" wrapping in the first of them
+   pushed its number a line below the other two.
+
+   Each column reads number-then-label, which is why the markup is a <dl> read
+   in reverse: the term still precedes its definition for a screen reader, and
+   the numbers still line up across the strip whatever the labels under them
+   do.
+   ---------------------------------------------------------------------- */
 .stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-2);
-  margin-block-start: var(--space-4);
-}
-
-/* Flex column with the number pushed to the bottom: "Open requests" wraps to
-   two lines at 360px and the other two labels do not, and three numbers at
-   three different heights read as three unrelated tiles. */
-.stat {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  background-color: var(--bg-surface);
+  margin-block-start: var(--space-5);
+  overflow: hidden;
+  background-color: var(--surface-glass);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  box-shadow: var(--elevation-1);
+  backdrop-filter: blur(var(--blur-chrome));
+}
+
+.stat {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: end;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-3);
+}
+
+.stat + .stat {
+  border-inline-start: 1px solid var(--border-subtle);
 }
 
 .stat dt {
@@ -220,8 +249,9 @@
   margin: 0;
   font-size: var(--text-2xl);
   font-weight: var(--weight-semibold);
+  line-height: var(--leading-none);
   /* Tabular, or a number counting up to itself changes width on every frame
-     and nudges the tile beside it. */
+     and nudges the column beside it. */
   font-variant-numeric: tabular-nums;
   letter-spacing: var(--tracking-tight);
 }
