@@ -263,11 +263,20 @@ export default function Feed() {
           real one, and the link goes to the requests it counts.           */}
       <section className={styles.nearby} aria-labelledby="nearby-heading">
         <Container>
-          <h2 id="nearby-heading" className={styles.nearbyTitle}>
-            Someone nearby <span className={styles.heroTitleInk}>needs blood.</span>
-          </h2>
+          {/* The heading and the way out of the section sit on one line:
+              somebody who wants the whole list should not have to read the
+              cities first to find the link to it. */}
+          <div className={styles.nearbyHead}>
+            <h2 id="nearby-heading" className={styles.nearbyTitle}>
+              Someone nearby <span className={styles.heroTitleInk}>needs blood.</span>
+            </h2>
+            <a className={styles.viewAll} href={`#${LIST_ID}`}>
+              View all requests
+              <Icon name="chevronRight" />
+            </a>
+          </div>
           <p className={styles.nearbyLead}>
-            Where the open requests are right now. Choose a city to see its own.
+            See what is needed in your area, and help save a life.
           </p>
 
           {isLoading && (
@@ -311,7 +320,10 @@ export default function Feed() {
                     onClick={() => showCity(name)}
                   >
                     <Icon name="mapPin" />
-                    {name}
+                    {/* Its own element so it is the thing that truncates: as
+                        a bare text node it pushed the count out of the chip
+                        instead, and Kumanovo lost its number. */}
+                    <span className={styles.cityName}>{name}</span>
                     <span className={styles.cityCount} data-numeric>
                       {count}
                     </span>
@@ -320,13 +332,6 @@ export default function Feed() {
               ))}
             </ul>
           )}
-
-          {/* Down the page rather than to another screen: the list it points
-              at is on this one. */}
-          <a className={styles.viewAll} href={`#${LIST_ID}`}>
-            View all requests
-            <Icon name="chevronRight" />
-          </a>
         </Container>
       </section>
 

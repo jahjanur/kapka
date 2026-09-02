@@ -221,7 +221,18 @@
   padding-block: var(--space-8) var(--space-6);
 }
 
+/* The heading takes the room it needs and the link sits at the end of the
+   line, dropping under it only when there is no room for both. */
+.nearbyHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
 .nearbyTitle {
+  /* Wraps rather than pushing the link off the line beside it. */
+  min-inline-size: 0;
   font-size: var(--text-xl);
   letter-spacing: var(--tracking-tight);
   text-wrap: balance;
@@ -239,26 +250,38 @@
   color: var(--fg-muted);
 }
 
+/* Three across where there is room for three, two where there is not: a
+   wrapping row left the last line ragged and the chips different widths,
+   which read as six unrelated buttons rather than one set. */
 .cityList {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  /* Wide enough for the longest city we cover, so the grid drops to two
+     columns rather than abbreviating one: three across a 390px screen left
+     "Kumanovo" four pixels short, and "Kuman…" is a chip nobody can use.
+     Three columns come back as soon as the screen can hold them. */
+  grid-template-columns: repeat(auto-fit, minmax(7.75rem, 1fr));
   gap: var(--space-2);
   margin-block-start: var(--space-4);
   list-style: none;
 }
 
 .cityChip {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: var(--space-2);
+  /* Everything here is sized to fit the longest city we cover — Kumanovo,
+     at three chips across a 360px screen. A hair more padding or a step more
+     type and it abbreviates, and a city abbreviated to "Ku…" is a chip
+     nobody can use. */
+  gap: var(--space-1);
+  inline-size: 100%;
   min-block-size: var(--hit-min);
-  padding-inline: var(--space-4);
+  padding-inline: var(--space-2);
   font-family: inherit;
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   font-weight: var(--weight-medium);
   color: var(--fg-primary);
   background-color: var(--bg-surface);
-  border: 1px solid var(--border-control);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-full);
   box-shadow: var(--elevation-1);
   cursor: pointer;
@@ -282,47 +305,60 @@
   scale: var(--press-scale);
 }
 
-/* The count rides on the chip rather than beside it, so the chip is one
-   thing to press and one thing to read. */
+/* The city abbreviates before the count does — the number is the reason the
+   chip is there. */
+.cityName {
+  min-inline-size: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* The count rides on the chip at its end, filled: it is the number somebody
+   is scanning for, and the chip is one thing to press either way. */
 .cityCount {
   display: grid;
   place-items: center;
-  min-inline-size: 1.5rem;
-  block-size: 1.5rem;
-  padding-inline: var(--space-1);
+  flex: none;
+  margin-inline-start: auto;
+  min-inline-size: 1.25rem;
+  block-size: 1.25rem;
   font-size: var(--text-xs);
   font-weight: var(--weight-semibold);
   font-variant-numeric: tabular-nums;
-  color: var(--accent-ink);
-  background-color: var(--accent-surface);
+  color: var(--fg-onAccent);
+  background-color: var(--accent);
+  background-image: var(--gradient-accent);
   border-radius: var(--radius-full);
 }
 
-/* A city with a critical request in it is marked, and says so to a screen
-   reader as well — the colour is never the only channel (§10). */
-.cityChipCritical {
-  border-color: var(--danger);
-}
+/* Cities with something critical in them come first in the list rather than
+   being coloured differently — every count is the same red here, and order
+   is what carries the urgency. The count of critical is still spoken, in the
+   chip's own label. */
 
-.cityChipCritical .cityCount {
-  color: var(--fg-onDanger);
-  background-color: var(--danger);
-}
-
+/* A pill rather than a line of text: it sits beside a heading, and a bare
+   link there reads as part of the sentence. */
 .viewAll {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
+  flex: none;
   min-block-size: var(--hit-min);
-  margin-block-start: var(--space-3);
+  padding-inline: var(--space-4);
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
   color: var(--accent-ink);
   text-decoration: none;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  box-shadow: var(--elevation-1);
 }
 @media (hover: hover) {
   .viewAll:hover {
-    text-decoration: underline;
+    border-color: var(--accent);
+    box-shadow: var(--glow-soft);
   }
 }
 
