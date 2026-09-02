@@ -546,16 +546,11 @@ export default function Register() {
               </Button>
             ) : (
               <div className={styles.actions}>
-                {!singlePage && (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="lg"
-                    onClick={() => setStep(1)}
-                  >
-                    Back
-                  </Button>
-                )}
+                {/* The action that finishes the form comes first, in the
+                    markup as well as on the screen: stacked on a phone it is
+                    the one under the thumb, and a keyboard reaches it before
+                    the way back. Back is a ghost — it is not a peer of the
+                    button that creates the account. */}
                 <Button
                   type="submit"
                   size="lg"
@@ -565,6 +560,16 @@ export default function Register() {
                 >
                   Register as donor
                 </Button>
+                {!singlePage && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="lg"
+                    onClick={() => setStep(1)}
+                  >
+                    Back
+                  </Button>
+                )}
               </div>
             )}
           </div>
