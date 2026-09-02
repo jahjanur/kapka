@@ -22,10 +22,13 @@ test('a donor registers, confirms their email, and joins the pool', async ({
   const email = uniqueEmail('donor');
   const isPhone = (viewport?.width ?? 0) < 768;
 
+  /* Through the gate, the way the product sends everybody: /register asks
+     whether you have an account before it asks for one. */
   await page.goto('/register');
+  await page.getByRole('link', { name: /Create account/ }).click();
 
   // The notice is reachable before anything is typed, which is the point of
-  // putting it above the form.
+  // keeping it on the same screen as the form.
   await expect(page.getByRole('link', { name: /What we store, and why/ })).toBeVisible();
 
   await page.getByLabel(/Full name/).fill('Ana Petrovska');
@@ -40,7 +43,8 @@ test('a donor registers, confirms their email, and joins the pool', async ({
   }
 
   await page.getByRole('button', { name: 'O negative' }).click();
-  await page.getByLabel(/City/).selectOption('Skopje');
+  await page.getByRole('combobox', { name: /City/ }).click();
+  await page.getByRole('option', { name: 'Skopje' }).click();
   await page.getByRole('button', { name: /Register as donor/ }).click();
 
   // The screen is honest about what has and has not happened.
@@ -99,13 +103,14 @@ test('a duplicate email is refused on the field it belongs to', async ({
   const isPhone = (viewport?.width ?? 0) < 768;
 
   const fill = async () => {
-    await page.goto('/register');
+    await page.goto('/register/new');
     await page.getByLabel(/Full name/).fill('Ana Petrovska');
     await page.getByLabel(/^Email/).fill(email);
     await page.getByLabel(/^Password/).fill('a-long-enough-password');
     if (isPhone) await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByRole('button', { name: 'O negative' }).click();
-    await page.getByLabel(/City/).selectOption('Skopje');
+    await page.getByRole('combobox', { name: /City/ }).click();
+    await page.getByRole('option', { name: 'Skopje' }).click();
     await page.getByRole('button', { name: /Register as donor/ }).click();
   };
 
