@@ -13,8 +13,8 @@ import {
   Grid,
   Icon,
   RequestCard,
+  Picker,
   RequestCardSkeleton,
-  Select,
   Stack,
   UrgencyPill,
   VitalSign,
@@ -275,17 +275,13 @@ export default function Feed() {
                   for, and it should never be somewhere you have to swipe to. */}
               <div className={styles.controls}>
                 <Field label="City" hideLabel>
-                  <Select
+                  <Picker
                     placeholder="Anywhere"
+                    icon="mapPin"
+                    options={CITIES}
                     value={city}
-                    onChange={(event) => setCity(event.target.value)}
-                  >
-                    {CITIES.map((name) => (
-                      <option key={name} value={name}>
-                        {name}
-                      </option>
-                    ))}
-                  </Select>
+                    onChange={setCity}
+                  />
                 </Field>
 
                 {activeFilters > 0 && (

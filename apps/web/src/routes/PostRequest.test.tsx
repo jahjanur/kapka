@@ -92,13 +92,19 @@ function renderPage({ signedIn = true } = {}) {
 
 async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
   await user.click(await screen.findByRole('button', { name: 'O negative' }));
-  await user.selectOptions(screen.getByLabelText(/City/), 'Skopje');
+  await pickCity(user, 'Skopje');
   await user.type(screen.getByLabelText(/Hospital/), 'City General');
   await user.type(screen.getByLabelText(/Contact phone/), '+389 70 123 456');
 }
 
 const submit = (user: ReturnType<typeof userEvent.setup>) =>
   user.click(screen.getByRole('button', { name: /Post request/ }));
+
+/** The city control is a listbox we draw, not a <select> — see Picker. */
+async function pickCity(user: ReturnType<typeof userEvent.setup>, name: string) {
+  await user.click(screen.getByRole('combobox', { name: /City/ }));
+  await user.click(screen.getByRole('option', { name }));
+}
 
 beforeEach(() => {
   /* The form autosaves, so without this each test starts with whatever the

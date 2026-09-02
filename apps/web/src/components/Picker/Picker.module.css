@@ -1,0 +1,98 @@
+/* ============================================================================
+   Picker — the list we draw, because the one the browser draws is a system
+   menu that follows the system's appearance rather than the page's.
+   ========================================================================= */
+
+.root {
+  position: relative;
+  display: block;
+}
+
+/* Reads as the same control as every other field: it composes the shared
+   surface, and only the things a button needs are added. */
+.trigger {
+  composes: control from '../Field/Control.module.css';
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: start;
+  cursor: pointer;
+}
+
+.trigger[data-placeholder] .value {
+  color: var(--fg-muted);
+}
+
+.icon {
+  flex: none;
+  color: var(--fg-muted);
+}
+
+/* Truncates rather than pushing the chevron out of the control. */
+.value {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.chevron {
+  flex: none;
+  color: var(--fg-muted);
+  transition: rotate var(--dur-fast) var(--ease-out);
+}
+
+.chevronUp {
+  rotate: 180deg;
+}
+
+/* ── The list ────────────────────────────────────────────────────────────── */
+.list {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: calc(100% + var(--space-2));
+  z-index: var(--z-overlay);
+  max-block-size: 15rem;
+  padding: var(--space-1);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-4);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: var(--hit-min);
+  padding-inline: var(--space-3);
+  font-size: var(--text-base);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+/* One highlight, driven by the keyboard and by the pointer alike — two
+   different ones (hover and "active") is how a list ends up with two things
+   looking chosen at once. */
+.optionActive {
+  background-color: var(--accent-surface);
+  color: var(--accent-ink);
+}
+
+.optionChosen {
+  font-weight: var(--weight-semibold);
+}
+
+.tick {
+  margin-inline-start: auto;
+  color: var(--accent);
+}
+
+@media (forced-colors: active) {
+  .optionActive {
+    outline: 2px solid Highlight;
+  }
+}

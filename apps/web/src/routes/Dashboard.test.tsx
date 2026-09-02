@@ -112,6 +112,12 @@ const notification = (over: Partial<DonorNotification> = {}): DonorNotification 
   ...over,
 });
 
+/** The city control is a listbox we draw, not a <select> — see Picker. */
+async function pickCity(user: ReturnType<typeof userEvent.setup>, name: string) {
+  await user.click(screen.getByRole('combobox', { name: /City/ }));
+  await user.click(screen.getByRole('option', { name }));
+}
+
 beforeEach(() => {
   exportMyData.mockReset();
   exportMyData.mockResolvedValue({ exportedAt: '2026-09-01T00:00:00.000Z', account: {} });
@@ -197,7 +203,7 @@ describe('editing the profile', () => {
     const user = userEvent.setup();
     renderDashboard();
     await user.click(await screen.findByRole('button', { name: /Edit details/ }));
-    await user.selectOptions(screen.getByLabelText(/City/), 'Bitola');
+    await pickCity(user, 'Bitola');
     await user.click(screen.getByRole('button', { name: /Save changes/ }));
 
     await waitFor(() => {

@@ -55,11 +55,17 @@ async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText(/^Email/), 'ana@example.com');
   await user.type(screen.getByLabelText(/^Password/), 'a-long-enough-password');
   await user.click(screen.getByRole('button', { name: 'O negative' }));
-  await user.selectOptions(screen.getByLabelText(/City/), 'Skopje');
+  await pickCity(user, 'Skopje');
 }
 
 const submit = (user: ReturnType<typeof userEvent.setup>) =>
   user.click(screen.getByRole('button', { name: /Register as donor/ }));
+
+/** The city control is a listbox we draw, not a <select> — see Picker. */
+async function pickCity(user: ReturnType<typeof userEvent.setup>, name: string) {
+  await user.click(screen.getByRole('combobox', { name: /City/ }));
+  await user.click(screen.getByRole('option', { name }));
+}
 
 beforeEach(() => {
   setViewport('desktop');
@@ -183,7 +189,7 @@ describe('donor registration', () => {
     await user.type(screen.getByLabelText(/^Password/), 'a-long-enough-password');
     await user.click(screen.getByRole('button', { name: 'Continue' }));
     await user.click(await screen.findByRole('button', { name: 'O negative' }));
-    await user.selectOptions(screen.getByLabelText(/City/), 'Skopje');
+    await pickCity(user, 'Skopje');
     await submit(user);
 
     expect(
@@ -344,7 +350,7 @@ describe('on a phone, in two steps', () => {
     await user.click(screen.getByRole('button', { name: 'Continue' }));
 
     await user.click(await screen.findByRole('button', { name: 'O negative' }));
-    await user.selectOptions(screen.getByLabelText(/City/), 'Skopje');
+    await pickCity(user, 'Skopje');
     await user.click(screen.getByRole('button', { name: /Register as donor/ }));
 
     await waitFor(() => {

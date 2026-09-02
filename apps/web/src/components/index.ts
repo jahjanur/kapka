@@ -6,6 +6,7 @@ export { Field } from './Field/Field';
 export { useFieldContext, type FieldContextValue } from './Field/FieldContext';
 export { Input } from './Input/Input';
 export { Textarea } from './Input/Textarea';
+export { Picker } from './Picker/Picker';
 export { Select } from './Select/Select';
 export { Icon, IconSprite, ICON_NAMES, type IconName } from './Icon/Icon';
 export { Modal, Sheet, type ModalShape } from './Modal/Modal';

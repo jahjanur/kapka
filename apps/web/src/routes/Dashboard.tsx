@@ -21,7 +21,7 @@ import {
   Icon,
   Input,
   Modal,
-  Select,
+  Picker,
   Skeleton,
   useToast,
 } from '../components';
@@ -467,16 +467,13 @@ export default function Dashboard() {
                     </Field>
 
                     <Field label="City" required help="We match requests in your city.">
-                      <Select
+                      <Picker
+                        placeholder="Choose your city"
+                        icon="mapPin"
+                        options={CITIES}
                         value={city}
-                        onChange={(event) => setCity(event.target.value)}
-                      >
-                        {CITIES.map((name) => (
-                          <option key={name} value={name}>
-                            {name}
-                          </option>
-                        ))}
-                      </Select>
+                        onChange={setCity}
+                      />
                     </Field>
 
                     <fieldset className={styles.fieldset}>

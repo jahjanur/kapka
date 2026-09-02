@@ -28,6 +28,7 @@ import {
   Stack,
   Textarea,
   ThemeToggle,
+  Picker,
   UrgencyPill,
   VitalSign,
   WithSidebar,
@@ -549,6 +550,41 @@ export const SPECIMENS: Specimen[] = [
     ),
   },
   { id: 'theme-toggle', render: () => <ThemeToggle /> },
+
+  /* ── Picker ───────────────────────────────────────────────────────────── */
+  {
+    /* Closed only. The open list is a live listbox driven by the keyboard,
+       and a screenshot of it would be a screenshot of one frame of that —
+       Picker.test.tsx is where its behaviour is held down. */
+    id: 'picker-chosen',
+    width: 'full',
+    render: () => (
+      <Field label="City">
+        <Picker
+          placeholder="Choose your city"
+          icon="mapPin"
+          options={['Skopje', 'Bitola']}
+          value="Skopje"
+          onChange={noop}
+        />
+      </Field>
+    ),
+  },
+  {
+    id: 'picker-empty',
+    width: 'full',
+    render: () => (
+      <Field label="City">
+        <Picker
+          placeholder="Choose your city"
+          icon="mapPin"
+          options={['Skopje', 'Bitola']}
+          value=""
+          onChange={noop}
+        />
+      </Field>
+    ),
+  },
 
   /* ── Vital trace ──────────────────────────────────────────────────────── */
   {

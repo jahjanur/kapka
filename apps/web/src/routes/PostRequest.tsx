@@ -15,6 +15,7 @@ import {
   Field,
   Icon,
   Input,
+  Picker,
   RequestCard,
   Select,
   Textarea,
@@ -369,20 +370,16 @@ export default function PostRequest() {
                 </Field>
 
                 <Field label="City" required error={errors.city}>
-                  <Select
+                  <Picker
                     placeholder="Choose the city"
+                    icon="mapPin"
+                    options={CITIES}
                     value={city}
-                    onChange={(event) => {
-                      setCity(event.target.value);
-                      check('city', { city: event.target.value });
+                    onChange={(next) => {
+                      setCity(next);
+                      check('city', { city: next });
                     }}
-                  >
-                    {CITIES.map((name) => (
-                      <option key={name} value={name}>
-                        {name}
-                      </option>
-                    ))}
-                  </Select>
+                  />
                 </Field>
               </div>
 

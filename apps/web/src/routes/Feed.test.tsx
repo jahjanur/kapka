@@ -81,6 +81,12 @@ const renderFeed = ({ as }: { as?: UserRole } = {}) =>
     </MemoryRouter>,
   );
 
+/** The city control is a listbox we draw, not a <select> — see Picker. */
+async function pickCity(user: ReturnType<typeof userEvent.setup>, name: string) {
+  await user.click(screen.getByRole('combobox', { name: /City/ }));
+  await user.click(screen.getByRole('option', { name }));
+}
+
 beforeEach(() => {
   listRequests.mockReset();
   listRequests.mockResolvedValue(REQUESTS);
@@ -115,7 +121,7 @@ describe('the public feed', () => {
     renderFeed();
     await screen.findByText('3 open requests');
 
-    await user.selectOptions(screen.getByLabelText('City'), 'Bitola');
+    await pickCity(user, 'Bitola');
     await waitFor(() => {
       expect(screen.getByText('1 open request')).toBeInTheDocument();
     });
@@ -137,7 +143,7 @@ describe('the public feed', () => {
     await screen.findByText('3 open requests');
 
     await user.click(screen.getByRole('button', { name: 'Critical' }));
-    await user.selectOptions(screen.getByLabelText('City'), 'Bitola');
+    await pickCity(user, 'Bitola');
 
     const empty = await screen.findByText(/No requests match these filters/);
     expect(empty).toBeInTheDocument();

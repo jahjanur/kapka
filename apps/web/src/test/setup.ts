@@ -36,6 +36,16 @@ window.matchMedia = (query: string): MediaQueryList =>
   }) as MediaQueryList;
 
 /**
+ * jsdom does not implement scrollIntoView either. The Picker calls it to keep
+ * the option the arrow keys are on inside its scroller — a real behaviour with
+ * nothing to assert in jsdom, which has no layout and no scrolling. Another
+ * gap filled here rather than guarded against in the component.
+ */
+Element.prototype.scrollIntoView = function scrollIntoView() {
+  /* Nothing to do: jsdom has no viewport to scroll within. */
+};
+
+/**
  * jsdom implements <dialog> as an element and nothing else — showModal is not
  * a function on it, so any component that opens one throws on render.
  *
