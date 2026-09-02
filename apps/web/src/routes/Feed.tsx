@@ -20,7 +20,6 @@ import {
   VitalSign,
 } from '../components';
 import { BLOOD_TYPES, CITIES, type BloodType, type Urgency } from '@kapka/shared';
-import { cx } from '../lib/cx';
 import { useCountUp } from '../lib/useCountUp';
 import { useRequests } from '../lib/useRequests';
 import { useSession } from '../lib/session';
@@ -306,10 +305,7 @@ export default function Feed() {
                       below already has, put where somebody is looking. */}
                   <button
                     type="button"
-                    className={cx(
-                      styles.cityChip,
-                      critical > 0 && styles.cityChipCritical,
-                    )}
+                    className={styles.cityChip}
                     /* Spelled out rather than left to the computed name,
                        which reads the city and the count with nothing
                        between them: "Skopje2". The red outline is also said
