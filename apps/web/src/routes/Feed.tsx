@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import {
   AppHeader,
   BloodTypeLabel,
@@ -201,42 +200,27 @@ export default function Feed() {
         <VitalSign className={styles.heroWave} />
       </section>
 
-      {/* ── What this is ───────────────────────────────────────────────────
-          Three claims, each one either true of the product or checkable
-          against it. Nothing here is a statistic we do not hold.          */}
-      <section className={styles.pillars} aria-label="Why give blood">
+      {/* ── The numbers ────────────────────────────────────────────────────
+          The three the product actually knows. A "lives saved" counter would
+          be the easiest thing here to invent and the one nobody could check.
+          ------------------------------------------------------------- */}
+      <section className={styles.numbersBand} aria-label="Open requests right now">
         <Container>
-          <ul className={styles.pillarList}>
-            <li className={styles.pillar}>
-              <span className={styles.pillarMark} aria-hidden="true">
-                <Icon name="droplet" />
-              </span>
-              <h2 className={styles.pillarTitle}>Save lives</h2>
-              <p className={styles.pillarBody}>
-                One donation is split into three components, and can help up to three
-                people.
-              </p>
-            </li>
-            <li className={styles.pillar}>
-              <span className={styles.pillarMark} aria-hidden="true">
-                <Icon name="users" />
-              </span>
-              <h2 className={styles.pillarTitle}>For everyone</h2>
-              <p className={styles.pillarBody}>
-                Every blood type is needed. Yours is the one somebody is waiting for.
-              </p>
-            </li>
-            <li className={styles.pillar}>
-              <span className={styles.pillarMark} aria-hidden="true">
-                <Icon name="shield" />
-              </span>
-              <h2 className={styles.pillarTitle}>Safe and private</h2>
-              <p className={styles.pillarBody}>
-                An admin checks every request, and your details are never shown on the
-                public feed.
-              </p>
-            </li>
-          </ul>
+          <dl className={styles.numbers}>
+            <Stat
+              icon="droplet"
+              label="Open requests"
+              value={stats.open}
+              loading={isLoading}
+            />
+            <Stat
+              icon="alertTriangle"
+              label="Critical"
+              value={stats.critical}
+              loading={isLoading}
+            />
+            <Stat icon="mapPin" label="Cities" value={stats.cities} loading={isLoading} />
+          </dl>
         </Container>
       </section>
 
@@ -284,81 +268,6 @@ export default function Feed() {
               <span className={styles.orbitDot} />
             </div>
           </div>
-        </Container>
-      </section>
-
-      {/* ── The numbers ────────────────────────────────────────────────────
-          The three the product actually knows. A "lives saved" counter would
-          be the easiest thing here to invent and the one nobody could check.
-          ------------------------------------------------------------- */}
-      <section className={styles.numbersBand} aria-label="Open requests right now">
-        <Container>
-          <dl className={styles.numbers}>
-            <Stat
-              icon="droplet"
-              label="Open requests"
-              value={stats.open}
-              loading={isLoading}
-            />
-            <Stat
-              icon="alertTriangle"
-              label="Critical"
-              value={stats.critical}
-              loading={isLoading}
-            />
-            <Stat icon="mapPin" label="Cities" value={stats.cities} loading={isLoading} />
-          </dl>
-        </Container>
-      </section>
-
-      {/* ── How it works ───────────────────────────────────────────────────
-          The real three steps, which are not the three a stock landing page
-          would use: the middle one is ours doing the work, not the donor.
-          ------------------------------------------------------------- */}
-      <section className={styles.steps} aria-labelledby="steps-heading">
-        <Container>
-          <div className={styles.stepsHead}>
-            <h2 id="steps-heading" className={styles.stepsTitle}>
-              How it works
-            </h2>
-            <Link className={styles.viewAll} to={PATHS.howItWorks}>
-              View more
-              <Icon name="chevronRight" />
-            </Link>
-          </div>
-
-          <ol className={styles.stepList}>
-            <li className={styles.step}>
-              <span className={styles.stepNumber}>1</span>
-              <span className={styles.stepMark} aria-hidden="true">
-                <Icon name="clipboard" />
-              </span>
-              <h3 className={styles.stepTitle}>Register</h3>
-              <p className={styles.stepBody}>
-                Your blood type and city, in about two minutes.
-              </p>
-            </li>
-            <li className={styles.step}>
-              <span className={styles.stepNumber}>2</span>
-              <span className={styles.stepMark} aria-hidden="true">
-                <Icon name="droplet" />
-              </span>
-              <h3 className={styles.stepTitle}>We email you</h3>
-              <p className={styles.stepBody}>
-                Only when an approved request matches your type and your city.
-              </p>
-            </li>
-            <li className={styles.step}>
-              <span className={styles.stepNumber}>3</span>
-              <span className={styles.stepMark} aria-hidden="true">
-                <Icon name="heart" />
-              </span>
-              <h3 className={styles.stepTitle}>You give</h3>
-              <p className={styles.stepBody}>
-                At the hospital that asked. One donation, up to three people.
-              </p>
-            </li>
-          </ol>
         </Container>
       </section>
 
