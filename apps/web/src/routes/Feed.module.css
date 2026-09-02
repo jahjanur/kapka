@@ -411,7 +411,14 @@
   padding: var(--space-2) var(--container-gutter);
   background-color: color-mix(in oklab, var(--bg-canvas) var(--tint-chrome), transparent);
   backdrop-filter: blur(var(--blur-chrome));
-  border-block-end: 1px solid var(--border-subtle);
+  /* Above the strip, not below it: the rule is where the page ends and the
+     list begins, and the filters belong to the list. Below them it read as a
+     line drawn under the page's last section with the filters stranded on
+     the wrong side of it.
+
+     Nothing is lost while the strip is stuck to the header — what passes
+     underneath goes under blurred glass, which is what separates them. */
+  border-block-start: 1px solid var(--border-subtle);
 }
 
 /* A group is one flex item of the scroller, so the strip scrolls across both
@@ -531,7 +538,7 @@
     padding: 0;
     background: none;
     backdrop-filter: none;
-    border-block-end: 0;
+    border-block-start: 0;
     gap: var(--space-5);
     inset-block-start: calc(var(--header-height) + var(--space-6));
 
