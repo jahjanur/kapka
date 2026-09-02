@@ -104,7 +104,10 @@ describe('the public feed', () => {
     // the database happened to return.
     renderFeed();
     await screen.findByText('3 open requests');
-    const headings = screen.getAllByRole('heading', { level: 3 });
+    /* Scoped to the list: the page above it has its own h3s now — the three
+       steps of how this works — and they are not requests. */
+    const list = screen.getByRole('region', { name: 'Requests' });
+    const headings = within(list).getAllByRole('heading', { level: 3 });
     expect(headings[0]).toHaveTextContent('Mother Teresa');
   });
 

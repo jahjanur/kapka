@@ -1,0 +1,61 @@
+/* ============================================================================
+   The hero illustration. Every colour is a token, so it belongs to whichever
+   theme it is drawn in.
+   ========================================================================= */
+
+.art {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+}
+
+.glow {
+  fill: var(--accent-surface);
+}
+
+.ring {
+  fill: none;
+  stroke: var(--accent-border);
+  stroke-width: 1;
+}
+
+.drop {
+  fill: var(--accent);
+  /* The same light the rest of the product is lit by: from the top left. */
+  filter: drop-shadow(0 0.75rem 1.5rem var(--aurora-core));
+}
+
+.heart {
+  fill: var(--fg-onAccent);
+}
+
+.hand {
+  fill: color-mix(in oklab, var(--accent-surface) 88%, var(--accent-border));
+  stroke: var(--accent-border);
+  stroke-width: 1.5;
+}
+
+/* The drop breathes, slowly, on the product's own beat — global.css stops it
+   for anyone who has asked for less motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .drop,
+  .heart {
+    animation: beat calc(var(--dur-beat) * 2) var(--ease-fluid) infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+}
+
+@keyframes beat {
+  0%,
+  70%,
+  100% {
+    scale: 1;
+  }
+  80% {
+    scale: 1.04;
+  }
+  90% {
+    scale: 0.99;
+  }
+}

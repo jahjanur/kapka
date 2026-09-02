@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   AppHeader,
-  BloodTypeBadge,
+  DropletArt,
   BloodTypeLabel,
   Button,
   Container,
@@ -12,23 +13,25 @@ import {
   FilterChip,
   Grid,
   Icon,
+  type IconName,
   RequestCard,
   Picker,
   RequestCardSkeleton,
   Stack,
-  UrgencyPill,
   VitalSign,
 } from '../components';
 import { BLOOD_TYPES, CITIES, type BloodType, type Urgency } from '@kapka/shared';
 import { useCountUp } from '../lib/useCountUp';
 import { useRequests } from '../lib/useRequests';
 import { useSession } from '../lib/session';
-import { timeAgo } from '../lib/relativeTime';
 import { PATHS } from './paths';
 import styles from './Feed.module.css';
 
 const URGENCIES: Urgency[] = ['critical', 'urgent', 'routine'];
 const URGENCY_RANK: Record<Urgency, number> = { critical: 0, urgent: 1, routine: 2 };
+
+/** What "View all requests" jumps to. */
+const LIST_ID = 'requests';
 
 const titleCase = (value: string) => (value[0] ?? '').toUpperCase() + value.slice(1);
 
@@ -37,10 +40,12 @@ const titleCase = (value: string) => (value[0] ?? '').toUpperCase() + value.slic
  * see useCountUp, which does nothing at all under prefers-reduced-motion.
  */
 function Stat({
+  icon,
   label,
   value,
   loading,
 }: {
+  icon: IconName;
   label: string;
   value: number;
   loading: boolean;
@@ -48,10 +53,13 @@ function Stat({
   const shown = useCountUp(value);
   return (
     <div className={styles.stat}>
-      <dt>{label}</dt>
-      {/* Tabular figures and a reserved width, so a count from 0 to 12 does
-          not shuffle the two tiles beside it on every frame. */}
+      <span className={styles.statMark} aria-hidden="true">
+        <Icon name={icon} />
+      </span>
+      {/* Tabular figures, so a count from 0 to 12 does not shuffle the two
+          beside it on every frame. */}
       <dd data-numeric>{loading ? '—' : shown}</dd>
+      <dt>{label}</dt>
     </div>
   );
 }
@@ -110,9 +118,6 @@ export default function Feed() {
     [requests, urgency, bloodType, city],
   );
 
-  /** The one the hero calls out on a wide screen. */
-  const mostUrgent = filtered[0];
-
   const stats = useMemo(
     () => ({
       open: requests.length,
@@ -134,125 +139,213 @@ export default function Feed() {
       <AppHeader />
 
       {/* ── Hero ──────────────────────────────────────────────────────────
-          Lit from behind by three slow washes of the product's own red and
-          ruled with a faint grid, on the light canvas the rest of the page
-          uses. The band and the feed under it are one surface — the point
-          of the wash is depth, not a second page.                        */}
+          The sentence, the two ways in, and the drop. Lit from behind by
+          three slow washes of the product's own red on the canvas the rest
+          of the page uses — the point of the wash is depth, not a second
+          page.                                                            */}
       <section className={styles.hero}>
         <div className={styles.aurora} aria-hidden="true" />
         <div className={styles.grid} aria-hidden="true" />
         <Container>
           <div className={styles.heroGrid}>
             <div className={styles.heroCopy}>
-              {/* Everything above the fold that is words. One element, so the
-                  band's spare height falls between the copy and the numbers
-                  rather than being shared out between every paragraph. */}
-              <div className={styles.heroLede}>
-                <p className={styles.eyebrow}>
-                  <span className={styles.pulse} aria-hidden="true" />
-                  Live in North Macedonia
-                </p>
-                <h1 className={styles.heroTitle}>
-                  Someone nearby <span className={styles.heroTitleInk}>needs blood.</span>
-                </h1>
-                <p className={styles.heroLead}>
-                  Register once with your blood type and city. When a matching request is
-                  approved, we email you — no searching, no phone tree.
-                </p>
-                <div className={styles.heroActions}>
-                  {/* Read on the session as it stands rather than waiting for
-                      the boot refresh: signed out is both the common case and
-                      what the header assumes, so the pair of buttons is stable
-                      for most readers instead of appearing a moment late. */}
-                  {heroPrimary && (
-                    <Button to={heroPrimary.to} size="lg">
-                      {heroPrimary.label}
-                    </Button>
-                  )}
-                  {/* The hero speaks to donors, but the person whose relative
-                      needs blood lands here too, and the header nav that would
-                      take them on is hidden on a phone. It leads when there is
-                      nothing above it. */}
-                  <Button
-                    to={PATHS.postRequest}
-                    variant={heroPrimary ? 'secondary' : 'primary'}
-                    size="lg"
-                  >
-                    Post a request
-                    <Icon name="arrowRight" />
+              <h1 className={styles.heroTitle}>
+                Be someone’s <span className={styles.heroTitleInk}>lifeline.</span>
+              </h1>
+              <p className={styles.heroLead}>
+                Every drop of your blood can bring hope and save a life.
+              </p>
+              <div className={styles.heroActions}>
+                {/* Read on the session as it stands rather than waiting for
+                    the boot refresh: signed out is both the common case and
+                    what the header assumes, so the pair of buttons is stable
+                    for most readers instead of appearing a moment late. */}
+                {heroPrimary && (
+                  <Button to={heroPrimary.to} size="lg">
+                    <Icon name="heart" />
+                    {heroPrimary.label}
                   </Button>
-                </div>
-
-                {/* The trace is the product's pulse, and it belongs where the
-                    numbers are: this strip is the only part of the page that
-                    says how much is happening right now. */}
-              </div>
-
-              {/* The middle of the band, on a phone, and the three things
-                  somebody weighing up the button above it wants to know. Not
-                  a restatement of the lead — that says what the product does,
-                  and these say what it costs you. They are the same three
-                  promises the sign-up screen makes, which is where they have
-                  to hold. Hidden from 48rem, where there is no gap to fill
-                  and the spotlight is already saying something truer. */}
-              <ul className={styles.assurances}>
-                <li>
-                  <Icon name="checkCircle" />
-                  Two minutes to register, once
-                </li>
-                <li>
-                  <Icon name="checkCircle" />
-                  Only matching requests, never marketing
-                </li>
-                <li>
-                  <Icon name="checkCircle" />
-                  Pause the emails or leave whenever you like
-                </li>
-              </ul>
-
-              {/* The trace and the numbers travel together, at the foot of
-                  the screen: on a phone the hero is the whole first view, and
-                  a group anchored to the bottom of it is what turns the height
-                  it fills into a composition rather than a gap. */}
-              <div className={styles.heroFoot}>
-                <VitalSign className={styles.vital} />
-
-                <dl className={styles.stats}>
-                  <Stat label="Open requests" value={stats.open} loading={isLoading} />
-                  <Stat label="Critical" value={stats.critical} loading={isLoading} />
-                  <Stat label="Cities" value={stats.cities} loading={isLoading} />
-                </dl>
+                )}
+                {/* The hero speaks to donors, but the person whose relative
+                    needs blood lands here too, and the header nav that would
+                    take them on is hidden on a phone. */}
+                <Button
+                  to={PATHS.postRequest}
+                  variant={heroPrimary ? 'secondary' : 'primary'}
+                  size="lg"
+                >
+                  <Icon name="clipboard" />
+                  Post a request
+                </Button>
               </div>
             </div>
 
-            {/*
-              The wide-screen half of the hero. On a phone this is hidden
-              rather than stacked: it repeats the first card of the feed, and
-              showing the same request twice in the first two screens is worse
-              than showing it once.
-            */}
-            {mostUrgent && (
-              <aside className={styles.spotlight} aria-labelledby="spotlight-heading">
-                <h2 id="spotlight-heading" className={styles.spotlightHeading}>
-                  Most urgent right now
-                </h2>
-                <div className={styles.spotlightTop}>
-                  <BloodTypeBadge type={mostUrgent.bloodType} size="lg" />
-                  <UrgencyPill urgency={mostUrgent.urgency} />
-                </div>
-                <p className={styles.spotlightHospital}>{mostUrgent.hospitalName}</p>
-                <p className={styles.spotlightMeta}>
-                  {mostUrgent.city} · {mostUrgent.unitsNeeded}
-                  {mostUrgent.unitsNeeded === 1 ? ' unit' : ' units'} ·{' '}
-                  {timeAgo(mostUrgent.createdAt)}
-                </p>
-                <Button to={PATHS.request(mostUrgent.id)} variant="secondary" fullWidth>
-                  View request
-                  <Icon name="chevronRight" />
-                </Button>
-              </aside>
-            )}
+            <DropletArt className={styles.heroArt} />
           </div>
+        </Container>
+
+        {/* The product's pulse, as the line the band ends on. */}
+        <VitalSign className={styles.heroWave} />
+      </section>
+
+      {/* ── What this is ───────────────────────────────────────────────────
+          Three claims, each one either true of the product or checkable
+          against it. Nothing here is a statistic we do not hold.          */}
+      <section className={styles.pillars} aria-label="Why give blood">
+        <Container>
+          <ul className={styles.pillarList}>
+            <li className={styles.pillar}>
+              <span className={styles.pillarMark} aria-hidden="true">
+                <Icon name="droplet" />
+              </span>
+              <h2 className={styles.pillarTitle}>Save lives</h2>
+              <p className={styles.pillarBody}>
+                One donation is split into three components, and can help up to three
+                people.
+              </p>
+            </li>
+            <li className={styles.pillar}>
+              <span className={styles.pillarMark} aria-hidden="true">
+                <Icon name="users" />
+              </span>
+              <h2 className={styles.pillarTitle}>For everyone</h2>
+              <p className={styles.pillarBody}>
+                Every blood type is needed. Yours is the one somebody is waiting for.
+              </p>
+            </li>
+            <li className={styles.pillar}>
+              <span className={styles.pillarMark} aria-hidden="true">
+                <Icon name="shield" />
+              </span>
+              <h2 className={styles.pillarTitle}>Safe and private</h2>
+              <p className={styles.pillarBody}>
+                An admin checks every request, and your details are never shown on the
+                public feed.
+              </p>
+            </li>
+          </ul>
+        </Container>
+      </section>
+
+      {/* ── What is happening now ──────────────────────────────────────────
+          The live half of the page, above the list itself: the count is the
+          real one, and the link goes to the requests it counts.           */}
+      <section className={styles.nearby} aria-labelledby="nearby-heading">
+        <Container>
+          <div className={styles.nearbyGrid}>
+            <div className={styles.nearbyCopy}>
+              <h2 id="nearby-heading" className={styles.nearbyTitle}>
+                Someone nearby <span className={styles.heroTitleInk}>needs blood.</span>
+              </h2>
+              <p className={styles.nearbyLead}>
+                Real requests, from real hospitals, in the cities we cover.
+              </p>
+
+              <p className={styles.live}>
+                <span className={styles.pulse} aria-hidden="true" />
+                <span className={styles.liveText}>
+                  Live in North Macedonia
+                  <span className={styles.liveSub}>Open requests right now</span>
+                </span>
+                <span className={styles.liveCount} data-numeric>
+                  {isLoading ? '—' : stats.open}
+                </span>
+              </p>
+
+              {/* Down the page rather than to another screen: the list it
+                  points at is on this one. */}
+              <a className={styles.viewAll} href={`#${LIST_ID}`}>
+                View all requests
+                <Icon name="chevronRight" />
+              </a>
+            </div>
+
+            <div className={styles.orbit} aria-hidden="true">
+              <span className={styles.orbitRing} />
+              <span className={styles.orbitRing} />
+              <span className={styles.orbitCore}>
+                <Icon name="user" />
+              </span>
+              <span className={styles.orbitDot} />
+              <span className={styles.orbitDot} />
+              <span className={styles.orbitDot} />
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* ── The numbers ────────────────────────────────────────────────────
+          The three the product actually knows. A "lives saved" counter would
+          be the easiest thing here to invent and the one nobody could check.
+          ------------------------------------------------------------- */}
+      <section className={styles.numbersBand} aria-label="Open requests right now">
+        <Container>
+          <dl className={styles.numbers}>
+            <Stat
+              icon="droplet"
+              label="Open requests"
+              value={stats.open}
+              loading={isLoading}
+            />
+            <Stat
+              icon="alertTriangle"
+              label="Critical"
+              value={stats.critical}
+              loading={isLoading}
+            />
+            <Stat icon="mapPin" label="Cities" value={stats.cities} loading={isLoading} />
+          </dl>
+        </Container>
+      </section>
+
+      {/* ── How it works ───────────────────────────────────────────────────
+          The real three steps, which are not the three a stock landing page
+          would use: the middle one is ours doing the work, not the donor.
+          ------------------------------------------------------------- */}
+      <section className={styles.steps} aria-labelledby="steps-heading">
+        <Container>
+          <div className={styles.stepsHead}>
+            <h2 id="steps-heading" className={styles.stepsTitle}>
+              How it works
+            </h2>
+            <Link className={styles.viewAll} to={PATHS.howItWorks}>
+              View more
+              <Icon name="chevronRight" />
+            </Link>
+          </div>
+
+          <ol className={styles.stepList}>
+            <li className={styles.step}>
+              <span className={styles.stepNumber}>1</span>
+              <span className={styles.stepMark} aria-hidden="true">
+                <Icon name="clipboard" />
+              </span>
+              <h3 className={styles.stepTitle}>Register</h3>
+              <p className={styles.stepBody}>
+                Your blood type and city, in about two minutes.
+              </p>
+            </li>
+            <li className={styles.step}>
+              <span className={styles.stepNumber}>2</span>
+              <span className={styles.stepMark} aria-hidden="true">
+                <Icon name="droplet" />
+              </span>
+              <h3 className={styles.stepTitle}>We email you</h3>
+              <p className={styles.stepBody}>
+                Only when an approved request matches your type and your city.
+              </p>
+            </li>
+            <li className={styles.step}>
+              <span className={styles.stepNumber}>3</span>
+              <span className={styles.stepMark} aria-hidden="true">
+                <Icon name="heart" />
+              </span>
+              <h3 className={styles.stepTitle}>You give</h3>
+              <p className={styles.stepBody}>
+                At the hospital that asked. One donation, up to three people.
+              </p>
+            </li>
+          </ol>
         </Container>
       </section>
 
@@ -260,7 +353,7 @@ export default function Feed() {
           One grid holds both, so the filters can be a strip above the cards
           on a phone and a column beside them on a wide screen without the
           markup changing. Sticky in both places, from the same rule.       */}
-      <div className={styles.page}>
+      <div className={styles.page} id={LIST_ID}>
         <Container>
           <div className={styles.layout}>
             <aside className={styles.filters} aria-label="Filter requests">
@@ -327,14 +420,15 @@ export default function Feed() {
               </div>
             </aside>
 
-            <div className={styles.list}>
+            {/* A landmark, not a div: this is what somebody jumping by
+                region is after, and it is where "View all requests" lands.
+                The heading names it and is otherwise for screen readers —
+                the count under it says the same thing on screen. */}
+            <section className={styles.list} aria-labelledby="requests-heading">
               <Stack gap={4}>
-                {/* The list needs a heading of its own. The spotlight above
-                    is the only h2 on this page and it is hidden on a phone,
-                    so the outline went straight from the h1 to the cards'
-                    h3s — a skipped level, and nothing for a screen reader to
-                    jump to when the thing it wants is "the requests". */}
-                <h2 className="visually-hidden">Requests</h2>
+                <h2 id="requests-heading" className="visually-hidden">
+                  Requests
+                </h2>
                 <p className={styles.resultCount} aria-live="polite">
                   {isLoading
                     ? 'Loading requests…'
@@ -393,7 +487,7 @@ export default function Feed() {
                   </Grid>
                 )}
               </Stack>
-            </div>
+            </section>
           </div>
         </Container>
       </div>
