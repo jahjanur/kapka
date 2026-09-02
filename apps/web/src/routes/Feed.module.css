@@ -134,7 +134,30 @@
   margin-inline-end: calc(var(--container-gutter) * -1);
   mix-blend-mode: var(--image-blend);
   background-color: var(--image-surface);
-  border-radius: var(--radius-xl);
+  /*
+   * Dissolved into the page rather than cropped against it.
+   *
+   * The photograph was shot on something very close to white but not quite,
+   * so multiplying it darkened its rectangle by a hair — and a hair is
+   * enough: each edge of that rectangle drew a line. Every one of them is
+   * faded now, top and bottom and left, so there is no edge left to see.
+   * The right is the only one that stays, and it is off the screen.
+   *
+   * Two masks, intersected: a browser that cannot compose them shows the
+   * picture unfaded, which is where this started rather than something
+   * broken.
+   */
+  mask-image:
+    linear-gradient(
+      to bottom,
+      transparent 0%,
+      var(--mask-opaque) 14%,
+      var(--mask-opaque) 58%,
+      transparent 94%
+    ),
+    linear-gradient(to right, transparent 2%, var(--mask-opaque) 26%);
+  mask-composite: intersect;
+  -webkit-mask-composite: source-in;
 }
 
 /* The trace, as the line the band ends on. */
