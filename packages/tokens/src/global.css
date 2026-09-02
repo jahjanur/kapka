@@ -139,6 +139,19 @@ body {
 
 /* ── Utilities ───────────────────────────────────────────────────────────── */
 
+/* A subtree that is dark whatever the theme is. tokens.css redefines the
+   token set inside it; these two lines are what make the redefinition take
+   effect for anything that inherits rather than reading a token directly.
+
+   body's `color` is computed OUTSIDE the scope, so every element that
+   inherits it — a card is `color: inherit` by design — would otherwise keep
+   the light theme's near-black ink and disappear against the dark surface.
+   That is exactly what happened: the hospital names went invisible. */
+.deep-surface {
+  background-color: var(--bg-canvas);
+  color: var(--fg-primary);
+}
+
 /* Available to screen readers, invisible on screen. */
 .visually-hidden:not(:focus):not(:active) {
   position: absolute;

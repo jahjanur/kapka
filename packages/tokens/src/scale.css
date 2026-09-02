@@ -206,7 +206,8 @@
   }
 }
 
-:root[data-theme="dark"] {
+:root[data-theme="dark"],
+.deep-surface {
   --elevation-1: none;
   --elevation-2: none;
   --elevation-3: 0 8px 24px oklch(0 0 0 / 0.35);

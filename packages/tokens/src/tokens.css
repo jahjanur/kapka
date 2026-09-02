@@ -264,7 +264,16 @@
   }
 }
 
-:root[data-theme="dark"] {
+/* `.deep-surface` is the same declaration list applied to a subtree rather
+   than the document: a screen that is dark whatever the theme is. The feed is
+   one — it is the working surface of the product, and half of it in daylight
+   under a lit band looked like two pages stapled together.
+
+   It works because nothing in this system reads a colour that is not a token:
+   redefine the tokens on an ancestor and every card, chip, badge and input
+   inside it follows, with no component knowing anything happened. */
+:root[data-theme="dark"],
+.deep-surface {
   --bg-canvas:      var(--slate-1000);
   --bg-surface:     var(--slate-950);
   --bg-surface-alt: var(--slate-900);
@@ -331,5 +340,6 @@
 
 /* Keep the native form-control / scrollbar rendering in step with the
    manual toggle, not just the OS preference. */
-:root[data-theme="dark"]  { color-scheme: dark; }
+:root[data-theme="dark"],
+.deep-surface             { color-scheme: dark; }
 :root[data-theme="light"] { color-scheme: light; }

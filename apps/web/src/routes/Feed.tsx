@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   AppHeader,
   BloodTypeBadge,
@@ -83,31 +83,10 @@ export default function Feed() {
   const [bloodType, setBloodType] = useState<BloodType | null>(null);
   const [city, setCity] = useState('');
   const [scrolled, setScrolled] = useState(false);
-  /* True while the hero is still passing under the header — see AppHeader's
-     `overlay`. Starts true because the page opens at the top, and the first
-     scroll event is the one that can turn it off; starting false would flash
-     a white bar over the dark band on every load. */
-  const [overHero, setOverHero] = useState(true);
-  const hero = useRef<HTMLElement>(null);
-
   useEffect(() => {
-    const onScroll = () => {
-      setScrolled(window.scrollY > 240);
-      /* The bar is over the band until the band's last pixel has gone under
-         it. Measured from the element rather than from a constant, because
-         the hero is three different heights across the breakpoints. */
-      const bottom = hero.current?.getBoundingClientRect().bottom ?? 0;
-      setOverHero(bottom > 0);
-    };
-    onScroll();
+    const onScroll = () => setScrolled(window.scrollY > 240);
     window.addEventListener('scroll', onScroll, { passive: true });
-    /* A resize can change the hero's height without a scroll — rotating a
-       phone, or the lg breakpoint arriving. */
-    window.addEventListener('resize', onScroll);
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
-    };
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   const requests = useMemo(() => data ?? [], [data]);
@@ -151,8 +130,12 @@ export default function Feed() {
   };
 
   return (
-    <>
-      <AppHeader overlay={overHero} />
+    /* The whole feed is the dark surface, not only the band at the top. It
+       used to be a lit hero above a white page, which read as two designs
+       meeting in the middle of the screen — see .deep-surface in the token
+       layer for how one class turns every component inside it. */
+    <div className="deep-surface">
+      <AppHeader overlay />
 
       {/* ── Hero ──────────────────────────────────────────────────────────
           A deep band rather than a tinted one, lit from behind by three
@@ -160,7 +143,7 @@ export default function Feed() {
           surface in the product and it is dark in both themes: this is the
           one screen everybody sees first, and it should look like an
           instrument rather than a document.                              */}
-      <section className={styles.hero} ref={hero}>
+      <section className={styles.hero}>
         <div className={styles.aurora} aria-hidden="true" />
         <div className={styles.grid} aria-hidden="true" />
         <Container>
@@ -405,6 +388,6 @@ export default function Feed() {
           </Button>
         </div>
       )}
-    </>
+    </div>
   );
 }
