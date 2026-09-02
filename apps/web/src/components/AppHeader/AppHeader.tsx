@@ -55,17 +55,52 @@ export function AppHeader() {
             </span>
 
             {session ? (
-              /* The way in to your own profile, and on a phone the only one:
-                 the nav is hidden below 48rem, so an avatar that was not a
-                 link left /me reachable by typing the URL and no other way.
-                 Labelled rather than left to the initial, which is decoration
-                 — a screen reader announcing "A" is not a destination. */
-              <Link to={PATHS.dashboard} className={styles.who} aria-label="Your profile">
-                <span className={styles.whoAvatar} aria-hidden="true">
-                  {session.user.fullName.slice(0, 1).toUpperCase()}
-                </span>
-                <span className={styles.whoName}>{session.user.fullName}</span>
-              </Link>
+              <>
+                {/*
+                  The bell goes to the list of what we have actually emailed
+                  this donor about, which is the only thing behind it — there
+                  is no notification centre in this product and a bell that
+                  opened nothing would be a control that lies.
+                
+                  The dot is not "you have unread things", because nothing
+                  here has a read state. It means the one thing about this
+                  account that needs attention: until the address is
+                  confirmed, the matching query leaves this donor out, so the
+                  list the bell opens will stay empty however many requests
+                  match them.
+                */}
+                <Link
+                  to={`${PATHS.dashboard}#notifications`}
+                  className={styles.bell}
+                  aria-label={
+                    session.user.emailVerified
+                      ? 'What we have emailed you about'
+                      : 'What we have emailed you about — your email is not confirmed yet'
+                  }
+                >
+                  <Icon name="bell" />
+                  {!session.user.emailVerified && (
+                    <span className={styles.bellDot} aria-hidden="true" />
+                  )}
+                </Link>
+
+                {/* The way in to your own profile, and on a phone the only
+                    one: the nav is hidden below 48rem, so an avatar that was
+                    not a link left /me reachable by typing the URL and no
+                    other way. Labelled rather than left to the initial, which
+                    is decoration — a screen reader announcing "A" is not a
+                    destination. */}
+                <Link
+                  to={PATHS.dashboard}
+                  className={styles.who}
+                  aria-label="Your profile"
+                >
+                  <span className={styles.whoAvatar} aria-hidden="true">
+                    {session.user.fullName.slice(0, 1).toUpperCase()}
+                  </span>
+                  <span className={styles.whoName}>{session.user.fullName}</span>
+                </Link>
+              </>
             ) : (
               <Button to={PATHS.register} size="sm">
                 <span className={styles.registerShort}>Register</span>

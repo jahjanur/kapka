@@ -20,20 +20,26 @@ const SESSION: Session = {
   accessToken: 'token',
 };
 
-function SignedIn({ children }: { children: ReactNode }) {
+function SignedIn({
+  children,
+  confirmed = true,
+}: {
+  children: ReactNode;
+  confirmed?: boolean;
+}) {
   const { session, signIn } = useSession();
   useEffect(() => {
-    signIn(SESSION);
-  }, [signIn]);
+    signIn({ ...SESSION, user: { ...SESSION.user, emailVerified: confirmed } });
+  }, [signIn, confirmed]);
   return session ? <>{children}</> : null;
 }
 
-function renderSignedInHeader() {
+function renderSignedInHeader({ confirmed = true } = {}) {
   return render(
     <MemoryRouter>
       <ThemeProvider>
         <SessionProvider>
-          <SignedIn>
+          <SignedIn confirmed={confirmed}>
             <AppHeader />
           </SignedIn>
         </SessionProvider>
@@ -82,6 +88,27 @@ describe('the product header', () => {
   it('does not ask somebody with an account to register', () => {
     renderSignedInHeader();
     expect(screen.queryByRole('link', { name: /Register/ })).toBeNull();
+  });
+
+  it('points the bell at the list it is a bell for', () => {
+    /* There is no notification centre in this product. The one thing behind
+       this control is the list of what we have actually emailed this donor
+       about, which lives on their profile. */
+    renderSignedInHeader();
+    expect(
+      screen.getByRole('link', { name: 'What we have emailed you about' }),
+    ).toHaveAttribute('href', '/me#notifications');
+  });
+
+  it('says why the bell is marked when the address is unconfirmed', () => {
+    /* The dot is not "unread" — nothing here has a read state. It means this
+       account is left out of the matching until the address is confirmed, so
+       the list behind the bell will stay empty however many requests match.
+       A screen reader is told that rather than left with a red circle. */
+    renderSignedInHeader({ confirmed: false });
+    expect(
+      screen.getByRole('link', { name: /your email is not confirmed yet/i }),
+    ).toBeInTheDocument();
   });
 
   it('links nowhere developer-facing', () => {
