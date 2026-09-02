@@ -210,20 +210,15 @@
   }
 }
 
-/* ── What is happening now ───────────────────────────────────────────────── */
+/* ── Where it is happening ───────────────────────────────────────────────
+   The section that used to be a heading, a sentence and a pill saying "7".
+   The number was already in the band above it, and the pill was a label
+   pretending to be a control. These chips are the control: the same city
+   filter the list has, with the count on it, and pressing one takes you to
+   the requests it counts.
+   ---------------------------------------------------------------------- */
 .nearby {
-  padding-block: var(--space-6);
-}
-
-.nearbyGrid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.4fr);
-  align-items: center;
-  gap: var(--space-4);
-}
-
-.nearbyCopy {
-  min-inline-size: 0;
+  padding-block: var(--space-8) var(--space-6);
 }
 
 .nearbyTitle {
@@ -238,70 +233,80 @@
   color: var(--fg-secondary);
 }
 
-/* The one live thing on the page above the list itself: a real count, from
-   the same data the cards below are drawn from. */
-.live {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
+.nearbyEmpty {
   margin-block-start: var(--space-4);
-  padding: var(--space-3);
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--elevation-1);
-}
-
-.pulse {
-  flex: none;
-  inline-size: 0.5rem;
-  block-size: 0.5rem;
-  border-radius: var(--radius-full);
-  background-color: var(--accent);
-  box-shadow: 0 0 0 0 var(--aurora-core);
-  animation: pulse var(--dur-beat) var(--ease-fluid) infinite;
-}
-
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 var(--aurora-core);
-  }
-  70% {
-    box-shadow: 0 0 0 0.5rem transparent;
-  }
-  100% {
-    box-shadow: 0 0 0 0 transparent;
-  }
-}
-
-.liveText {
-  display: grid;
-  flex: 1 1 auto;
-  min-inline-size: 0;
   font-size: var(--text-sm);
-  font-weight: var(--weight-semibold);
-  line-height: var(--leading-snug);
-}
-
-.liveSub {
-  font-size: var(--text-xs);
-  font-weight: var(--weight-normal);
   color: var(--fg-muted);
 }
 
-.liveCount {
+.cityList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-block-start: var(--space-4);
+  list-style: none;
+}
+
+.cityChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: var(--hit-min);
+  padding-inline: var(--space-4);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--fg-primary);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-full);
+  box-shadow: var(--elevation-1);
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    transform var(--dur-instant) var(--ease-out);
+}
+
+.cityChip svg {
+  color: var(--fg-muted);
+}
+
+@media (hover: hover) {
+  .cityChip:hover {
+    border-color: var(--accent);
+    box-shadow: var(--glow-soft);
+  }
+}
+.cityChip:active {
+  scale: var(--press-scale);
+}
+
+/* The count rides on the chip rather than beside it, so the chip is one
+   thing to press and one thing to read. */
+.cityCount {
   display: grid;
   place-items: center;
-  flex: none;
-  min-inline-size: 1.75rem;
-  block-size: 1.75rem;
-  padding-inline: var(--space-2);
-  font-size: var(--text-sm);
+  min-inline-size: 1.5rem;
+  block-size: 1.5rem;
+  padding-inline: var(--space-1);
+  font-size: var(--text-xs);
   font-weight: var(--weight-semibold);
   font-variant-numeric: tabular-nums;
-  color: var(--fg-onAccent);
-  background-image: var(--gradient-accent);
+  color: var(--accent-ink);
+  background-color: var(--accent-surface);
   border-radius: var(--radius-full);
+}
+
+/* A city with a critical request in it is marked, and says so to a screen
+   reader as well — the colour is never the only channel (§10). */
+.cityChipCritical {
+  border-color: var(--danger);
+}
+
+.cityChipCritical .cityCount {
+  color: var(--fg-onDanger);
+  background-color: var(--danger);
 }
 
 .viewAll {
@@ -309,6 +314,7 @@
   align-items: center;
   gap: var(--space-1);
   min-block-size: var(--hit-min);
+  margin-block-start: var(--space-3);
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
   color: var(--accent-ink);
@@ -318,59 +324,6 @@
   .viewAll:hover {
     text-decoration: underline;
   }
-}
-
-/* Rings around a person: the shape of a request going out to whoever is
-   near it. Decorative, and drawn in tokens like everything else. */
-.orbit {
-  position: relative;
-  aspect-ratio: 1;
-  display: grid;
-  place-items: center;
-}
-
-.orbitRing {
-  position: absolute;
-  border: 1px solid var(--accent-border);
-  border-radius: var(--radius-full);
-  inset: 12%;
-}
-.orbitRing:last-of-type {
-  inset: 28%;
-}
-
-.orbitCore {
-  display: grid;
-  place-items: center;
-  font-size: var(--text-lg);
-  inline-size: 44%;
-  aspect-ratio: 1;
-  color: var(--accent);
-  background-color: var(--bg-surface);
-  border-radius: var(--radius-full);
-  box-shadow: var(--glow-soft);
-}
-
-.orbitDot {
-  position: absolute;
-  inline-size: 0.5rem;
-  block-size: 0.5rem;
-  background-color: var(--accent);
-  border-radius: var(--radius-full);
-}
-.orbitDot:nth-of-type(1) {
-  inset-block-start: 8%;
-  inset-inline-end: 22%;
-}
-.orbitDot:nth-of-type(2) {
-  inset-block-end: 14%;
-  inset-inline-start: 10%;
-  opacity: 0.6;
-}
-.orbitDot:nth-of-type(3) {
-  inset-block-start: 44%;
-  inset-inline-end: 4%;
-  opacity: 0.35;
 }
 
 @media (min-width: 48rem) {

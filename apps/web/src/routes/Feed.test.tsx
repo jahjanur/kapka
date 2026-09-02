@@ -177,6 +177,40 @@ describe('the public feed', () => {
     expect(within(strip).getByText('3')).toBeInTheDocument();
   });
 
+  it('offers the cities that actually have requests, with their counts', async () => {
+    /* Drawn from the same list as the cards, so the two cannot disagree —
+       and it answers the question that section is asking, which is where
+       this is happening rather than how much of it there is. */
+    renderFeed();
+    await screen.findByText('3 open requests');
+
+    // Two in Skopje, one in Bitola; the fixture has no others.
+    expect(
+      screen.getByRole('button', { name: 'Skopje, 2 open requests, 1 critical' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Bitola, 1 open request' }),
+    ).toBeInTheDocument();
+  });
+
+  it('says which cities have something critical in them, in words', async () => {
+    // Never colour alone (§10): the chip is outlined AND it says so.
+    renderFeed();
+    await screen.findByText('3 open requests');
+    expect(
+      screen.getByRole('button', { name: /Skopje, 2 open requests, 1 critical/ }),
+    ).toBeInTheDocument();
+  });
+
+  it('filters the list to the city that was pressed', async () => {
+    const user = userEvent.setup();
+    renderFeed();
+    await screen.findByText('3 open requests');
+
+    await user.click(screen.getByRole('button', { name: /^Bitola/ }));
+    expect(await screen.findByText('1 open request')).toBeInTheDocument();
+  });
+
   it('puts every filter on screen, behind no toggle', async () => {
     /* The chips used to fold away behind a "Filters" button on a phone. They
        are a scrolling strip now, so there is nothing to open — and a filter

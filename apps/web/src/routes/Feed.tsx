@@ -15,10 +15,12 @@ import {
   RequestCard,
   Picker,
   RequestCardSkeleton,
+  Skeleton,
   Stack,
   VitalSign,
 } from '../components';
 import { BLOOD_TYPES, CITIES, type BloodType, type Urgency } from '@kapka/shared';
+import { cx } from '../lib/cx';
 import { useCountUp } from '../lib/useCountUp';
 import { useRequests } from '../lib/useRequests';
 import { useSession } from '../lib/session';
@@ -125,6 +127,38 @@ export default function Feed() {
     [requests],
   );
 
+  /**
+   * Which cities have open requests, most first, and how many of each are
+   * critical.
+   *
+   * From the same list the cards below are drawn from, so the two can never
+   * disagree — and it is the answer to the only question this section was
+   * ever asking: where is this happening.
+   */
+  const byCity = useMemo(() => {
+    const counts = new Map<string, { city: string; count: number; critical: number }>();
+    for (const request of requests) {
+      const row = counts.get(request.city) ?? {
+        city: request.city,
+        count: 0,
+        critical: 0,
+      };
+      row.count += 1;
+      if (request.urgency === 'critical') row.critical += 1;
+      counts.set(request.city, row);
+    }
+    return [...counts.values()].sort(
+      (a, b) =>
+        b.critical - a.critical || b.count - a.count || a.city.localeCompare(b.city),
+    );
+  }, [requests]);
+
+  /** Filters the list to one city and takes the reader to it. */
+  const showCity = (name: string) => {
+    setCity(name);
+    document.getElementById(LIST_ID)?.scrollIntoView({ block: 'start' });
+  };
+
   const activeFilters = (urgency ? 1 : 0) + (bloodType ? 1 : 0) + (city === '' ? 0 : 1);
   const clearFilters = () => {
     setUrgency(null);
@@ -229,45 +263,70 @@ export default function Feed() {
           real one, and the link goes to the requests it counts.           */}
       <section className={styles.nearby} aria-labelledby="nearby-heading">
         <Container>
-          <div className={styles.nearbyGrid}>
-            <div className={styles.nearbyCopy}>
-              <h2 id="nearby-heading" className={styles.nearbyTitle}>
-                Someone nearby <span className={styles.heroTitleInk}>needs blood.</span>
-              </h2>
-              <p className={styles.nearbyLead}>
-                Real requests, from real hospitals, in the cities we cover.
-              </p>
+          <h2 id="nearby-heading" className={styles.nearbyTitle}>
+            Someone nearby <span className={styles.heroTitleInk}>needs blood.</span>
+          </h2>
+          <p className={styles.nearbyLead}>
+            Where the open requests are right now. Choose a city to see its own.
+          </p>
 
-              <p className={styles.live}>
-                <span className={styles.pulse} aria-hidden="true" />
-                <span className={styles.liveText}>
-                  Live in North Macedonia
-                  <span className={styles.liveSub}>Open requests right now</span>
-                </span>
-                <span className={styles.liveCount} data-numeric>
-                  {isLoading ? '—' : stats.open}
-                </span>
-              </p>
+          {isLoading && (
+            /* Shaped like the chips that replace it, so nothing moves when
+               they land (§9.7). */
+            <ul className={styles.cityList} aria-hidden="true">
+              {Array.from({ length: 4 }, (_, i) => (
+                <li key={i}>
+                  <Skeleton width="7rem" height="2.5rem" shape="circle" />
+                </li>
+              ))}
+            </ul>
+          )}
 
-              {/* Down the page rather than to another screen: the list it
-                  points at is on this one. */}
-              <a className={styles.viewAll} href={`#${LIST_ID}`}>
-                View all requests
-                <Icon name="chevronRight" />
-              </a>
-            </div>
+          {!isLoading && byCity.length === 0 && (
+            <p className={styles.nearbyEmpty}>
+              Nothing is open right now — which is the good outcome. New requests appear
+              here as an admin approves them.
+            </p>
+          )}
 
-            <div className={styles.orbit} aria-hidden="true">
-              <span className={styles.orbitRing} />
-              <span className={styles.orbitRing} />
-              <span className={styles.orbitCore}>
-                <Icon name="user" />
-              </span>
-              <span className={styles.orbitDot} />
-              <span className={styles.orbitDot} />
-              <span className={styles.orbitDot} />
-            </div>
-          </div>
+          {byCity.length > 0 && (
+            <ul className={styles.cityList}>
+              {byCity.map(({ city: name, count, critical }) => (
+                <li key={name}>
+                  {/* A control, not a label: this is the filter the list
+                      below already has, put where somebody is looking. */}
+                  <button
+                    type="button"
+                    className={cx(
+                      styles.cityChip,
+                      critical > 0 && styles.cityChipCritical,
+                    )}
+                    /* Spelled out rather than left to the computed name,
+                       which reads the city and the count with nothing
+                       between them: "Skopje2". The red outline is also said
+                       here in words — colour is never the only channel. */
+                    aria-label={`${name}, ${String(count)} open ${
+                      count === 1 ? 'request' : 'requests'
+                    }${critical > 0 ? `, ${String(critical)} critical` : ''}`}
+                    onClick={() => showCity(name)}
+                  >
+                    <Icon name="mapPin" />
+                    {name}
+                    <span className={styles.cityCount} data-numeric>
+                      {count}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* Down the page rather than to another screen: the list it points
+              at is on this one. */}
+          <a className={styles.viewAll} href={`#${LIST_ID}`}>
+            View all requests
+            <Icon name="chevronRight" />
+          </a>
         </Container>
       </section>
 
