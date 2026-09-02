@@ -12,9 +12,18 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
-  /* Derived, so the sticky offsets that use --header-height stay correct. */
-  min-block-size: calc(var(--header-height) - var(--space-2) * 2);
-  padding-block: var(--space-2);
+  /*
+   * The header IS this tall, not "at least" — everything pinned below it
+   * offsets by --header-height, so a header free to grow to fit its content
+   * leaves a strip of the scrolling page showing through the difference. That
+   * is exactly what happened: box-sizing is border-box everywhere, so the old
+   * `min-block-size: header - padding*2` subtracted padding that was already
+   * inside the box and rendered a 57px header under a 72px offset.
+   *
+   * The 1px is the border below, which border-box counts inside this element
+   * but not inside .inner — so .header ends up at exactly --header-height.
+   */
+  block-size: calc(var(--header-height) - 1px);
 }
 
 .brand {

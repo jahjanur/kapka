@@ -128,11 +128,19 @@
   --blur-chrome: 10px;
   --tint-chrome: 90%;
 
-  /* Total header height INCLUDING its padding. Anything that sticks below the
+  /* Total header height INCLUDING its border. Anything that sticks below the
      header offsets by exactly this — previously the header said 3.5rem inner
      and the feed's rail hard-coded 4.5rem separately, so changing one would
-     have silently misaligned the other. */
-  --header-height: 4.5rem;
+     have silently misaligned the other.
+
+     It is a phone value because the header is genuinely shorter on a phone:
+     the nav and the theme toggle appear at 48rem and it grows. One number for
+     both was 15px too tall on a phone, and everything pinned below it — the
+     feed's filter strip, the offline banner — floated that far under the
+     header with the page scrolling through the gap. AppHeader forces its own
+     box to this height rather than the other way round, so content that
+     changes size cannot reopen the gap. */
+  --header-height: 3.5rem;
 
   /* ── Hit targets ─────────────────────────────────────────────────────── */
   --hit-min: 2.75rem;    /* 44px — WCAG 2.2 AA target size */
@@ -160,6 +168,17 @@
   --z-overlay:   300;
   --z-modal:     400;
   --z-toast:     500;
+}
+
+/* The other half of --header-height. At 48rem the nav and the theme toggle
+   appear in the header and it is genuinely taller, so the offset below it has
+   to be too — the token is the only place that number exists, and both values
+   live here rather than one here and one in a component. The literal 48rem
+   matches --bp-md; custom properties cannot be used in a media prelude. */
+@media (min-width: 48rem) {
+  :root {
+    --header-height: 4.5rem;
+  }
 }
 
 /* Dark-mode elevation: swap shadow for a hairline. Two blocks, same content,

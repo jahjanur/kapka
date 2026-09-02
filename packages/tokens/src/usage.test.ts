@@ -241,4 +241,17 @@ describe('the header height is derived, not repeated', () => {
     expect(header?.source).toContain('calc(var(--header-height)');
     expect(feed?.source).toContain('inset-block-start: var(--header-height)');
   });
+
+  it('fixes the header box rather than setting a floor for it', () => {
+    /*
+     * A minimum lets content decide the height, and the offsets below cannot
+     * follow it. That shipped: `min-block-size: calc(header - padding * 2)`
+     * subtracted padding that border-box already counted inside the box, so a
+     * 57px header sat under a 72px offset and the feed scrolled through the
+     * 15px strip between the two.
+     */
+    const header = componentCss.find((f) => f.name.includes('AppHeader'));
+    expect(header?.source).toContain('block-size: calc(var(--header-height)');
+    expect(header?.source).not.toContain('min-block-size: calc(var(--header-height)');
+  });
 });
