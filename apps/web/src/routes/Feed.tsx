@@ -188,6 +188,28 @@ export default function Feed() {
                     says how much is happening right now. */}
               </div>
 
+              {/* The middle of the band, on a phone, and the three things
+                  somebody weighing up the button above it wants to know. Not
+                  a restatement of the lead — that says what the product does,
+                  and these say what it costs you. They are the same three
+                  promises the sign-up screen makes, which is where they have
+                  to hold. Hidden from 48rem, where there is no gap to fill
+                  and the spotlight is already saying something truer. */}
+              <ul className={styles.assurances}>
+                <li>
+                  <Icon name="checkCircle" />
+                  Two minutes to register, once
+                </li>
+                <li>
+                  <Icon name="checkCircle" />
+                  Only matching requests, never marketing
+                </li>
+                <li>
+                  <Icon name="checkCircle" />
+                  Pause the emails or leave whenever you like
+                </li>
+              </ul>
+
               {/* The trace and the numbers travel together, at the foot of
                   the screen: on a phone the hero is the whole first view, and
                   a group anchored to the bottom of it is what turns the height

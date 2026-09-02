@@ -26,7 +26,7 @@
      wash runs to the very top of the screen rather than starting under a
      white strip. */
   margin-block-start: calc(var(--header-height) * -1);
-  padding-block: calc(var(--header-height) + var(--space-8)) var(--space-8);
+  padding-block: calc(var(--header-height) + var(--space-8)) var(--space-6);
   background-color: var(--bg-canvas);
   border-block-end: 1px solid var(--border-subtle);
 }
@@ -102,14 +102,49 @@
   /* start, or a grid stretches the eyebrow pill to the full width of the
      screen and it stops being a pill. */
   justify-items: start;
-  gap: var(--space-8);
+  /* The minimum between the three groups. Anything the band has spare on a
+     taller screen is added to these two gaps; on an 844px one there is
+     nothing spare, and this is what makes the strip still fit. */
+  gap: var(--space-5);
   block-size: 100%;
 }
 
-/* Two children, so the height goes between them and nowhere else. */
+/* Three children now, so the band's slack falls above and below the middle
+   one rather than into a single hole. */
 .heroLede,
+.assurances,
 .heroFoot {
   inline-size: 100%;
+}
+
+/* ── The three promises ──────────────────────────────────────────────────
+   Phone only: they fill the space a viewport-tall band leaves between the
+   buttons and the numbers, and they are the questions somebody asks with a
+   thumb over "Register as donor".
+   ---------------------------------------------------------------------- */
+.assurances {
+  display: grid;
+  gap: var(--space-2);
+  list-style: none;
+}
+
+.assurances li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+}
+
+.assurances svg {
+  flex: none;
+  color: var(--accent);
+}
+
+@media (min-width: 48rem) {
+  .assurances {
+    display: none;
+  }
 }
 
 /* A pill rather than a line of text: it is the one element that says the data
@@ -192,7 +227,7 @@
 .vital {
   /* A graphic, not a rule across the page: at full width on a desktop the
      beat is stretched into a shallow wobble and stops reading as one. */
-  max-inline-size: 24rem;
+  max-inline-size: 20rem;
   /* Fades at both ends so it reads as a window onto something continuous
      rather than a line that starts and stops in the layout. */
   mask-image: linear-gradient(
