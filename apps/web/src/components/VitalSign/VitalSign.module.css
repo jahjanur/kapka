@@ -24,7 +24,7 @@
 }
 
 .ghost {
-  stroke: var(--border-onDeep);
+  stroke: var(--border-subtle);
   stroke-width: 1.5;
 }
 
@@ -37,8 +37,10 @@
   filter: drop-shadow(0 0 6px var(--aurora-core));
 }
 
+/* The drop is the darkest thing in the graphic, so it stays the drop against
+   its own halo on a light surface. */
 .drop {
-  fill: var(--fg-onDeep);
+  fill: var(--accent-ink);
 }
 
 /* The halo swells by growing its radius rather than by scaling. A transform

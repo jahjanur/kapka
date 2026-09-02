@@ -550,27 +550,6 @@ export const SPECIMENS: Specimen[] = [
   },
   { id: 'theme-toggle', render: () => <ThemeToggle /> },
 
-  {
-    /* Only ever seen on the hero's dark band, so it is photographed on one —
-       shot against the page's surface it is a transparent button on a
-       transparent background, which tells nobody anything. */
-    id: 'button-glass',
-    width: 'full',
-    render: () => (
-      <div
-        style={{
-          background: 'var(--surface-deep)',
-          padding: 'var(--space-6)',
-          borderRadius: 'var(--radius-xl)',
-        }}
-      >
-        <Button variant="glass" size="lg">
-          Post a request
-        </Button>
-      </div>
-    ),
-  },
-
   /* ── Vital trace ──────────────────────────────────────────────────────── */
   {
     /* Playwright cancels an infinite animation back to its initial state
@@ -579,17 +558,7 @@ export const SPECIMENS: Specimen[] = [
        at the end of it. */
     id: 'vital-sign',
     width: 'full',
-    render: () => (
-      <div
-        style={{
-          background: 'var(--surface-deep)',
-          padding: 'var(--space-6)',
-          borderRadius: 'var(--radius-xl)',
-        }}
-      >
-        <VitalSign />
-      </div>
-    ),
+    render: () => <VitalSign />,
   },
 
   /* ── Overlays and banners, each on a page of its own ──────────────────── */

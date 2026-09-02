@@ -8,11 +8,7 @@ import { Link } from 'react-router-dom';
 import { cx } from '../../lib/cx';
 import styles from './Button.module.css';
 
-/**
- * `glass` is for a dark surface only — the hero band. It is transparent, so on
- * a light background it is a label with a faint outline and no button at all.
- */
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'glass';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface CommonProps {

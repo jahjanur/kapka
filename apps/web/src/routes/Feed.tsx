@@ -130,19 +130,14 @@ export default function Feed() {
   };
 
   return (
-    /* The whole feed is the dark surface, not only the band at the top. It
-       used to be a lit hero above a white page, which read as two designs
-       meeting in the middle of the screen — see .deep-surface in the token
-       layer for how one class turns every component inside it. */
-    <div className="deep-surface">
-      <AppHeader overlay />
+    <>
+      <AppHeader />
 
       {/* ── Hero ──────────────────────────────────────────────────────────
-          A deep band rather than a tinted one, lit from behind by three
-          slow washes and ruled with a faint grid. It is the only dark
-          surface in the product and it is dark in both themes: this is the
-          one screen everybody sees first, and it should look like an
-          instrument rather than a document.                              */}
+          Lit from behind by three slow washes of the product's own red and
+          ruled with a faint grid, on the light canvas the rest of the page
+          uses. The band and the feed under it are one surface — the point
+          of the wash is depth, not a second page.                        */}
       <section className={styles.hero}>
         <div className={styles.aurora} aria-hidden="true" />
         <div className={styles.grid} aria-hidden="true" />
@@ -176,7 +171,7 @@ export default function Feed() {
                     nothing above it. */}
                 <Button
                   to={PATHS.postRequest}
-                  variant={heroPrimary ? 'glass' : 'primary'}
+                  variant={heroPrimary ? 'secondary' : 'primary'}
                   size="lg"
                 >
                   Post a request
@@ -388,6 +383,6 @@ export default function Feed() {
           </Button>
         </div>
       )}
-    </div>
+    </>
   );
 }

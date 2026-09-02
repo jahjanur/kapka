@@ -3,25 +3,25 @@
    ========================================================================= */
 
 /* ── Hero ────────────────────────────────────────────────────────────────── */
-/* A deep band, lit from behind, in both themes. Everything below it is the
-   ordinary light surface of the product — the contrast between the two is the
-   point, and it is what makes the feed read as the working part of the page
-   rather than more of the same. */
+/* A lit band, not a dark one: the product's red washed across the top of the
+   page, on the same canvas the feed below it uses. The band and the feed are
+   one surface — what separates them is depth, not a change of colour. */
 .hero {
   position: relative;
   isolation: isolate;
   overflow: hidden;
   /* Pulled up under the header and given the height back as padding, so the
-     band runs to the very top of the screen and the bar floats on it. */
+     wash runs to the very top of the screen rather than starting under a
+     white strip. */
   margin-block-start: calc(var(--header-height) * -1);
   padding-block: calc(var(--header-height) + var(--space-8)) var(--space-8);
-  background-color: var(--surface-deep);
-  color: var(--fg-onDeep);
+  background-color: var(--bg-canvas);
+  border-block-end: 1px solid var(--border-subtle);
 }
 
-/* The aurora: three washes, drifting. Its own element rather than a
-   background on .hero, so it can move without taking the text with it, and so
-   a browser that cannot animate it still gets the still image. */
+/* The aurora: three washes of the accent, drifting. Its own element rather
+   than a background on .hero, so it can move without taking the text with it,
+   and so a browser that cannot animate it still gets the still image. */
 .aurora {
   position: absolute;
   /* Larger than the band it sits in: the wash has to be able to leave the
@@ -29,11 +29,10 @@
   inset: -30% -10%;
   z-index: -2;
   background-image:
-    radial-gradient(38% 55% at 18% 30%, var(--aurora-core) 0%, transparent 70%),
-    radial-gradient(42% 60% at 78% 20%, var(--aurora-edge) 0%, transparent 72%),
-    radial-gradient(45% 65% at 60% 95%, var(--aurora-far) 0%, transparent 75%);
+    radial-gradient(38% 55% at 15% 25%, var(--aurora-core) 0%, transparent 70%),
+    radial-gradient(45% 62% at 82% 15%, var(--aurora-edge) 0%, transparent 72%),
+    radial-gradient(50% 70% at 60% 100%, var(--aurora-far) 0%, transparent 75%);
   filter: blur(0.5rem);
-  opacity: 0.85;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -54,14 +53,14 @@
 }
 
 /* A faint rule grid over the wash. It is what separates "an instrument" from
-   "a gradient", and at 5% white it is felt more than seen. */
+   "a gradient", and this quiet it is felt more than seen. */
 .grid {
   position: absolute;
   inset: 0;
   z-index: -1;
   background-image:
-    linear-gradient(to right, var(--line-onDeep) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--line-onDeep) 1px, transparent 1px);
+    linear-gradient(to right, var(--line-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line-grid) 1px, transparent 1px);
   background-size: 2.5rem 2.5rem;
   /* Fades out downward, so the band hands over to the feed rather than
      stopping at a hard line. */
@@ -80,8 +79,8 @@
   min-inline-size: 0;
 }
 
-/* A pill rather than a line of text: on a dark surface a bare label floats,
-   and this is the one element that says the data is live. */
+/* A pill rather than a line of text: it is the one element that says the data
+   on this page is live, and on the wash a bare label floats. */
 .eyebrow {
   display: inline-flex;
   align-items: center;
@@ -90,14 +89,15 @@
   padding-inline: var(--space-3);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
-  color: var(--fg-onDeep-muted);
-  background-color: var(--surface-glass-onDeep);
-  border: 1px solid var(--border-onDeep);
+  color: var(--fg-secondary);
+  background-color: var(--surface-glass);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-full);
+  backdrop-filter: blur(var(--blur-chrome));
 }
 
-/* A slow pulse on one small dot, with the halo the dark band gives it. The
-   page is about urgency; a page that flashes at you is about itself. */
+/* A slow pulse on one small dot, ringed by the accent. The page is about
+   urgency; a page that flashes at you is about itself. */
 .pulse {
   inline-size: 0.5rem;
   block-size: 0.5rem;
@@ -124,14 +124,13 @@
   font-size: var(--text-4xl);
   letter-spacing: var(--tracking-tight);
   text-wrap: balance;
-  color: var(--fg-onDeep);
 }
 
 /* The half of the sentence the product is actually about, in the product's
    own colour. Clipped to the text, with a solid fallback colour underneath
    for anything that cannot clip a background. */
 .heroTitleInk {
-  color: var(--crimson-300);
+  color: var(--accent-ink);
   background-image: var(--gradient-ink);
   background-clip: text;
   -webkit-background-clip: text;
@@ -146,7 +145,7 @@
   max-inline-size: var(--measure-narrow);
   margin-block-start: var(--space-4);
   font-size: var(--text-lg);
-  color: var(--fg-onDeep-muted);
+  color: var(--fg-secondary);
 }
 
 .heroActions {
@@ -174,9 +173,9 @@
 }
 
 /* ── Stat strip ──────────────────────────────────────────────────────────── */
-/* Three tiles of glass on the band, side by side at 360px. A wrapping flex
-   row put "Cities" on a line of its own at the narrow end, which read as a
-   fourth thing rather than the third. */
+/* Three tiles, side by side at 360px. A wrapping flex row put "Cities" on a
+   line of its own at the narrow end, which read as a fourth thing rather than
+   the third. */
 .stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -193,10 +192,10 @@
   justify-content: space-between;
   gap: var(--space-2);
   padding: var(--space-3);
-  background-color: var(--surface-glass-onDeep);
-  border: 1px solid var(--border-onDeep);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  backdrop-filter: blur(var(--blur-chrome));
+  box-shadow: var(--elevation-1);
 }
 
 .stat dt {
@@ -204,7 +203,7 @@
   font-weight: var(--weight-medium);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
-  color: var(--fg-onDeep-muted);
+  color: var(--fg-muted);
 }
 
 .stat dd {
@@ -215,7 +214,6 @@
      and nudges the tile beside it. */
   font-variant-numeric: tabular-nums;
   letter-spacing: var(--tracking-tight);
-  color: var(--fg-onDeep);
 }
 
 /* ── Spotlight ───────────────────────────────────────────────────────────── */
@@ -231,7 +229,7 @@
   font-weight: var(--weight-semibold);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
-  color: var(--fg-onDeep-muted);
+  color: var(--fg-muted);
 }
 
 .spotlightTop {
@@ -243,7 +241,6 @@
 
 .spotlightHospital {
   margin-block-start: var(--space-4);
-  color: var(--fg-onDeep);
   font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
   line-height: var(--leading-snug);
@@ -254,7 +251,7 @@
   margin-block-start: var(--space-2);
   margin-block-end: var(--space-5);
   font-size: var(--text-sm);
-  color: var(--fg-onDeep-muted);
+  color: var(--fg-secondary);
 }
 
 /* Page-level layout change, so a media query by design (§7.2). */
@@ -269,16 +266,15 @@
     gap: var(--space-16);
     align-items: start;
   }
-  /* Glass on the band, not a white card cut out of it: the hero is one
-     surface, and a panel that opaque reads as a different page pasted on. */
+  /* A card that floats on the wash: opaque enough to read against a moving
+     background, and lit rather than shadowed, like everything else here. */
   .spotlight {
     display: block;
     padding: var(--space-5);
-    background-color: var(--surface-glass-onDeep);
-    border: 1px solid var(--border-onDeep);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--radius-xl);
-    backdrop-filter: blur(var(--blur-chrome));
-    box-shadow: var(--glow-soft);
+    box-shadow: var(--elevation-2), var(--glow-soft);
   }
 }
 

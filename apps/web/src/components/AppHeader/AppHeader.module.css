@@ -5,46 +5,6 @@
   background-color: color-mix(in oklab, var(--bg-canvas) var(--tint-chrome), transparent);
   backdrop-filter: blur(var(--blur-chrome));
   border-block-end: 1px solid var(--border-subtle);
-  /* Both sides of the swap are animated, because the swap happens under the
-     reader's thumb as they scroll rather than on a page change. */
-  transition:
-    background-color var(--dur-normal) var(--ease-out),
-    border-color var(--dur-normal) var(--ease-out),
-    color var(--dur-normal) var(--ease-out);
-}
-
-/* ── Over a dark surface ─────────────────────────────────────────────────── */
-/* Dark glass, not clear: at the top of the feed it is the same colour as the
-   band and reads as no bar at all, and the moment the hero starts sliding
-   underneath, what passes below is blurred rather than tangled up with the
-   wordmark. Fully transparent looked right for the first frame and like a
-   fault for every one after it. */
-.overlay {
-  background-color: color-mix(in oklab, var(--surface-deep) 68%, transparent);
-  border-block-end-color: transparent;
-  color: var(--fg-onDeep);
-  /* Read by the theme toggle, which would otherwise be a white pill sitting
-     on the dark band. */
-  --control-surface: var(--surface-glass-onDeep);
-  --control-border: var(--border-onDeep);
-  --control-ink: var(--fg-onDeep-muted);
-}
-.overlay .brand,
-.overlay .navLinkActive,
-.overlay .whoName {
-  color: var(--fg-onDeep);
-}
-.overlay .navLink {
-  color: var(--fg-onDeep-muted);
-}
-@media (hover: hover) {
-  .overlay .navLink:hover {
-    color: var(--fg-onDeep);
-    background-color: var(--surface-glass-onDeep);
-  }
-}
-.overlay .navLinkActive {
-  background-color: var(--surface-glass-onDeep);
 }
 
 .inner {
