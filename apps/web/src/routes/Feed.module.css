@@ -3,19 +3,73 @@
    ========================================================================= */
 
 /* ── Hero ────────────────────────────────────────────────────────────────── */
-/* A tinted band rather than a plain white block, so the page opens with the
-   product's own colour and the feed below reads as a separate surface. */
+/* A deep band, lit from behind, in both themes. Everything below it is the
+   ordinary light surface of the product — the contrast between the two is the
+   point, and it is what makes the feed read as the working part of the page
+   rather than more of the same. */
 .hero {
-  padding-block: var(--space-8) var(--space-6);
-  background-image: linear-gradient(
-    to bottom,
-    var(--accent-surface),
-    var(--bg-canvas) 88%
-  );
-  border-block-end: 1px solid var(--border-subtle);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  /* Pulled up under the header and given the height back as padding, so the
+     band runs to the very top of the screen and the bar floats on it. */
+  margin-block-start: calc(var(--header-height) * -1);
+  padding-block: calc(var(--header-height) + var(--space-8)) var(--space-8);
+  background-color: var(--surface-deep);
+  color: var(--fg-onDeep);
+}
+
+/* The aurora: three washes, drifting. Its own element rather than a
+   background on .hero, so it can move without taking the text with it, and so
+   a browser that cannot animate it still gets the still image. */
+.aurora {
+  position: absolute;
+  /* Larger than the band it sits in: the wash has to be able to leave the
+     frame, or the drift shows its edges. */
+  inset: -30% -10%;
+  z-index: -2;
+  background-image:
+    radial-gradient(38% 55% at 18% 30%, var(--aurora-core) 0%, transparent 70%),
+    radial-gradient(42% 60% at 78% 20%, var(--aurora-edge) 0%, transparent 72%),
+    radial-gradient(45% 65% at 60% 95%, var(--aurora-far) 0%, transparent 75%);
+  filter: blur(0.5rem);
+  opacity: 0.85;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .aurora {
+    animation: drift var(--dur-drift) var(--ease-in-out) infinite alternate;
+  }
+}
+
+@keyframes drift {
+  from {
+    translate: -2% -1%;
+    scale: 1;
+  }
+  to {
+    translate: 3% 2%;
+    scale: 1.12;
+  }
+}
+
+/* A faint rule grid over the wash. It is what separates "an instrument" from
+   "a gradient", and at 5% white it is felt more than seen. */
+.grid {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(to right, var(--line-onDeep) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line-onDeep) 1px, transparent 1px);
+  background-size: 2.5rem 2.5rem;
+  /* Fades out downward, so the band hands over to the feed rather than
+     stopping at a hard line. */
+  mask-image: linear-gradient(to bottom, var(--mask-fade), transparent 85%);
 }
 
 .heroGrid {
+  position: relative;
   display: grid;
   gap: var(--space-6);
 }
@@ -26,60 +80,123 @@
   min-inline-size: 0;
 }
 
+/* A pill rather than a line of text: on a dark surface a bare label floats,
+   and this is the one element that says the data is live. */
 .eyebrow {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  padding-block: var(--space-1);
+  padding-inline: var(--space-3);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
-  color: var(--fg-secondary);
+  color: var(--fg-onDeep-muted);
+  background-color: var(--surface-glass-onDeep);
+  border: 1px solid var(--border-onDeep);
+  border-radius: var(--radius-full);
 }
 
-/* A slow pulse on one small dot. The page is about urgency; a page that
-   flashes at you is about itself. */
+/* A slow pulse on one small dot, with the halo the dark band gives it. The
+   page is about urgency; a page that flashes at you is about itself. */
 .pulse {
   inline-size: 0.5rem;
   block-size: 0.5rem;
   border-radius: var(--radius-full);
   background-color: var(--accent);
-  animation: pulse var(--dur-pulse) var(--ease-in-out) infinite;
+  box-shadow: 0 0 0 0 var(--aurora-core);
+  animation: pulse var(--dur-beat) var(--ease-fluid) infinite;
 }
 
 @keyframes pulse {
-  50% {
-    opacity: 0.35;
+  0% {
+    box-shadow: 0 0 0 0 var(--aurora-core);
+  }
+  70% {
+    box-shadow: 0 0 0 0.5rem transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
   }
 }
 
 .heroTitle {
-  margin-block-start: var(--space-3);
+  margin-block-start: var(--space-4);
   font-size: var(--text-4xl);
   letter-spacing: var(--tracking-tight);
   text-wrap: balance;
+  color: var(--fg-onDeep);
+}
+
+/* The half of the sentence the product is actually about, in the product's
+   own colour. Clipped to the text, with a solid fallback colour underneath
+   for anything that cannot clip a background. */
+.heroTitleInk {
+  color: var(--crimson-300);
+  background-image: var(--gradient-ink);
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .heroTitleInk {
+    color: transparent;
+  }
 }
 
 .heroLead {
   max-inline-size: var(--measure-narrow);
-  margin-block-start: var(--space-3);
+  margin-block-start: var(--space-4);
   font-size: var(--text-lg);
-  color: var(--fg-secondary);
+  color: var(--fg-onDeep-muted);
 }
 
 .heroActions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
-  margin-block-start: var(--space-5);
+  margin-block-start: var(--space-6);
+}
+
+/* ── The trace ───────────────────────────────────────────────────────────── */
+.vital {
+  /* A graphic, not a rule across the page: at full width on a desktop the
+     beat is stretched into a shallow wobble and stops reading as one. */
+  max-inline-size: 24rem;
+  margin-block-start: var(--space-8);
+  /* Fades at both ends so it reads as a window onto something continuous
+     rather than a line that starts and stops in the layout. */
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    var(--mask-opaque) 12%,
+    var(--mask-opaque) 88%,
+    transparent
+  );
 }
 
 /* ── Stat strip ──────────────────────────────────────────────────────────── */
+/* Three tiles of glass on the band, side by side at 360px. A wrapping flex
+   row put "Cities" on a line of its own at the narrow end, which read as a
+   fourth thing rather than the third. */
 .stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin-block-start: var(--space-4);
+}
+
+/* Flex column with the number pushed to the bottom: "Open requests" wraps to
+   two lines at 360px and the other two labels do not, and three numbers at
+   three different heights read as three unrelated tiles. */
+.stat {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-6);
-  margin-block-start: var(--space-8);
-  padding-block-start: var(--space-5);
-  border-block-start: 1px solid var(--border-subtle);
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background-color: var(--surface-glass-onDeep);
+  border: 1px solid var(--border-onDeep);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(var(--blur-chrome));
 }
 
 .stat dt {
@@ -87,15 +204,18 @@
   font-weight: var(--weight-medium);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
-  color: var(--fg-muted);
+  color: var(--fg-onDeep-muted);
 }
 
 .stat dd {
   margin: 0;
   font-size: var(--text-2xl);
   font-weight: var(--weight-semibold);
+  /* Tabular, or a number counting up to itself changes width on every frame
+     and nudges the tile beside it. */
   font-variant-numeric: tabular-nums;
   letter-spacing: var(--tracking-tight);
+  color: var(--fg-onDeep);
 }
 
 /* ── Spotlight ───────────────────────────────────────────────────────────── */
@@ -111,7 +231,7 @@
   font-weight: var(--weight-semibold);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
-  color: var(--fg-muted);
+  color: var(--fg-onDeep-muted);
 }
 
 .spotlightTop {
@@ -123,6 +243,7 @@
 
 .spotlightHospital {
   margin-block-start: var(--space-4);
+  color: var(--fg-onDeep);
   font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
   line-height: var(--leading-snug);
@@ -133,13 +254,13 @@
   margin-block-start: var(--space-2);
   margin-block-end: var(--space-5);
   font-size: var(--text-sm);
-  color: var(--fg-secondary);
+  color: var(--fg-onDeep-muted);
 }
 
 /* Page-level layout change, so a media query by design (§7.2). */
 @media (min-width: 64rem) {
   .hero {
-    padding-block: var(--space-16) var(--space-10);
+    padding-block: calc(var(--header-height) + var(--space-12)) var(--space-10);
   }
   .heroGrid {
     /* The copy gets the room; the spotlight is a fixed rail beside it. This
@@ -148,13 +269,16 @@
     gap: var(--space-16);
     align-items: start;
   }
+  /* Glass on the band, not a white card cut out of it: the hero is one
+     surface, and a panel that opaque reads as a different page pasted on. */
   .spotlight {
     display: block;
     padding: var(--space-5);
-    background-color: var(--bg-surface);
-    border: 1px solid var(--border-hairline);
+    background-color: var(--surface-glass-onDeep);
+    border: 1px solid var(--border-onDeep);
     border-radius: var(--radius-xl);
-    box-shadow: var(--elevation-2);
+    backdrop-filter: blur(var(--blur-chrome));
+    box-shadow: var(--glow-soft);
   }
 }
 

@@ -42,6 +42,8 @@ export function RequestCard({ request }: { request: PublicBloodRequest }) {
         aria-label={`${announceBloodType(bloodType)} needed at ${hospitalName}, ${city}`}
       >
         <span className={styles.stripe} aria-hidden="true" />
+        {/* A highlight that crosses the card once on hover — see .sheen. */}
+        <span className={styles.sheen} aria-hidden="true" />
 
         <div className={styles.top}>
           <BloodTypeBadge type={bloodType} size="lg" />

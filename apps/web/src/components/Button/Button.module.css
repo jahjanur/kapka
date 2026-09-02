@@ -74,19 +74,48 @@
 }
 
 /* ── Variant: primary ────────────────────────────────────────────────────── */
+/* A gradient and a glow rather than a flat fill: this is the button the whole
+   product is asking you to press, and --accent alone had it looking like every
+   other red rectangle on the web. The colour underneath is still the token, so
+   a browser without gradient support gets the button that shipped before. */
 .primary {
   background-color: var(--accent);
+  background-image: var(--gradient-accent);
   color: var(--fg-onAccent);
-  box-shadow: var(--shadow-accent);
+  box-shadow: var(--glow-accent);
 }
 @media (hover: hover) {
   .primary:hover:not(:disabled) {
     background-color: var(--accent-hover);
+    background-image: var(--gradient-accent-hover);
+    box-shadow: var(--glow-accent-strong);
+    translate: 0 -1px;
   }
 }
 .primary:active:not(:disabled) {
   background-color: var(--accent-active);
+  background-image: none;
   box-shadow: none;
+  translate: 0;
+}
+
+/* ── Variant: glass ──────────────────────────────────────────────────────── */
+/* The second action on the hero band. Not `ghost`: a ghost button on a dark
+   surface is grey text on near-black, which is neither legible nor a button. */
+.glass {
+  background-color: var(--surface-glass-onDeep);
+  color: var(--fg-onDeep);
+  border-color: var(--border-onDeep);
+  backdrop-filter: blur(var(--blur-chrome));
+}
+@media (hover: hover) {
+  .glass:hover:not(:disabled) {
+    background-color: color-mix(in oklab, var(--slate-0) 16%, transparent);
+    border-color: color-mix(in oklab, var(--slate-0) 28%, transparent);
+  }
+}
+.glass:active:not(:disabled) {
+  background-color: color-mix(in oklab, var(--slate-0) 6%, transparent);
 }
 
 /* ── Variant: secondary ──────────────────────────────────────────────────── */

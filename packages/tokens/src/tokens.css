@@ -97,6 +97,66 @@
   --accent-border:  var(--crimson-200);
   --accent-ink:     var(--crimson-700);   /* accent text on a light surface */
 
+  /* ── Expressive layer ────────────────────────────────────────────────
+     The product is about blood arriving in time, and until now it said so
+     in flat rectangles. These are the values that let a surface glow, a
+     gradient run, and a dark band sit under an aurora — every one of them
+     built from the ramps above, so there is still no colour in this system
+     that is not a token.
+
+     They are theme-independent on purpose: a deep band is deep in both
+     themes, and glass takes its tint from whatever --bg-surface is.       */
+
+  /* Fills that move: 135deg so the light reads as coming from one place
+     across the whole product, never per component. */
+  --gradient-accent: linear-gradient(135deg, var(--crimson-500), var(--crimson-700));
+  --gradient-accent-hover: linear-gradient(
+    135deg,
+    var(--crimson-400),
+    var(--crimson-600)
+  );
+  /* For text clipped to a gradient — lighter, because it is thin. */
+  --gradient-ink: linear-gradient(100deg, var(--crimson-300), var(--crimson-500));
+
+  /* The dark band the feed opens on. Always dark, in both themes. */
+  --surface-deep: var(--slate-1000);
+  --fg-onDeep: var(--slate-0);
+  --fg-onDeep-muted: var(--slate-300);
+  --border-onDeep: color-mix(in oklab, var(--slate-0) 14%, transparent);
+  /* A faint technical rule, for the grid under the aurora. */
+  --line-onDeep: color-mix(in oklab, var(--slate-0) 5%, transparent);
+
+  /* The aurora itself: three washes that drift over the deep surface. */
+  --aurora-core: color-mix(in oklab, var(--crimson-500) 58%, transparent);
+  --aurora-edge: color-mix(in oklab, var(--crimson-700) 45%, transparent);
+  --aurora-far: color-mix(in oklab, var(--info) 22%, transparent);
+
+  /* Chrome that lets the page through it — a tinted pane, not a colour. */
+  --surface-glass: color-mix(in oklab, var(--bg-surface) 72%, transparent);
+  --surface-glass-onDeep: color-mix(in oklab, var(--slate-0) 8%, transparent);
+
+  /* A segmented control's own three values, named so a container can hand it
+     a different set — the header does exactly that where it lies over the
+     feed's dark band, and every other screen gets these. */
+  --control-surface: var(--bg-surface-alt);
+  --control-border: var(--border-hairline);
+  --control-ink: var(--fg-secondary);
+
+  /* Mask stops. A mask reads only the alpha channel, so these are not
+     colours in any meaningful sense — but a component writing rgb(0 0 0) is
+     indistinguishable from one hard-coding black, and the rule that catches
+     the second has to catch the first. */
+  --mask-opaque: rgb(0 0 0);
+  --mask-fade: rgb(0 0 0 / 90%);
+
+  /* Light thrown by something, rather than a shadow cast under it. */
+  --glow-accent: 0 0.5rem 1.75rem -0.5rem
+    color-mix(in oklab, var(--crimson-500) 55%, transparent);
+  --glow-accent-strong: 0 0.75rem 2.5rem -0.5rem
+    color-mix(in oklab, var(--crimson-500) 70%, transparent);
+  --glow-soft: 0 0.5rem 2rem -0.75rem
+    color-mix(in oklab, var(--crimson-500) 35%, transparent);
+
   --focus-ring: var(--crimson-500);
 
   /* ── Blood-type coding (§6.3) ────────────────────────────────────────── */

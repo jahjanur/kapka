@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AppHeader,
   BloodTypeBadge,
@@ -17,8 +17,10 @@ import {
   Select,
   Stack,
   UrgencyPill,
+  VitalSign,
 } from '../components';
 import { BLOOD_TYPES, CITIES, type BloodType, type Urgency } from '@kapka/shared';
+import { useCountUp } from '../lib/useCountUp';
 import { useRequests } from '../lib/useRequests';
 import { useSession } from '../lib/session';
 import { timeAgo } from '../lib/relativeTime';
@@ -29,6 +31,30 @@ const URGENCIES: Urgency[] = ['critical', 'urgent', 'routine'];
 const URGENCY_RANK: Record<Urgency, number> = { critical: 0, urgent: 1, routine: 2 };
 
 const titleCase = (value: string) => (value[0] ?? '').toUpperCase() + value.slice(1);
+
+/**
+ * One tile of the stat strip. The number counts up to itself when it lands —
+ * see useCountUp, which does nothing at all under prefers-reduced-motion.
+ */
+function Stat({
+  label,
+  value,
+  loading,
+}: {
+  label: string;
+  value: number;
+  loading: boolean;
+}) {
+  const shown = useCountUp(value);
+  return (
+    <div className={styles.stat}>
+      <dt>{label}</dt>
+      {/* Tabular figures and a reserved width, so a count from 0 to 12 does
+          not shuffle the two tiles beside it on every frame. */}
+      <dd data-numeric>{loading ? '—' : shown}</dd>
+    </div>
+  );
+}
 
 export default function Feed() {
   const { data, isLoading, error, refetch } = useRequests();
@@ -57,11 +83,31 @@ export default function Feed() {
   const [bloodType, setBloodType] = useState<BloodType | null>(null);
   const [city, setCity] = useState('');
   const [scrolled, setScrolled] = useState(false);
+  /* True while the hero is still passing under the header — see AppHeader's
+     `overlay`. Starts true because the page opens at the top, and the first
+     scroll event is the one that can turn it off; starting false would flash
+     a white bar over the dark band on every load. */
+  const [overHero, setOverHero] = useState(true);
+  const hero = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 240);
+    const onScroll = () => {
+      setScrolled(window.scrollY > 240);
+      /* The bar is over the band until the band's last pixel has gone under
+         it. Measured from the element rather than from a constant, because
+         the hero is three different heights across the breakpoints. */
+      const bottom = hero.current?.getBoundingClientRect().bottom ?? 0;
+      setOverHero(bottom > 0);
+    };
+    onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    /* A resize can change the hero's height without a scroll — rotating a
+       phone, or the lg breakpoint arriving. */
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
   }, []);
 
   const requests = useMemo(() => data ?? [], [data]);
@@ -106,10 +152,17 @@ export default function Feed() {
 
   return (
     <>
-      <AppHeader />
+      <AppHeader overlay={overHero} />
 
-      {/* ── Hero ──────────────────────────────────────────────────────────── */}
-      <section className={styles.hero}>
+      {/* ── Hero ──────────────────────────────────────────────────────────
+          A deep band rather than a tinted one, lit from behind by three
+          slow washes and ruled with a faint grid. It is the only dark
+          surface in the product and it is dark in both themes: this is the
+          one screen everybody sees first, and it should look like an
+          instrument rather than a document.                              */}
+      <section className={styles.hero} ref={hero}>
+        <div className={styles.aurora} aria-hidden="true" />
+        <div className={styles.grid} aria-hidden="true" />
         <Container>
           <div className={styles.heroGrid}>
             <div className={styles.heroCopy}>
@@ -117,7 +170,9 @@ export default function Feed() {
                 <span className={styles.pulse} aria-hidden="true" />
                 Live in North Macedonia
               </p>
-              <h1 className={styles.heroTitle}>Someone nearby needs blood.</h1>
+              <h1 className={styles.heroTitle}>
+                Someone nearby <span className={styles.heroTitleInk}>needs blood.</span>
+              </h1>
               <p className={styles.heroLead}>
                 Register once with your blood type and city. When a matching request is
                 approved, we email you — no searching, no phone tree.
@@ -138,7 +193,7 @@ export default function Feed() {
                     nothing above it. */}
                 <Button
                   to={PATHS.postRequest}
-                  variant={heroPrimary ? 'ghost' : 'primary'}
+                  variant={heroPrimary ? 'glass' : 'primary'}
                   size="lg"
                 >
                   Post a request
@@ -146,19 +201,15 @@ export default function Feed() {
                 </Button>
               </div>
 
+              {/* The trace is the product's pulse, and it belongs where the
+                  numbers are: this strip is the only part of the page that
+                  says how much is happening right now. */}
+              <VitalSign className={styles.vital} />
+
               <dl className={styles.stats}>
-                <div className={styles.stat}>
-                  <dt>Open requests</dt>
-                  <dd data-numeric>{isLoading ? '—' : stats.open}</dd>
-                </div>
-                <div className={styles.stat}>
-                  <dt>Critical</dt>
-                  <dd data-numeric>{isLoading ? '—' : stats.critical}</dd>
-                </div>
-                <div className={styles.stat}>
-                  <dt>Cities</dt>
-                  <dd data-numeric>{isLoading ? '—' : stats.cities}</dd>
-                </div>
+                <Stat label="Open requests" value={stats.open} loading={isLoading} />
+                <Stat label="Critical" value={stats.critical} loading={isLoading} />
+                <Stat label="Cities" value={stats.cities} loading={isLoading} />
               </dl>
             </div>
 

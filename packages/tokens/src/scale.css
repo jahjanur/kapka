@@ -116,6 +116,18 @@
      not a response to something the user just did. */
   --dur-pulse: 1.4s;
 
+  /* Ambient motion, in the order of how much of it there is. Nothing here is
+     a response to an action — it is the product looking alive — so all of it
+     is slow enough to be noticed only if you look, and all of it stops dead
+     under prefers-reduced-motion (see global.css).                          */
+  --dur-beat: 2.2s; /* one cardiac cycle: the vital trace, the logo */
+  --dur-sweep: 2.8s; /* a highlight travelling across a surface */
+  --dur-drift: 24s; /* the aurora behind the hero */
+
+  /* Fluid rather than snappy: for anything that represents a liquid or a
+     signal, where an abrupt stop reads as a glitch. */
+  --ease-fluid: cubic-bezier(0.37, 0, 0.63, 1);
+
   /* ── Opacity ─────────────────────────────────────────────────────────── */
   /* One value for "this control is disabled". Four components had drifted to
      0.5, 0.55 and 0.6 for the same state. */

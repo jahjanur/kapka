@@ -11,20 +11,23 @@
    name, everything else stacked under it — because three columns of this
    at phone width is four characters each.
    ---------------------------------------------------------------------- */
+/* The feed's band, at card scale: a wash of the product's colour behind the
+   person's own name. The washes are the same three the hero uses, at a
+   fraction of the strength — this is a page you work on, not a page that
+   opens a product. */
 .identity {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   margin-block-end: var(--space-6);
   padding: var(--space-5);
-  /* Both stops are tokens: the accent wash gives the header of a personal
-     page some warmth without a second surface colour entering the system. */
-  background-image: linear-gradient(
-    180deg,
-    var(--accent-surface) 0%,
-    var(--bg-surface) 60%
-  );
   background-color: var(--bg-surface);
+  background-image:
+    radial-gradient(60% 120% at 8% 0%, var(--accent-surface) 0%, transparent 60%),
+    radial-gradient(50% 100% at 95% 10%, var(--accent-surface) 0%, transparent 65%);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-xl);
-  box-shadow: var(--elevation-1);
+  box-shadow: var(--elevation-1), var(--glow-soft);
 }
 
 .eyebrow {
@@ -43,6 +46,7 @@
 }
 
 .identityAvatar {
+  position: relative;
   display: grid;
   place-items: center;
   flex: none;
@@ -50,9 +54,34 @@
   block-size: 3.5rem;
   border-radius: var(--radius-full);
   background-color: var(--accent);
+  background-image: var(--gradient-accent);
   color: var(--fg-onAccent);
   font-size: var(--text-xl);
   font-weight: var(--weight-bold);
+  box-shadow: var(--glow-accent);
+}
+
+/* A ring that breathes out of the avatar, on the product's own beat. It is
+   the only motion on this page: a profile is a place to read and change
+   settings, and anything more here would be decoration for its own sake. */
+@media (prefers-reduced-motion: no-preference) {
+  .identityAvatar::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    animation: halo calc(var(--dur-beat) * 2) var(--ease-fluid) infinite;
+  }
+}
+
+@keyframes halo {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 45%, transparent);
+  }
+  60%,
+  100% {
+    box-shadow: 0 0 0 0.75rem transparent;
+  }
 }
 
 /* min-inline-size: 0, or a long address stretches the row instead of

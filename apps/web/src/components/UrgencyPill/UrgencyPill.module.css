@@ -29,6 +29,27 @@
   border-color: var(--danger);
 }
 
+/* Critical is the only level that moves, and it moves in a ring outside its
+   own box so nothing under it reflows. In step with the card edge beside it,
+   because two different rhythms on one card is a fidget rather than a pulse. */
+@media (prefers-reduced-motion: no-preference) {
+  .critical {
+    animation: alarm var(--dur-sweep) var(--ease-fluid) infinite;
+  }
+}
+
+@keyframes alarm {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--danger) 45%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 0.35rem transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
 .icon {
   font-size: 1em;
 }

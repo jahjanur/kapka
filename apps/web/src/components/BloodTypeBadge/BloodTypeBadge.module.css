@@ -60,9 +60,20 @@
 }
 
 /* ── Rh sign selects fill vs outline ─────────────────────────────────────── */
+/* The filled half also gets depth: a highlight along the top edge and a glow
+   in its own hue underneath. Both are built from --bt-solid-bg, so a badge
+   still carries exactly one colour and the ABO hue is still the only thing
+   that varies between them. */
 .badge[data-rh='positive'] {
   background-color: var(--bt-solid-bg);
+  background-image: linear-gradient(
+    160deg,
+    color-mix(in oklab, var(--slate-0) 22%, transparent),
+    transparent 55%
+  );
   color: var(--bt-solid-fg);
+  box-shadow: 0 0.25rem 0.75rem -0.25rem
+    color-mix(in oklab, var(--bt-solid-bg) 60%, transparent);
 }
 .badge[data-rh='negative'] {
   background-color: var(--bt-surface);

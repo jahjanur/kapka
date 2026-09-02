@@ -1,0 +1,118 @@
+/* ============================================================================
+   VitalSign — a cardiac trace with a drop of blood running along it.
+
+   Two animations, one duration: the line draws itself over --dur-beat, and
+   the drop covers the same path in the same time, so the drop is always at
+   the head of the line rather than near it.
+   ========================================================================= */
+
+/* Its own aspect ratio rather than a fixed height. preserveAspectRatio="none"
+   would let the box stretch the viewBox — and the first thing that goes is the
+   drop, which becomes an ellipse the wider the screen gets. */
+.svg {
+  display: block;
+  inline-size: 100%;
+  aspect-ratio: 320 / 64;
+  overflow: visible;
+}
+
+.ghost,
+.trace {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ghost {
+  stroke: var(--border-onDeep);
+  stroke-width: 1.5;
+}
+
+.trace {
+  stroke: var(--accent);
+  stroke-width: 2;
+  /* The whole path length, near enough — an over-estimate only means the
+     dash gap is longer than it needs to be, which is invisible. */
+  stroke-dasharray: 700;
+  filter: drop-shadow(0 0 6px var(--aurora-core));
+}
+
+.drop {
+  fill: var(--fg-onDeep);
+}
+
+/* The halo swells by growing its radius rather than by scaling. A transform
+   would fight the one offset-path is already applying to place it on the
+   trace — which is exactly what it did: the halo drifted off the drop and
+   trailed it around the curve. */
+.halo {
+  fill: var(--aurora-core);
+  r: 7;
+}
+
+/* Motion is opt-in, and global.css stops all of it under
+   prefers-reduced-motion. Still rest the trace somewhere deliberate: drawn,
+   with the drop at the end of it rather than parked mid-spike. */
+.trace {
+  stroke-dashoffset: 0;
+}
+.drop,
+.halo {
+  offset-path: path(
+    'M0 32 H46 q6 0 8-6 t8 6 H92 l7-26 6 52 7-26 H150 q7 0 9-8 t9 8 H320'
+  );
+  /* Resting on the spike rather than at the end of the line. This is the frame
+     somebody with prefers-reduced-motion sees for good, and the far right edge
+     is where the drop is least visible and says least. */
+  offset-distance: 34%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .trace {
+    animation: draw var(--dur-beat) var(--ease-fluid) infinite;
+  }
+
+  .drop,
+  .halo {
+    animation: run var(--dur-beat) var(--ease-fluid) infinite;
+  }
+
+  .halo {
+    animation-name: run, breathe;
+    animation-duration: var(--dur-beat), var(--dur-beat);
+    animation-timing-function: var(--ease-fluid), var(--ease-fluid);
+    animation-iteration-count: infinite, infinite;
+  }
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: 700;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes run {
+  from {
+    offset-distance: 0%;
+  }
+  to {
+    offset-distance: 100%;
+  }
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.3;
+    r: 6;
+  }
+  /* The spike is roughly a third of the way along, and the halo swells as the
+     drop goes through it — the one moment in the loop that carries a beat. */
+  32% {
+    opacity: 0.9;
+    r: 12;
+  }
+}

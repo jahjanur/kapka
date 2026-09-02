@@ -151,10 +151,20 @@ describe('the public feed', () => {
     const strip = (await screen.findByText('Open requests')).closest('dl');
     if (!strip) throw new Error('no stat strip');
 
-    // 3 open, 1 critical, 2 cities.
-    expect(within(strip).getByText('3')).toBeInTheDocument();
-    expect(within(strip).getByText('1')).toBeInTheDocument();
-    expect(within(strip).getByText('2')).toBeInTheDocument();
+    /* 3 open, 1 critical, 2 cities — awaited, because each number counts up
+       to itself when the data lands rather than appearing finished (see
+       useCountUp, which does nothing under prefers-reduced-motion). */
+    await waitFor(
+      () => {
+        expect(within(strip).getByText('3')).toBeInTheDocument();
+        expect(within(strip).getByText('1')).toBeInTheDocument();
+        expect(within(strip).getByText('2')).toBeInTheDocument();
+      },
+      /* Longer than the count itself: the whole suite runs in parallel, and a
+         loaded machine can take well past a second to deliver 700ms of
+         animation frames. */
+      { timeout: 3000 },
+    );
 
     // Narrowing the list must not change what the strip reports: it
     // describes what is open, and a filter is the reader's own view of it.

@@ -40,12 +40,46 @@
 
 @media (hover: hover) {
   .card:hover {
-    border-color: var(--border-default);
-    box-shadow: var(--elevation-3);
-    translate: 0 -2px;
+    border-color: var(--accent-border);
+    box-shadow: var(--elevation-3), var(--glow-soft);
+    translate: 0 -3px;
   }
   .card:hover .cta {
     color: var(--accent);
+  }
+  /* One highlight crossing the card, once, on the way in. Not a loop: a card
+     that shimmers forever is a card nobody can read. */
+  .card:hover .sheen {
+    animation: sheen var(--dur-sweep) var(--ease-out);
+  }
+}
+
+/* The sheen lives on its own element so it can be clipped by the card's
+   radius and stay under the text. */
+.sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: linear-gradient(
+    100deg,
+    transparent 35%,
+    var(--surface-glass) 50%,
+    transparent 65%
+  );
+  background-size: 300% 100%;
+  background-position: 150% 0;
+  opacity: 0;
+}
+
+@keyframes sheen {
+  from {
+    background-position: 150% 0;
+    opacity: 0.9;
+  }
+  to {
+    background-position: -50% 0;
+    opacity: 0;
   }
 }
 
@@ -54,22 +88,49 @@
 }
 
 /* The list is scanned by severity before it is read. A 3px edge does that
-   without adding a fourth colour to the card's interior. */
+   without adding a fourth colour to the card's interior — now lit, so the
+   severity registers at the edge of vision rather than only when looked at. */
 .stripe {
   position: absolute;
   inset-block: 0;
   inset-inline-start: 0;
   inline-size: 3px;
+  z-index: 1;
   background-color: var(--border-default);
 }
 .card[data-urgency='critical'] .stripe {
   background-color: var(--danger);
+  box-shadow: 0 0 0.75rem 0 var(--danger);
+}
+
+/* The one card that should be able to catch an eye already looking elsewhere.
+   Two and a half seconds a beat, on 3px of edge — global.css stops it dead
+   for anyone who has asked for less motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .card[data-urgency='critical'] .stripe {
+    animation: bleed var(--dur-sweep) var(--ease-fluid) infinite;
+  }
+}
+
+@keyframes bleed {
+  50% {
+    opacity: 0.55;
+  }
 }
 .card[data-urgency='urgent'] .stripe {
   background-color: var(--warning);
 }
 .card[data-urgency='routine'] .stripe {
   background-color: var(--info);
+}
+
+.top,
+.hospital,
+.meta,
+.note,
+.cta {
+  position: relative;
+  z-index: 1;
 }
 
 .top {
