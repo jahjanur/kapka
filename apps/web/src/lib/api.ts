@@ -13,6 +13,7 @@ import type {
   RegisterInput,
   UserRole,
 } from '@kapka/shared';
+import { DONATION_INTERVAL_DAYS } from '@kapka/shared';
 import { SEED_CONTACT, SEED_REQUESTS } from './seedRequests';
 
 export interface SessionUser {
@@ -361,7 +362,7 @@ const DEMO_USER: SessionUser = {
   emailVerified: true,
 };
 
-let demoProfile: DonorProfile = {
+const DEMO_PROFILE: DonorProfile = {
   bloodType: 'O-',
   city: 'Skopje',
   lastDonationDate: null,
@@ -369,6 +370,30 @@ let demoProfile: DonorProfile = {
   notifyByEmail: true,
   eligibleFrom: null,
 };
+
+/*
+ * Who this tab is signed in as.
+ *
+ * Registering used to hand back a session in the visitor's own name and then
+ * every later call answered about somebody else: you signed up as yourself
+ * and your profile said Demo Donor, of Skopje, O−. A demo that contradicts
+ * what it was just told teaches the reader that nothing they type matters.
+ *
+ * In memory, like the real session: there is no server here to hold a refresh
+ * cookie, so a reload signs you out, which is at least the truth.
+ */
+let demoUser: SessionUser = DEMO_USER;
+let demoProfile: DonorProfile = { ...DEMO_PROFILE };
+/** False once somebody has registered in this tab — see listMyNotifications. */
+let demoUntouched = true;
+
+/** What the API computes in SQL (§5.2), close enough for a build with no API. */
+function demoEligibleFrom(lastDonationDate: string | null): string | null {
+  if (!lastDonationDate) return null;
+  const eligible = new Date(`${lastDonationDate}T00:00:00`);
+  eligible.setDate(eligible.getDate() + DONATION_INTERVAL_DAYS);
+  return eligible > new Date() ? eligible.toISOString().slice(0, 10) : null;
+}
 
 function createDemoClient(): ApiClient {
   const latency = <T>(value: T): Promise<T> =>
@@ -408,16 +433,24 @@ function createDemoClient(): ApiClient {
           'email',
         );
       }
-      return {
-        user: {
-          id: 'demo-user',
-          email: input.email,
-          fullName: input.fullName,
-          role: 'donor',
-          emailVerified: false,
-        },
-        accessToken: 'demo-access-token',
+      demoUser = {
+        id: 'demo-user',
+        email: input.email,
+        fullName: input.fullName,
+        role: 'donor',
+        emailVerified: false,
       };
+      demoProfile = {
+        bloodType: input.bloodType,
+        city: input.city,
+        lastDonationDate: input.lastDonationDate ?? null,
+        isAvailable: true,
+        notifyByEmail: true,
+        eligibleFrom: demoEligibleFrom(input.lastDonationDate ?? null),
+      };
+      demoUntouched = false;
+
+      return { user: demoUser, accessToken: 'demo-access-token' };
     },
     async createRequest(input) {
       await latency(null);
@@ -447,7 +480,7 @@ function createDemoClient(): ApiClient {
     },
     async getMe() {
       await latency(null);
-      return { user: DEMO_USER, donorProfile: { ...demoProfile } };
+      return { user: demoUser, donorProfile: { ...demoProfile } };
     },
     async updateDonorProfile(patch) {
       await latency(null);
@@ -475,12 +508,12 @@ function createDemoClient(): ApiClient {
       return {
         exportedAt: new Date().toISOString(),
         account: {
-          id: DEMO_USER.id,
-          email: DEMO_USER.email,
-          fullName: DEMO_USER.fullName,
+          id: demoUser.id,
+          email: demoUser.email,
+          fullName: demoUser.fullName,
           phone: null,
-          role: DEMO_USER.role,
-          emailVerified: DEMO_USER.emailVerified,
+          role: demoUser.role,
+          emailVerified: demoUser.emailVerified,
           createdAt: new Date().toISOString(),
         },
         donorProfile: { ...demoProfile },
@@ -493,6 +526,11 @@ function createDemoClient(): ApiClient {
     },
     async listMyNotifications() {
       await latency(null);
+      /* Two canned rows so both states are visible locally — but only for the
+         stock demo account. Somebody who has just registered in this tab has
+         been emailed about nothing, and showing them otherwise would be the
+         same lie as the profile in somebody else's name. */
+      if (!demoUntouched) return [];
       const [first, second] = SEED_REQUESTS;
       if (!first || !second) return [];
       return [
@@ -561,13 +599,8 @@ function createDemoClient(): ApiClient {
           'token',
         );
       }
-      return {
-        id: 'demo-user',
-        email: 'demo@example.com',
-        fullName: 'Demo Donor',
-        role: 'donor',
-        emailVerified: true,
-      };
+      demoUser = { ...demoUser, emailVerified: true };
+      return demoUser;
     },
     async resendVerification() {
       await latency(null);

@@ -11,6 +11,7 @@ import {
 } from '@kapka/shared';
 import {
   AppHeader,
+  BloodTypeBadge,
   BloodTypeLabel,
   Button,
   Container,
@@ -240,43 +241,50 @@ export default function Dashboard() {
       <AppHeader />
       <div className={styles.page}>
         <Container>
-          <div className={styles.head}>
-            <h1 className={styles.title}>Your profile</h1>
-            <p className={styles.lead}>
-              Who we have you down as, what we use to decide whether a request reaches
-              you, and the switch that stops it.
-            </p>
-          </div>
-
           {/* ── Who you are ────────────────────────────────────────────────
-              The page said whose settings these were nowhere at all. It is
-              also the only place outside the minute after registering that
-              can say the address is still unconfirmed — and an unconfirmed
-              donor is not in the matching query, however complete the rest
-              of this page looks (§12).                                     */}
+              The heading is the person, not the word "profile": a page about
+              you that opens with a category label and finds your name three
+              paragraphs down is a settings screen wearing a hat.
+
+              It is also the only place outside the minute after registering
+              that can say the address is still unconfirmed — and an
+              unconfirmed donor is not in the matching query, however
+              complete the rest of this page looks (§12).                   */}
           {me && (
-            <section className={styles.identity}>
-              <span className={styles.identityAvatar} aria-hidden="true">
-                {me.fullName.slice(0, 1).toUpperCase()}
-              </span>
-              <div className={styles.identityWho}>
-                <h2 className={styles.identityName}>{me.fullName}</h2>
-                <p className={styles.identityEmail}>{me.email}</p>
-                <p className={styles.identityRole}>{ACCOUNT_TYPE[me.role]}</p>
+            <header className={styles.identity}>
+              <p className={styles.eyebrow}>Your profile</p>
+
+              <div className={styles.identityTop}>
+                <span className={styles.identityAvatar} aria-hidden="true">
+                  {me.fullName.slice(0, 1).toUpperCase()}
+                </span>
+                <div className={styles.identityWho}>
+                  <h1 className={styles.title}>{me.fullName}</h1>
+                  <p className={styles.identityEmail}>{me.email}</p>
+                </div>
               </div>
-              <div
-                className={cx(
-                  styles.verify,
-                  me.emailVerified ? styles.verifyDone : styles.verifyPending,
-                )}
-              >
-                <p className={styles.verifyLine}>
+
+              {/* Never the colour alone: each chip carries its own words, and
+                  the pending one carries an icon as well. */}
+              <ul className={styles.chips}>
+                <li className={styles.chip}>{ACCOUNT_TYPE[me.role]}</li>
+                <li
+                  className={cx(
+                    styles.chip,
+                    me.emailVerified ? styles.chipDone : styles.chipPending,
+                  )}
+                >
                   <Icon name={me.emailVerified ? 'checkCircle' : 'alertCircle'} />
-                  {me.emailVerified
-                    ? 'Email confirmed'
-                    : 'Email not confirmed — we cannot email you about a request until it is'}
-                </p>
-                {!me.emailVerified && (
+                  {me.emailVerified ? 'Email confirmed' : 'Email not confirmed'}
+                </li>
+              </ul>
+
+              {!me.emailVerified && (
+                <div className={styles.verify}>
+                  <p className={styles.verifyLine}>
+                    Until you open the link we sent to {me.email}, no request will ever
+                    reach you — a donor we cannot confirm is left out of the matching.
+                  </p>
                   <Button
                     variant="secondary"
                     size="sm"
@@ -286,9 +294,31 @@ export default function Dashboard() {
                   >
                     Send the link again
                   </Button>
-                )}
-              </div>
-            </section>
+                </div>
+              )}
+
+              {/* The two facts that decide which requests are yours, where
+                  somebody looks first. Two and not three: whether the emails
+                  are on is the whole subject of the card directly below, and
+                  a summary that repeats the thing under it is noise. Changing
+                  either is further down, where the consequence is explained.
+                  Both are also side by side at 360px rather than two-and-one,
+                  which is what a third would cost here. */}
+              {profile && (
+                <dl className={styles.facts}>
+                  <div className={styles.fact}>
+                    <dt>Blood type</dt>
+                    <dd>
+                      <BloodTypeBadge type={profile.bloodType} />
+                    </dd>
+                  </div>
+                  <div className={styles.fact}>
+                    <dt>City</dt>
+                    <dd className={styles.factText}>{profile.city}</dd>
+                  </div>
+                </dl>
+              )}
+            </header>
           )}
 
           {isLoading && (
