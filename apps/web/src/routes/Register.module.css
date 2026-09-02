@@ -67,6 +67,18 @@
   composes: pillButton from '../components/Field/Pill.module.css';
 }
 
+/* The city select, in the same pill as the fields above it. It keeps its
+   right-hand padding: the chevron the Select draws lives there. */
+.pillField {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.pillSelect {
+  composes: pillInput from '../components/Field/Pill.module.css';
+  padding-inline-end: var(--space-8);
+}
+
 /* ── Steps ───────────────────────────────────────────────────────────────
    Phone only. The step chrome is not hidden at wider widths — it is never
    rendered, because whether the form has steps at all is a decision the

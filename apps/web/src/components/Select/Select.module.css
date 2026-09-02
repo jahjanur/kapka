@@ -12,6 +12,9 @@
 
 .select {
   composes: control from '../Field/Control.module.css';
+  /* See --control-scheme: this is what decides whether the popup the browser
+     opens is light or dark, and it has to agree with the page. */
+  color-scheme: var(--control-scheme);
   /* Room for the chevron, and never under it. */
   padding-inline-end: var(--space-10);
   appearance: none;

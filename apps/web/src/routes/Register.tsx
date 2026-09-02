@@ -483,20 +483,26 @@ export default function Register() {
                 error={errors.city}
                 help="We match donors to requests in the same city."
               >
-                <Select
-                  placeholder="Choose your city"
-                  value={city}
-                  onChange={(event) => {
-                    setCity(event.target.value);
-                    checkField('city', { city: event.target.value });
-                  }}
-                >
-                  {CITIES.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </Select>
+                <span className={styles.pill}>
+                  <Icon name="mapPin" className={styles.pillIcon} />
+                  <span className={styles.pillField}>
+                    <Select
+                      className={styles.pillSelect}
+                      placeholder="Choose your city"
+                      value={city}
+                      onChange={(event) => {
+                        setCity(event.target.value);
+                        checkField('city', { city: event.target.value });
+                      }}
+                    >
+                      {CITIES.map((name) => (
+                        <option key={name} value={name}>
+                          {name}
+                        </option>
+                      ))}
+                    </Select>
+                  </span>
+                </span>
               </Field>
 
               <fieldset className={styles.fieldset}>

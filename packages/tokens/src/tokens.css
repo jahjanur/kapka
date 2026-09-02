@@ -141,6 +141,12 @@
   --control-surface: var(--bg-surface-alt);
   --control-border: var(--border-hairline);
   --control-ink: var(--fg-secondary);
+  /* A <select>'s popup is drawn by the browser, and it takes its light or
+     dark appearance from the nearest color-scheme rather than from anything
+     we can style. Left to the root's "light dark", somebody running a dark
+     operating system got a black popup over this light page. Bound to the
+     theme instead, it always matches the page it opened from. */
+  --control-scheme: light;
 
   /* Mask stops. A mask reads only the alpha channel, so these are not
      colours in any meaningful sense — but a component writing rgb(0 0 0) is
@@ -268,6 +274,9 @@
     --aurora-edge: color-mix(in oklab, var(--crimson-800) 60%, transparent);
     --aurora-far:  color-mix(in oklab, var(--info) 18%, transparent);
     --line-grid:   color-mix(in oklab, var(--slate-0) 5%, transparent);
+
+    /* The browser draws the select popup; this is what makes it dark too. */
+    --control-scheme: dark;
   }
 }
 
@@ -341,6 +350,9 @@
   --aurora-edge: color-mix(in oklab, var(--crimson-800) 60%, transparent);
   --aurora-far:  color-mix(in oklab, var(--info) 18%, transparent);
   --line-grid:   color-mix(in oklab, var(--slate-0) 5%, transparent);
+
+  /* The browser draws the select popup; this is what makes it dark too. */
+  --control-scheme: dark;
 }
 
 /* Keep the native form-control / scrollbar rendering in step with the
