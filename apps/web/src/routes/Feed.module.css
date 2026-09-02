@@ -65,7 +65,7 @@
   position: relative;
   display: grid;
   /* The copy leads and the drop takes what is left, at every width. */
-  grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.55fr);
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
   align-items: center;
   gap: var(--space-2);
 }
@@ -74,8 +74,11 @@
   min-inline-size: 0;
 }
 
+/* Two lines on a phone, which is what the column beside the illustration
+   has room for — at --text-3xl "Be someone's" broke across two lines by
+   itself and the sentence took three. */
 .heroTitle {
-  font-size: var(--text-3xl);
+  font-size: var(--text-2xl);
   letter-spacing: var(--tracking-tight);
   text-wrap: balance;
 }
@@ -111,11 +114,23 @@
 }
 
 /* Larger than its column and bleeding off the right edge, which is what
-   stops it looking like a picture pasted into a box. The hero clips it. */
+   stops it looking like a picture pasted into a box. The hero clips it.
+
+   The blend is what makes the white it was shot on disappear into the wash
+   behind it — see --image-blend, which the dark theme turns off and swaps for
+   a light card, because multiplying a photograph onto near-black leaves a
+   silhouette. */
 .heroArt {
-  inline-size: 165%;
+  display: block;
+  /* Wider than the column it is in, so it runs past the gutter rather than
+     sitting in a box of its own. */
+  inline-size: 150%;
+  block-size: auto;
   margin-inline-start: auto;
   margin-inline-end: calc(var(--container-gutter) * -1);
+  mix-blend-mode: var(--image-blend);
+  background-color: var(--image-surface);
+  border-radius: var(--radius-xl);
 }
 
 /* The trace, as the line the band ends on. */
@@ -162,7 +177,7 @@
   }
 
   .heroArt {
-    inline-size: 130%;
+    inline-size: 115%;
   }
 }
 

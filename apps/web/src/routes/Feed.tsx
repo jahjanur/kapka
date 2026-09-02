@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   AppHeader,
-  DropletArt,
   BloodTypeLabel,
   Button,
   Container,
@@ -180,7 +179,21 @@ export default function Feed() {
               </div>
             </div>
 
-            <DropletArt className={styles.heroArt} />
+            {/* Decorative: the sentence beside it says everything it says.
+                Sized in the markup as well as the stylesheet, so the space it
+                will occupy is known before it arrives and nothing under it
+                jumps when it does. */}
+            <img
+              className={styles.heroArt}
+              src="/img/hero-drop.jpg"
+              alt=""
+              width={804}
+              height={900}
+              /* The largest thing on the first screen, so it is fetched with
+                 the markup rather than after it. */
+              fetchPriority="high"
+              decoding="async"
+            />
           </div>
         </Container>
 

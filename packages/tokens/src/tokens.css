@@ -148,6 +148,14 @@
      theme instead, it always matches the page it opened from. */
   --control-scheme: light;
 
+  /* A photograph shot on white, dropped onto a page that is not white.
+     Multiplying makes its background disappear into whatever is behind it,
+     which is what stops it looking like a rectangle pasted on — and it only
+     works on a light ground, so the dark theme turns it off and gives the
+     image a light card to sit on instead. */
+  --image-blend: multiply;
+  --image-surface: transparent;
+
   /* Mask stops. A mask reads only the alpha channel, so these are not
      colours in any meaningful sense — but a component writing rgb(0 0 0) is
      indistinguishable from one hard-coding black, and the rule that catches
@@ -277,6 +285,10 @@
 
     /* The browser draws the select popup; this is what makes it dark too. */
     --control-scheme: dark;
+
+    /* Multiply on a dark ground turns a photograph into a silhouette. */
+    --image-blend: normal;
+    --image-surface: var(--slate-50);
   }
 }
 
@@ -353,6 +365,10 @@
 
   /* The browser draws the select popup; this is what makes it dark too. */
   --control-scheme: dark;
+
+  /* Multiply on a dark ground turns a photograph into a silhouette. */
+  --image-blend: normal;
+  --image-surface: var(--slate-50);
 }
 
 /* Keep the native form-control / scrollbar rendering in step with the
