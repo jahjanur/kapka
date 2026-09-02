@@ -18,6 +18,13 @@ interface AuthLayoutProps {
   children: ReactNode;
   /** Under the card, on the band: the way across to the other screen. */
   footer?: ReactNode;
+  /**
+   * For a screen whose card is short enough to sit in the middle of the
+   * viewport — sign-in. The sign-up form is taller than a phone screen, so it
+   * starts at the top and scrolls, and centring it would only push the first
+   * field further down.
+   */
+  centred?: boolean;
 }
 
 /**
@@ -36,9 +43,10 @@ export function AuthLayout({
   mark = false,
   children,
   footer,
+  centred = false,
 }: AuthLayoutProps) {
   return (
-    <div className={styles.page}>
+    <div className={cx(styles.page, centred && styles.pageCentred)}>
       <div className={styles.band}>
         <div className={styles.bandInner}>
           <div className={styles.top}>

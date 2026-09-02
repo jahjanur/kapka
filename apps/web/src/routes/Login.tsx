@@ -65,6 +65,7 @@ export default function Login() {
       subtitle="Sign in to your account"
       back={PATHS.register}
       mark
+      centred
       footer={
         <>
           Don’t have an account?{' '}
