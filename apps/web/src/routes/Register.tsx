@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type SyntheticEvent } from 'r
 import { Link } from 'react-router-dom';
 import {
   AppHeader,
+  AuthLayout,
   BloodTypeLabel,
   Button,
   Container,
@@ -20,7 +21,6 @@ import {
 } from '@kapka/shared';
 import { BREAKPOINTS } from '@kapka/tokens';
 import { api, ApiError, type Session } from '../lib/api';
-import { cx } from '../lib/cx';
 import { useFieldErrors } from '../lib/useFieldErrors';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { useSession } from '../lib/session';
@@ -298,298 +298,303 @@ export default function Register() {
   const showing = (which: Step) => singlePage || step === which;
 
   return (
-    <>
-      <AppHeader />
+    <AuthLayout
+      title="Create your account"
+      back={PATHS.register}
+      /* The count is the shell's job now, so the form no longer draws its
+         own — but only when there are steps to count. On a wide screen every
+         field is on one page and a "1 of 2" over it would be a lie. */
+      progress={singlePage ? undefined : { step, of: 2 }}
+      footer={
+        <>
+          Already have an account?{' '}
+          <Link className={styles.footerLink} to={PATHS.login}>
+            Sign in
+          </Link>
+        </>
+      }
+    >
+      <div className={styles.layout}>
+        <form
+          className={styles.form}
+          onSubmit={(event) => void handleSubmit(event)}
+          noValidate
+        >
+          {formError && (
+            <p className={styles.formError} role="alert">
+              <Icon name="alertCircle" />
+              {formError}
+            </p>
+          )}
 
-      <div className={styles.page}>
-        <Container>
-          <div className={styles.layout}>
-            <div className={styles.intro}>
-              <h1 className={styles.title}>Become a donor</h1>
-              <p className={styles.lead}>
-                Two minutes now. After that we only contact you when someone near you
-                needs your blood type — never for anything else.
-              </p>
-              <ul className={styles.points}>
-                <li>
-                  <Icon name="checkCircle" />
-                  We email you only for matching requests an admin has approved.
-                </li>
-                <li>
-                  <Icon name="checkCircle" />
-                  Your contact details are never shown on the public feed.
-                </li>
-                <li>
-                  <Icon name="checkCircle" />
-                  Pause the emails, or delete your account, at any time.
-                </li>
-              </ul>
-              {/* Before the form, not buried under the submit button. Somebody
-                  deciding whether to hand over their blood type should be able
-                  to read what happens to it first. */}
-              <p className={styles.privacy}>
-                <Link to={PATHS.privacy}>What we store, and why</Link> — the whole notice
-                is a two-minute read.
-              </p>
-            </div>
-
-            <form
-              className={styles.form}
-              onSubmit={(event) => void handleSubmit(event)}
-              noValidate
-            >
-              {!singlePage && (
-                <div className={styles.progress}>
-                  <p className={styles.stepCount}>Step {step} of 2</p>
-                  <ol className={styles.pips} aria-hidden="true">
-                    <li className={cx(styles.pip, styles.pipOn)} />
-                    <li className={cx(styles.pip, step === 2 && styles.pipOn)} />
-                  </ol>
-                </div>
-              )}
-
-              {formError && (
-                <p className={styles.formError} role="alert">
-                  <Icon name="alertCircle" />
-                  {formError}
-                </p>
-              )}
-
-              {showing(1) && (
-                <section className={styles.group} aria-labelledby="step-1-title">
-                  <h2
-                    id="step-1-title"
-                    className={styles.stepTitle}
-                    /* Focusable only as a target for the step change, never in
+          {showing(1) && (
+            <section className={styles.group} aria-labelledby="step-1-title">
+              <h2
+                id="step-1-title"
+                className={styles.stepTitle}
+                /* Focusable only as a target for the step change, never in
                        the tab order. */
-                    tabIndex={-1}
-                    ref={step === 1 ? stepHeading : null}
+                tabIndex={-1}
+                ref={step === 1 ? stepHeading : null}
+              >
+                {STEP_TITLES[1]}
+              </h2>
+
+              <Field label="Full name" required error={errors.fullName}>
+                <span className={styles.pill}>
+                  <Icon name="user" className={styles.pillIcon} />
+                  <Input
+                    className={styles.pillInput}
+                    autoComplete="name"
+                    value={fullName}
+                    onChange={(event) => {
+                      setFullName(event.target.value);
+                      clearError('fullName');
+                    }}
+                    onBlur={() => {
+                      checkField('fullName');
+                    }}
+                  />
+                </span>
+              </Field>
+
+              <Field
+                label="Email"
+                required
+                error={errors.email}
+                help="Where the notifications go."
+              >
+                <span className={styles.pill}>
+                  <Icon name="mail" className={styles.pillIcon} />
+                  <Input
+                    className={styles.pillInput}
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(event) => {
+                      setEmail(event.target.value);
+                      clearError('email');
+                    }}
+                    onBlur={() => {
+                      checkField('email');
+                    }}
+                  />
+                </span>
+              </Field>
+
+              <Field
+                label="Password"
+                required
+                error={errors.password}
+                help="At least 10 characters."
+              >
+                <div className={styles.pill}>
+                  <Icon name="lock" className={styles.pillIcon} />
+                  <Input
+                    className={styles.pillInput}
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(event) => {
+                      setPassword(event.target.value);
+                      clearError('password');
+                    }}
+                    onBlur={() => {
+                      checkField('password');
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className={styles.pillButton}
+                    onClick={() => setShowPassword((shown) => !shown)}
+                    aria-pressed={showPassword}
                   >
-                    {STEP_TITLES[1]}
-                  </h2>
+                    <Icon name={showPassword ? 'eyeOff' : 'eye'} />
+                    <span className="visually-hidden">
+                      {showPassword ? 'Hide password' : 'Show password'}
+                    </span>
+                  </button>
+                </div>
+              </Field>
 
-                  <Field label="Full name" required error={errors.fullName}>
-                    <Input
-                      autoComplete="name"
-                      value={fullName}
-                      onChange={(event) => {
-                        setFullName(event.target.value);
-                        clearError('fullName');
-                      }}
-                      onBlur={() => {
-                        checkField('fullName');
-                      }}
-                    />
-                  </Field>
+              <Field
+                label="Phone"
+                optional
+                error={errors.phone}
+                help="Only shared with a hospital you have agreed to help."
+              >
+                <span className={styles.pill}>
+                  <Icon name="phone" className={styles.pillIcon} />
+                  <Input
+                    className={styles.pillInput}
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    value={phone}
+                    onChange={(event) => {
+                      setPhone(event.target.value);
+                      clearError('phone');
+                    }}
+                    onBlur={() => {
+                      checkField('phone');
+                    }}
+                  />
+                </span>
+              </Field>
+            </section>
+          )}
 
-                  <Field
-                    label="Email"
-                    required
-                    error={errors.email}
-                    help="Where the notifications go."
-                  >
-                    <Input
-                      type="email"
-                      inputMode="email"
-                      autoComplete="email"
-                      value={email}
-                      onChange={(event) => {
-                        setEmail(event.target.value);
-                        clearError('email');
-                      }}
-                      onBlur={() => {
-                        checkField('email');
-                      }}
-                    />
-                  </Field>
+          {showing(2) && (
+            <section className={styles.group} aria-labelledby="step-2-title">
+              <h2
+                id="step-2-title"
+                className={styles.stepTitle}
+                tabIndex={-1}
+                ref={step === 2 ? stepHeading : null}
+              >
+                {STEP_TITLES[2]}
+              </h2>
 
-                  <Field
-                    label="Password"
-                    required
-                    error={errors.password}
-                    help="At least 10 characters."
-                  >
-                    <div className={styles.password}>
-                      <Input
-                        type={showPassword ? 'text' : 'password'}
-                        autoComplete="new-password"
-                        value={password}
-                        onChange={(event) => {
-                          setPassword(event.target.value);
-                          clearError('password');
-                        }}
-                        onBlur={() => {
-                          checkField('password');
-                        }}
-                      />
-                      <button
-                        type="button"
-                        className={styles.reveal}
-                        onClick={() => setShowPassword((shown) => !shown)}
-                        aria-pressed={showPassword}
-                      >
-                        <Icon name={showPassword ? 'eyeOff' : 'eye'} />
-                        <span className="visually-hidden">
-                          {showPassword ? 'Hide password' : 'Show password'}
-                        </span>
-                      </button>
-                    </div>
-                  </Field>
-
-                  <Field
-                    label="Phone"
-                    optional
-                    error={errors.phone}
-                    help="Only shared with a hospital you have agreed to help."
-                  >
-                    <Input
-                      type="tel"
-                      inputMode="tel"
-                      autoComplete="tel"
-                      value={phone}
-                      onChange={(event) => {
-                        setPhone(event.target.value);
-                        clearError('phone');
-                      }}
-                      onBlur={() => {
-                        checkField('phone');
-                      }}
-                    />
-                  </Field>
-                </section>
-              )}
-
-              {showing(2) && (
-                <section className={styles.group} aria-labelledby="step-2-title">
-                  <h2
-                    id="step-2-title"
-                    className={styles.stepTitle}
-                    tabIndex={-1}
-                    ref={step === 2 ? stepHeading : null}
-                  >
-                    {STEP_TITLES[2]}
-                  </h2>
-
-                  {/* Chips rather than a select: eight options, and the one thing
+              {/* Chips rather than a select: eight options, and the one thing
                       on this form a donor must not get wrong. */}
-                  <Field label="Blood type" required error={errors.bloodType}>
-                    <div className={styles.types} role="group" aria-label="Blood type">
-                      {BLOOD_TYPES.map((type) => (
-                        <FilterChip
-                          key={type}
-                          selected={bloodType === type}
-                          onClick={() => {
-                            setBloodType(type);
-                            /* A chip is a complete answer, not a keystroke, so
+              <Field label="Blood type" required error={errors.bloodType}>
+                <div className={styles.types} role="group" aria-label="Blood type">
+                  {BLOOD_TYPES.map((type) => (
+                    <FilterChip
+                      key={type}
+                      selected={bloodType === type}
+                      onClick={() => {
+                        setBloodType(type);
+                        /* A chip is a complete answer, not a keystroke, so
                                checking it here is not validating as they type. */
-                            checkField('bloodType', { bloodType: type });
-                          }}
-                        >
-                          <BloodTypeLabel type={type} />
-                        </FilterChip>
-                      ))}
-                    </div>
-                  </Field>
-
-                  <Field
-                    label="City"
-                    required
-                    error={errors.city}
-                    help="We match donors to requests in the same city."
-                  >
-                    <Select
-                      placeholder="Choose your city"
-                      value={city}
-                      onChange={(event) => {
-                        setCity(event.target.value);
-                        checkField('city', { city: event.target.value });
+                        checkField('bloodType', { bloodType: type });
                       }}
                     >
-                      {CITIES.map((name) => (
-                        <option key={name} value={name}>
-                          {name}
-                        </option>
-                      ))}
-                    </Select>
+                      <BloodTypeLabel type={type} />
+                    </FilterChip>
+                  ))}
+                </div>
+              </Field>
+
+              <Field
+                label="City"
+                required
+                error={errors.city}
+                help="We match donors to requests in the same city."
+              >
+                <Select
+                  placeholder="Choose your city"
+                  value={city}
+                  onChange={(event) => {
+                    setCity(event.target.value);
+                    checkField('city', { city: event.target.value });
+                  }}
+                >
+                  {CITIES.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+
+              <fieldset className={styles.fieldset}>
+                <legend className={styles.legend}>Last donation</legend>
+                <p className={styles.legendHelp}>
+                  You become eligible again {DONATION_INTERVAL_DAYS} days after giving.
+                </p>
+
+                <label className={styles.check}>
+                  <input
+                    type="checkbox"
+                    checked={neverDonated}
+                    onChange={(event) => {
+                      setNeverDonated(event.target.checked);
+                      // "Never donated" is always valid, and the date it
+                      // hides cannot still be complaining about itself.
+                      clearError('lastDonationDate');
+                    }}
+                  />
+                  I have never donated
+                </label>
+
+                {!neverDonated && (
+                  <Field label="Date of last donation" error={errors.lastDonationDate}>
+                    <Input
+                      type="date"
+                      max={TODAY}
+                      value={lastDonationDate}
+                      onChange={(event) => {
+                        setLastDonationDate(event.target.value);
+                        clearError('lastDonationDate');
+                      }}
+                      onBlur={() => {
+                        checkField('lastDonationDate');
+                      }}
+                    />
                   </Field>
-
-                  <fieldset className={styles.fieldset}>
-                    <legend className={styles.legend}>Last donation</legend>
-                    <p className={styles.legendHelp}>
-                      You become eligible again {DONATION_INTERVAL_DAYS} days after
-                      giving.
-                    </p>
-
-                    <label className={styles.check}>
-                      <input
-                        type="checkbox"
-                        checked={neverDonated}
-                        onChange={(event) => {
-                          setNeverDonated(event.target.checked);
-                          // "Never donated" is always valid, and the date it
-                          // hides cannot still be complaining about itself.
-                          clearError('lastDonationDate');
-                        }}
-                      />
-                      I have never donated
-                    </label>
-
-                    {!neverDonated && (
-                      <Field
-                        label="Date of last donation"
-                        error={errors.lastDonationDate}
-                      >
-                        <Input
-                          type="date"
-                          max={TODAY}
-                          value={lastDonationDate}
-                          onChange={(event) => {
-                            setLastDonationDate(event.target.value);
-                            clearError('lastDonationDate');
-                          }}
-                          onBlur={() => {
-                            checkField('lastDonationDate');
-                          }}
-                        />
-                      </Field>
-                    )}
-                  </fieldset>
-                </section>
-              )}
-
-              <div className={styles.submit}>
-                {!singlePage && step === 1 ? (
-                  <Button type="button" size="lg" fullWidth onClick={handleContinue}>
-                    Continue
-                  </Button>
-                ) : (
-                  <div className={styles.actions}>
-                    {!singlePage && (
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="lg"
-                        onClick={() => setStep(1)}
-                      >
-                        Back
-                      </Button>
-                    )}
-                    <Button
-                      type="submit"
-                      size="lg"
-                      fullWidth
-                      loading={submitting}
-                      loadingLabel="Creating your account…"
-                    >
-                      Register as donor
-                    </Button>
-                  </div>
                 )}
+              </fieldset>
+            </section>
+          )}
+
+          <div className={styles.submit}>
+            {!singlePage && step === 1 ? (
+              <Button type="button" size="lg" fullWidth onClick={handleContinue}>
+                Continue
+              </Button>
+            ) : (
+              <div className={styles.actions}>
+                {!singlePage && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="lg"
+                    onClick={() => setStep(1)}
+                  >
+                    Back
+                  </Button>
+                )}
+                <Button
+                  type="submit"
+                  size="lg"
+                  fullWidth
+                  loading={submitting}
+                  loadingLabel="Creating your account…"
+                >
+                  Register as donor
+                </Button>
               </div>
-            </form>
+            )}
           </div>
-        </Container>
+        </form>
+
+        {/* Under the form rather than beside it: on the phone this screen is
+            drawn for, a column of promises above the first field is a column
+            somebody scrolls past. It is still on the page, and the privacy
+            notice is still one tap away. */}
+        <div className={styles.assurance}>
+          <ul className={styles.points}>
+            <li>
+              <Icon name="checkCircle" />
+              We email you only for matching requests an admin has approved.
+            </li>
+            <li>
+              <Icon name="checkCircle" />
+              Your contact details are never shown on the public feed.
+            </li>
+            <li>
+              <Icon name="checkCircle" />
+              Pause the emails, or delete your account, at any time.
+            </li>
+          </ul>
+          <p className={styles.privacy}>
+            <Link to={PATHS.privacy}>What we store, and why</Link> — the whole notice is a
+            two-minute read.
+          </p>
+        </div>
       </div>
-    </>
+    </AuthLayout>
   );
 }

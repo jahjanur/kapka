@@ -1,0 +1,160 @@
+/* ============================================================================
+   The shell the sign-up and sign-in screens share: a band in the product's
+   colour with a card lifted into it.
+   ========================================================================= */
+
+.page {
+  position: relative;
+  min-block-size: 100%;
+  padding-block-end: var(--space-12);
+  background-color: var(--bg-canvas);
+}
+
+.band {
+  padding-block: var(--space-6) var(--space-16);
+  padding-inline: var(--container-gutter);
+  background-color: var(--accent);
+  background-image: var(--gradient-accent);
+  color: var(--fg-onAccent);
+}
+
+.bandInner {
+  max-inline-size: 28rem;
+  margin-inline: auto;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: var(--hit-min);
+}
+
+/* The arrow is a link, so it can be opened in a new tab and read as one. */
+.back {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  inline-size: var(--hit-min);
+  block-size: var(--hit-min);
+  margin-inline-start: calc(var(--space-3) * -1);
+  color: var(--fg-onAccent);
+  border-radius: var(--radius-full);
+}
+@media (hover: hover) {
+  .back:hover {
+    background-color: var(--surface-glass-onAccent);
+  }
+}
+
+/* One chevron in the icon set, pointed the other way — a second path would be
+   a second thing to keep in step for no gain. */
+.backIcon {
+  rotate: 180deg;
+}
+
+.title {
+  flex: 1 1 auto;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  text-align: center;
+}
+
+/* Centred against the whole width when there is no arrow to balance. */
+.titleCentred {
+  padding-inline-end: 0;
+}
+
+.count {
+  flex: none;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-onAccent);
+  opacity: 0.85;
+}
+
+.pips {
+  display: flex;
+  gap: var(--space-2);
+  margin-block-start: var(--space-4);
+  list-style: none;
+}
+
+.pip {
+  block-size: 0.25rem;
+  flex: 1 1 0;
+  background-color: var(--surface-glass-onAccent);
+  border-radius: var(--radius-full);
+  transition: background-color var(--dur-normal) var(--ease-out);
+}
+
+.pipOn {
+  background-color: var(--fg-onAccent);
+}
+
+/* The droplet, for a screen that leads with the product rather than a step. */
+.mark {
+  display: grid;
+  place-items: center;
+  inline-size: 3.5rem;
+  block-size: 3.5rem;
+  margin-block-start: var(--space-6);
+  margin-inline: auto;
+  font-size: var(--text-2xl);
+  color: var(--fg-onAccent);
+  background-color: var(--surface-glass-onAccent);
+  border: 1px solid var(--border-onAccent);
+  border-radius: var(--radius-full);
+}
+
+.subtitle {
+  margin-block-start: var(--space-4);
+  font-size: var(--text-base);
+  text-align: center;
+  color: var(--fg-onAccent);
+  opacity: 0.9;
+}
+
+/* Lifted into the band by its own margin. The overlap is what makes the two
+   read as one screen rather than a red header stacked on a white page. */
+/* Narrow on purpose, at every width: one column of fields, the same shape on
+   a phone and a desktop. --measure-narrow is a reading measure, and 60ch of
+   form is four fields with a field's width of empty space beside them. */
+.card {
+  position: relative;
+  z-index: 1;
+  max-inline-size: 28rem;
+  margin-block-start: calc(var(--space-12) * -1);
+  padding: var(--space-6) var(--space-5);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--elevation-3);
+}
+
+@media (min-width: 30rem) {
+  .card {
+    padding: var(--space-8) var(--space-8);
+  }
+}
+
+.footer {
+  max-inline-size: 28rem;
+  margin-block-start: var(--space-6);
+  font-size: var(--text-sm);
+  text-align: center;
+  color: var(--fg-secondary);
+}
+
+/* The card is inset from the screen edge, so the band's gutter is not enough
+   on its own at 360px. */
+.card,
+.footer {
+  margin-inline: var(--container-gutter);
+}
+@media (min-width: 30rem) {
+  .card,
+  .footer {
+    margin-inline: auto;
+  }
+}

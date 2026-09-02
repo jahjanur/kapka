@@ -90,10 +90,39 @@ describe('the app end to end', () => {
     if (!registerLink) throw new Error('no register link in the header');
     await user.click(registerLink);
 
+    /* The header's button lands on the gate, not in the form: somebody
+       arriving may already have an account, and until there was a gate there
+       was nowhere for them to go. */
     expect(
-      await screen.findByRole('heading', { name: /Become a donor/ }),
+      await screen.findByRole('link', { name: /Create account/ }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Log in/ })).toHaveAttribute(
+      'href',
+      '/login',
+    );
+
+    await user.click(screen.getByRole('link', { name: /Create account/ }));
+    expect(
+      await screen.findByRole('heading', { name: /Create your account/ }),
     ).toBeInTheDocument();
     expect(screen.getByLabelText(/Full name/)).toBeInTheDocument();
+  });
+
+  it('walks from the gate to signing in', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await screen.findByText(/open requests/);
+    const [registerLink] = screen.getAllByRole('link', { name: /Register/ });
+    if (!registerLink) throw new Error('no register link in the header');
+    await user.click(registerLink);
+
+    await user.click(await screen.findByRole('link', { name: /Log in/ }));
+    expect(
+      await screen.findByRole('heading', { name: /Welcome back/ }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/Email/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Password/)).toBeInTheDocument();
   });
 
   it('shows the not-found screen for an address that is not a route', async () => {

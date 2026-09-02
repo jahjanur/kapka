@@ -15,6 +15,7 @@ export { useToast, type ToastTone, type ToastOptions } from './Toast/toastContex
 export * from './layout';
 export { ThemeToggle } from './ThemeToggle/ThemeToggle';
 export { AppHeader } from './AppHeader/AppHeader';
+export { AuthLayout } from './AuthLayout/AuthLayout';
 export { EmptyState } from './EmptyState/EmptyState';
 export { ErrorState } from './ErrorState/ErrorState';
 export { FilterBar, FilterChip, FilterGroupLabel } from './FilterBar/FilterBar';

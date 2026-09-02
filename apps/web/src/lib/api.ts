@@ -10,6 +10,7 @@ import type {
   ModerationQueueItem,
   ErrorCode,
   PublicBloodRequest,
+  LoginInput,
   RegisterInput,
   UserRole,
 } from '@kapka/shared';
@@ -113,6 +114,15 @@ export interface ApiClient {
    */
   getRequest(id: string, accessToken?: string): Promise<ViewedRequest>;
   register(input: RegisterInput): Promise<Session>;
+  /**
+   * Signs in an existing account.
+   *
+   * The API answers one message for every way of failing — wrong password,
+   * unknown address, deactivated account — because anything more specific
+   * tells whoever is guessing which addresses have accounts (§12). The screen
+   * shows exactly what it is given.
+   */
+  login(input: LoginInput): Promise<Session>;
   /**
    * The session this browser already has, if it has one.
    *
@@ -249,6 +259,12 @@ function createHttpClient(baseUrl: string): ApiClient {
     },
     register(input) {
       return call<Session>('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      });
+    },
+    login(input) {
+      return call<Session>('/auth/login', {
         method: 'POST',
         body: JSON.stringify(input),
       });
@@ -450,6 +466,22 @@ function createDemoClient(): ApiClient {
       };
       demoUntouched = false;
 
+      return { user: demoUser, accessToken: 'demo-access-token' };
+    },
+    async login(input) {
+      await latency(null);
+      /* One rehearsable failure, as with register: the wrong password, which
+         is the only one worth walking through locally. Everything else signs
+         in as whoever this tab last registered — there is no password store
+         here to check against. */
+      if (input.password === 'wrong') {
+        throw new ApiError(
+          'INVALID_CREDENTIALS',
+          'That email and password do not match.',
+          401,
+        );
+      }
+      demoUser = { ...demoUser, email: input.email };
       return { user: demoUser, accessToken: 'demo-access-token' };
     },
     async createRequest(input) {

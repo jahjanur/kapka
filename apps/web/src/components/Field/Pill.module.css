@@ -1,0 +1,75 @@
+/* ============================================================================
+   The auth screens' field surface: a pill holding an icon, the control, and
+   sometimes a button.
+
+   Its own file because both auth screens use it and CSS modules cannot share
+   a rule any other way — and the sign-in that is a shade off the sign-up is
+   the kind of thing nobody can name and everybody notices.
+   ========================================================================= */
+
+.pill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-inline: var(--space-4);
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.pill:focus-within {
+  border-color: var(--accent);
+  box-shadow: var(--glow-soft);
+}
+
+/* The invalid state belongs to the pill, since the pill is what is drawn. */
+.pill:has([aria-invalid='true']) {
+  border-color: var(--danger);
+  background-color: var(--danger-surface);
+}
+
+.pillIcon {
+  flex: none;
+  color: var(--fg-muted);
+}
+
+/* The control keeps its type and its hit area and gives up its surface — two
+   boxes, one inside the other, is what it looks like otherwise. */
+.pillInput {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  padding-inline: 0;
+  background-color: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.pillInput:hover,
+.pillInput:focus-visible,
+.pillInput[aria-invalid='true'] {
+  background-color: transparent;
+  border: 0;
+}
+
+/* Show / hide the password, inside the pill at its end. */
+.pillButton {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  inline-size: var(--hit-min);
+  block-size: var(--hit-min);
+  margin-inline-end: calc(var(--space-3) * -1);
+  color: var(--fg-muted);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .pillButton:hover {
+    color: var(--fg-primary);
+  }
+}

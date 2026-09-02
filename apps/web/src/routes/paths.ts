@@ -19,7 +19,15 @@ export const PATHS = {
   admin: '/admin',
   /** The donor's own dashboard (§9.5). */
   dashboard: '/me',
+  /**
+   * The gate, not the form: somebody arriving here may already have an
+   * account, and every "Register as donor" button in the product used to
+   * drop them straight into a sign-up form with no way across to signing in.
+   */
   register: '/register',
+  /** The sign-up form itself. */
+  createAccount: '/register/new',
+  login: '/login',
   howItWorks: '/how-it-works',
   privacy: '/privacy',
   /**

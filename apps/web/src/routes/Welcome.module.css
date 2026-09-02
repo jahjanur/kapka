@@ -1,0 +1,144 @@
+/* ============================================================================
+   The gate: illustration, one sentence, two ways in.
+   ========================================================================= */
+
+/* Centred in what is left of the screen under the header, so the two choices
+   sit in the thumb's reach rather than at the top of a tall empty page. */
+.page {
+  display: grid;
+  align-content: center;
+  min-block-size: calc(100dvh - var(--header-height));
+  padding-block: var(--space-8) var(--space-12);
+}
+
+.inner {
+  max-inline-size: var(--measure-narrow);
+  margin-inline: auto;
+  text-align: center;
+}
+
+/* ── The illustration ────────────────────────────────────────────────────── */
+.art {
+  position: relative;
+  padding-block-end: var(--space-6);
+  margin-block-end: var(--space-8);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.artRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-10);
+}
+
+/* A blood bag: a rounded rectangle with a filled lower two thirds and a
+   label panel at the top, which is all a bag is at this size. */
+.bag {
+  position: relative;
+  display: block;
+  inline-size: 4.5rem;
+  block-size: 6rem;
+  overflow: hidden;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-xl) var(--radius-xl);
+  box-shadow: var(--elevation-2);
+}
+
+.bagFill {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline: 0;
+  block-size: 68%;
+  background-image: var(--gradient-accent);
+}
+
+.bagLabel {
+  position: absolute;
+  inset-block-start: var(--space-2);
+  inset-inline-start: var(--space-2);
+  display: grid;
+  place-items: center;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--accent-ink);
+  background-color: var(--accent-surface);
+  border-radius: var(--radius-xs);
+}
+
+/* The droplet stands in for the heart of the reference sketch: it is the
+   product's own mark, and a second organ drawn in CSS would be a worse one. */
+.heart {
+  display: grid;
+  place-items: center;
+  inline-size: 4rem;
+  block-size: 4rem;
+  font-size: var(--text-2xl);
+  color: var(--fg-onAccent);
+  background-image: var(--gradient-accent);
+  border-radius: var(--radius-full);
+  box-shadow: var(--glow-accent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .heart {
+    animation: beat var(--dur-beat) var(--ease-fluid) infinite;
+  }
+}
+
+@keyframes beat {
+  0%,
+  70%,
+  100% {
+    scale: 1;
+  }
+  80% {
+    scale: 1.08;
+  }
+  90% {
+    scale: 0.98;
+  }
+}
+
+/* The trace runs under both of them, joining the two. */
+/* Held to the width of the two figures above it, so it reads as the line
+   between them rather than a rule across the page. */
+.trace {
+  max-inline-size: 17rem;
+  margin-block-start: var(--space-2);
+  margin-inline: auto;
+}
+
+.title {
+  font-size: var(--text-2xl);
+  letter-spacing: var(--tracking-tight);
+  text-wrap: balance;
+}
+
+.lead {
+  margin-block-start: var(--space-3);
+  font-size: var(--text-base);
+  color: var(--fg-secondary);
+}
+
+/* Stacked, full width, thumb-sized: this is a phone screen first, and the two
+   choices are equal in weight even though only one is filled. */
+.actions {
+  display: grid;
+  gap: var(--space-3);
+  margin-block-start: var(--space-8);
+}
+
+.aside {
+  margin-block-start: var(--space-6);
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+}
+
+.asideLink {
+  color: var(--accent-ink);
+  font-weight: var(--weight-semibold);
+}

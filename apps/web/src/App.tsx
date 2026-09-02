@@ -13,7 +13,9 @@ const RequestDetail = lazy(() => import('./routes/RequestDetail'));
 const PostRequest = lazy(() => import('./routes/PostRequest'));
 const AdminQueue = lazy(() => import('./routes/AdminQueue'));
 const Dashboard = lazy(() => import('./routes/Dashboard'));
+const Welcome = lazy(() => import('./routes/Welcome'));
 const Register = lazy(() => import('./routes/Register'));
+const Login = lazy(() => import('./routes/Login'));
 const VerifyEmail = lazy(() => import('./routes/VerifyEmail'));
 const HowItWorks = lazy(() => import('./routes/HowItWorks'));
 const Privacy = lazy(() => import('./routes/Privacy'));
@@ -60,7 +62,10 @@ export function App() {
                   <Route path={PATHS.request(':id')} element={<RequestDetail />} />
                   <Route path={PATHS.admin} element={<AdminQueue />} />
                   <Route path={PATHS.dashboard} element={<Dashboard />} />
-                  <Route path={PATHS.register} element={<Register />} />
+                  {/* The gate, the form and the way back in. */}
+                  <Route path={PATHS.register} element={<Welcome />} />
+                  <Route path={PATHS.createAccount} element={<Register />} />
+                  <Route path={PATHS.login} element={<Login />} />
                   <Route path={PATHS.verifyEmail} element={<VerifyEmail />} />
                   <Route path={PATHS.howItWorks} element={<HowItWorks />} />
                   <Route path={PATHS.privacy} element={<Privacy />} />
