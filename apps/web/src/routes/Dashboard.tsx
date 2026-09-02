@@ -7,6 +7,7 @@ import {
   donorProfilePatchSchema,
   type BloodType,
   type DonorProfilePatchInput,
+  type UserRole,
 } from '@kapka/shared';
 import {
   AppHeader,
@@ -33,6 +34,13 @@ import styles from './Dashboard.module.css';
 
 const TODAY = new Date().toISOString().slice(0, 10);
 
+/** Said in the reader's terms, not the column's. */
+const ACCOUNT_TYPE: Record<UserRole, string> = {
+  donor: 'Donor account',
+  requester: 'Requester account',
+  admin: 'Administrator',
+};
+
 /**
  * A day, written out. Accepts a bare YYYY-MM-DD, which Date parses as UTC
  * midnight and would otherwise format as the day before west of Greenwich.
@@ -58,6 +66,11 @@ export default function Dashboard() {
   const [saved, setSaved] = useState<DonorProfile | null>(null);
   const profile = saved ?? data?.donorProfile ?? null;
 
+  /* The session's copy renders straight away; the query's is the current one.
+     They differ exactly when it matters — confirming an email in another tab
+     leaves this tab's session saying unconfirmed until the next refresh. */
+  const me = data?.user ?? session?.user ?? null;
+
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
@@ -68,6 +81,8 @@ export default function Dashboard() {
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [leaving, setLeaving] = useState(false);
+
+  const [resending, setResending] = useState(false);
 
   const [bloodType, setBloodType] = useState<BloodType | null>(null);
   const [city, setCity] = useState('');
@@ -88,6 +103,38 @@ export default function Dashboard() {
       );
     } finally {
       setBusy(false);
+    }
+  }
+
+  /*
+   * Another confirmation link, asked for from the page that shows the address
+   * it goes to.
+   *
+   * Registering signs you in but the matching query refuses an unconfirmed
+   * donor, so between those two facts sits somebody who believes they are on
+   * the list and is not. The only place that said so was the screen shown
+   * once, immediately after registering — gone on the next navigation.
+   */
+  async function resendConfirmation() {
+    if (!token) return;
+    setResending(true);
+    try {
+      const result = await api.resendVerification(token);
+      show(
+        result.emailVerified
+          ? 'That address is already confirmed. You are on the list.'
+          : 'Sent. Give it a minute, and check your spam folder.',
+        { tone: 'success' },
+      );
+    } catch (caught) {
+      show(
+        caught instanceof ApiError
+          ? caught.message
+          : 'We could not send that email. Try again shortly.',
+        { tone: 'error' },
+      );
+    } finally {
+      setResending(false);
     }
   }
 
@@ -194,12 +241,55 @@ export default function Dashboard() {
       <div className={styles.page}>
         <Container>
           <div className={styles.head}>
-            <h1 className={styles.title}>Your donor settings</h1>
+            <h1 className={styles.title}>Your profile</h1>
             <p className={styles.lead}>
-              What we use to decide whether a request reaches you, and the switch that
-              stops it.
+              Who we have you down as, what we use to decide whether a request reaches
+              you, and the switch that stops it.
             </p>
           </div>
+
+          {/* ── Who you are ────────────────────────────────────────────────
+              The page said whose settings these were nowhere at all. It is
+              also the only place outside the minute after registering that
+              can say the address is still unconfirmed — and an unconfirmed
+              donor is not in the matching query, however complete the rest
+              of this page looks (§12).                                     */}
+          {me && (
+            <section className={styles.identity}>
+              <span className={styles.identityAvatar} aria-hidden="true">
+                {me.fullName.slice(0, 1).toUpperCase()}
+              </span>
+              <div className={styles.identityWho}>
+                <h2 className={styles.identityName}>{me.fullName}</h2>
+                <p className={styles.identityEmail}>{me.email}</p>
+                <p className={styles.identityRole}>{ACCOUNT_TYPE[me.role]}</p>
+              </div>
+              <div
+                className={cx(
+                  styles.verify,
+                  me.emailVerified ? styles.verifyDone : styles.verifyPending,
+                )}
+              >
+                <p className={styles.verifyLine}>
+                  <Icon name={me.emailVerified ? 'checkCircle' : 'alertCircle'} />
+                  {me.emailVerified
+                    ? 'Email confirmed'
+                    : 'Email not confirmed — we cannot email you about a request until it is'}
+                </p>
+                {!me.emailVerified && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => void resendConfirmation()}
+                    loading={resending}
+                    loadingLabel="Sending a new link…"
+                  >
+                    Send the link again
+                  </Button>
+                )}
+              </div>
+            </section>
+          )}
 
           {isLoading && (
             /* Two cards, shaped like the two that arrive — a heading, a line

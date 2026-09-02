@@ -54,12 +54,17 @@ export function AppHeader() {
             </span>
 
             {session ? (
-              <span className={styles.who}>
+              /* The way in to your own profile, and on a phone the only one:
+                 the nav is hidden below 48rem, so an avatar that was not a
+                 link left /me reachable by typing the URL and no other way.
+                 Labelled rather than left to the initial, which is decoration
+                 — a screen reader announcing "A" is not a destination. */
+              <Link to={PATHS.dashboard} className={styles.who} aria-label="Your profile">
                 <span className={styles.whoAvatar} aria-hidden="true">
                   {session.user.fullName.slice(0, 1).toUpperCase()}
                 </span>
                 <span className={styles.whoName}>{session.user.fullName}</span>
-              </span>
+              </Link>
             ) : (
               <Button to={PATHS.register} size="sm">
                 <span className={styles.registerShort}>Register</span>

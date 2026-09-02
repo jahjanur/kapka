@@ -97,6 +97,12 @@ describe('donor registration', () => {
     });
     // Registered is not yet on the list — the confirmation screen says so.
     expect(await screen.findByText(/Confirm your email/)).toBeInTheDocument();
+    /* Registering signs you in, so there is somewhere of your own to go from
+       here — and this screen is shown once, so it is the moment to say so. */
+    expect(screen.getByRole('link', { name: /Go to your profile/ })).toHaveAttribute(
+      'href',
+      '/me',
+    );
   });
 
   it('sends no request when the form is incomplete', async () => {

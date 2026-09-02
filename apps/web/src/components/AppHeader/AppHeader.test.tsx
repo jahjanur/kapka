@@ -1,10 +1,46 @@
+import { useEffect, type ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { ThemeProvider } from '../../lib/ThemeProvider';
 import { SessionProvider } from '../../lib/SessionProvider';
 import { STATIC_PATHS } from '../../routes/paths';
+import { useSession } from '../../lib/session';
+import type { Session } from '../../lib/api';
 import { AppHeader } from './AppHeader';
+
+const SESSION: Session = {
+  user: {
+    id: 'u1',
+    email: 'ana@example.com',
+    fullName: 'Ana Petrovska',
+    role: 'donor',
+    emailVerified: true,
+  },
+  accessToken: 'token',
+};
+
+function SignedIn({ children }: { children: ReactNode }) {
+  const { session, signIn } = useSession();
+  useEffect(() => {
+    signIn(SESSION);
+  }, [signIn]);
+  return session ? <>{children}</> : null;
+}
+
+function renderSignedInHeader() {
+  return render(
+    <MemoryRouter>
+      <ThemeProvider>
+        <SessionProvider>
+          <SignedIn>
+            <AppHeader />
+          </SignedIn>
+        </SessionProvider>
+      </ThemeProvider>
+    </MemoryRouter>,
+  );
+}
 
 function renderHeader() {
   return render(
@@ -30,6 +66,22 @@ describe('the product header', () => {
       'href',
       '/register',
     );
+  });
+
+  it('takes a signed-in reader to their own profile', () => {
+    /* On a phone this is the only way there: the nav is hidden below 48rem,
+       so while the avatar was a plain span, /me was reachable by typing the
+       URL and by nothing else. */
+    renderSignedInHeader();
+    expect(screen.getByRole('link', { name: 'Your profile' })).toHaveAttribute(
+      'href',
+      '/me',
+    );
+  });
+
+  it('does not ask somebody with an account to register', () => {
+    renderSignedInHeader();
+    expect(screen.queryByRole('link', { name: /Register/ })).toBeNull();
   });
 
   it('links nowhere developer-facing', () => {

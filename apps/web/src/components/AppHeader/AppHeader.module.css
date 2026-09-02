@@ -87,6 +87,18 @@
   align-items: center;
   gap: var(--space-2);
   max-inline-size: 12rem;
+  color: var(--fg-primary);
+  text-decoration: none;
+}
+
+@media (hover: hover) {
+  .who:hover .whoName {
+    color: var(--accent);
+  }
+  .who:hover .whoAvatar {
+    background-color: var(--accent);
+    color: var(--fg-onAccent);
+  }
 }
 
 .whoAvatar {

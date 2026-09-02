@@ -258,7 +258,14 @@ export default function Register() {
                 we contact when someone near you needs your blood type.
               </p>
               <div className={styles.doneActions}>
-                <Button to={PATHS.feed} size="lg">
+                {/* Registering signs you in, so there is a profile to go to
+                    from here — where the details just entered can be checked
+                    and another confirmation link asked for. It leads, because
+                    this is the one moment somebody has just made one. */}
+                <Button to={PATHS.dashboard} size="lg">
+                  Go to your profile
+                </Button>
+                <Button to={PATHS.feed} variant="secondary" size="lg">
                   See open requests
                 </Button>
               </div>

@@ -17,6 +17,8 @@ const deleteMyAccount = vi.fn<(password: string, token: string) => Promise<void>
 const listMyNotifications = vi.fn<(token: string) => Promise<DonorNotification[]>>();
 const updateDonorProfile =
   vi.fn<(patch: DonorProfilePatchInput, token: string) => Promise<DonorProfile>>();
+const resendVerification =
+  vi.fn<(token: string) => Promise<{ emailVerified: boolean }>>();
 
 vi.mock('../lib/api', async () => {
   const actual = await vi.importActual<typeof import('../lib/api')>('../lib/api');
@@ -30,6 +32,7 @@ vi.mock('../lib/api', async () => {
         deleteMyAccount(password, token),
       updateDonorProfile: (patch: DonorProfilePatchInput, token: string) =>
         updateDonorProfile(patch, token),
+      resendVerification: (token: string) => resendVerification(token),
     },
   };
 });
@@ -57,6 +60,12 @@ const SESSION: Session = {
 const me = (profile: DonorProfile | null = PROFILE): Me => ({
   user: SESSION.user,
   donorProfile: profile,
+});
+
+/** The same account, with the confirmation link still unopened. */
+const unconfirmed = (): Me => ({
+  user: { ...SESSION.user, emailVerified: false },
+  donorProfile: PROFILE,
 });
 
 function SignedIn({ children }: { children: ReactNode }) {
@@ -112,6 +121,8 @@ beforeEach(() => {
   listMyNotifications.mockResolvedValue([]);
   getMe.mockReset();
   updateDonorProfile.mockReset();
+  resendVerification.mockReset();
+  resendVerification.mockResolvedValue({ emailVerified: false });
   getMe.mockResolvedValue(me());
   updateDonorProfile.mockImplementation((patch) =>
     Promise.resolve({ ...PROFILE, ...patch } as DonorProfile),
@@ -382,5 +393,53 @@ describe('taking your data, and leaving', () => {
     await waitFor(() => {
       expect(exportMyData).toHaveBeenCalledWith('token');
     });
+  });
+});
+
+describe('who the profile belongs to', () => {
+  it('says whose account this is', async () => {
+    /* The page listed settings and never once named the person they belong
+       to — which is most of what a profile is. */
+    renderDashboard();
+    /* Twice over: the header's avatar link carries it too, and that link is
+       how a phone gets here at all. */
+    expect(await screen.findAllByText('Ana Petrovska')).not.toHaveLength(0);
+    expect(screen.getByText('ana@example.com')).toBeInTheDocument();
+    expect(screen.getByText('Donor account')).toBeInTheDocument();
+  });
+
+  it('says nothing is coming while the email is unconfirmed, and offers the link again', async () => {
+    /*
+     * The matching query refuses an unconfirmed donor, so this account is
+     * complete on screen and unreachable in practice. Before this, the only
+     * screen that said so was the one shown in the minute after registering.
+     */
+    const user = userEvent.setup();
+    getMe.mockResolvedValue(unconfirmed());
+    renderDashboard();
+
+    expect(await screen.findByText(/Email not confirmed/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Send the link again/ }));
+
+    await waitFor(() => {
+      expect(resendVerification).toHaveBeenCalledWith('token');
+    });
+  });
+
+  it('does not offer a confirmation link to somebody who has used theirs', async () => {
+    renderDashboard();
+    expect(await screen.findByText('Email confirmed')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Send the link again/ })).toBeNull();
+  });
+
+  it('still names a requester, who has no donor settings to show', async () => {
+    getMe.mockResolvedValue({
+      user: { ...SESSION.user, role: 'requester' },
+      donorProfile: null,
+    });
+    renderDashboard();
+
+    expect(await screen.findByText('Requester account')).toBeInTheDocument();
+    expect(screen.getByText('This account is not a donor')).toBeInTheDocument();
   });
 });

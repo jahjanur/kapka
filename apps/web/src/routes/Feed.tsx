@@ -50,7 +50,7 @@ export default function Feed() {
   const heroPrimary = !session
     ? { to: PATHS.register, label: 'Register as donor' }
     : isDonor
-      ? { to: PATHS.dashboard, label: 'Your donor settings' }
+      ? { to: PATHS.dashboard, label: 'Your profile' }
       : null;
 
   const [urgency, setUrgency] = useState<Urgency | null>(null);

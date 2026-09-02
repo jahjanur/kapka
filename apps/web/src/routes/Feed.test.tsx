@@ -252,10 +252,11 @@ describe('the public feed', () => {
     await screen.findByText('3 open requests');
 
     expect(screen.queryByRole('link', { name: /Register as donor/ })).toBeNull();
-    expect(screen.getByRole('link', { name: /Your donor settings/ })).toHaveAttribute(
-      'href',
-      '/me',
-    );
+    /* Two of them by design: the hero's action and the header's avatar, which
+       is the only way to your own profile on a phone. */
+    for (const link of screen.getAllByRole('link', { name: /Your profile/ })) {
+      expect(link).toHaveAttribute('href', '/me');
+    }
   });
 
   it('offers a requester the thing they can actually do', async () => {
@@ -265,7 +266,6 @@ describe('the public feed', () => {
     await screen.findByText('3 open requests');
 
     expect(screen.queryByRole('link', { name: /Register as donor/ })).toBeNull();
-    expect(screen.queryByRole('link', { name: /Your donor settings/ })).toBeNull();
     expect(screen.getAllByRole('link', { name: /Post a request/ })[0]).toHaveAttribute(
       'href',
       '/requests/new',
