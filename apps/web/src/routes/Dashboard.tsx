@@ -552,8 +552,7 @@ export default function Dashboard() {
                   the free-tier ceiling held back (§5.3) and a failed one
                   never arrived, and calling either of them sent would be a
                   list of emails they never got.                             */}
-              {/* Addressable: the bell in the header points at this. */}
-              <section id="notifications" className={cx(styles.card, styles.cardWide)}>
+              <section className={cx(styles.card, styles.cardWide)}>
                 <h2 className={styles.cardTitle}>What we have emailed you about</h2>
 
                 {loadingHistory && (

@@ -104,55 +104,6 @@
 }
 
 /* ── Signed in ───────────────────────────────────────────────────────────── */
-/* The bell, and the dot that says this account cannot be reached yet. */
-.bell {
-  position: relative;
-  display: inline-grid;
-  place-items: center;
-  flex: none;
-  inline-size: var(--hit-min);
-  block-size: var(--hit-min);
-  color: var(--fg-secondary);
-  border-radius: var(--radius-full);
-}
-@media (hover: hover) {
-  .bell:hover {
-    color: var(--fg-primary);
-    background-color: var(--bg-surface-alt);
-  }
-}
-
-.bellDot {
-  position: absolute;
-  inset-block-start: 0.55rem;
-  inset-inline-end: 0.7rem;
-  inline-size: 0.5rem;
-  block-size: 0.5rem;
-  background-color: var(--accent);
-  border: 2px solid var(--bg-canvas);
-  border-radius: var(--radius-full);
-}
-
-/* On the product's own beat, like the live dot on the feed: it is the one
-   thing in the chrome asking to be noticed. */
-@media (prefers-reduced-motion: no-preference) {
-  .bellDot {
-    animation: bellPulse var(--dur-beat) var(--ease-fluid) infinite;
-  }
-}
-
-@keyframes bellPulse {
-  0% {
-    box-shadow: 0 0 0 0 var(--aurora-core);
-  }
-  70% {
-    box-shadow: 0 0 0 0.35rem transparent;
-  }
-  100% {
-    box-shadow: 0 0 0 0 transparent;
-  }
-}
-
 .who {
   display: inline-flex;
   align-items: center;
@@ -175,19 +126,14 @@
 .whoAvatar {
   display: grid;
   place-items: center;
-  inline-size: 2.25rem;
-  block-size: 2.25rem;
+  inline-size: 2rem;
+  block-size: 2rem;
   flex: none;
   border-radius: var(--radius-full);
-  /* A ring rather than a bare circle: in the design this is a photograph
-     with an edge, and the edge is what separates it from the bar. */
-  border: 1px solid var(--border-subtle);
   background-color: var(--accent-surface);
-  background-image: var(--gradient-accent);
-  color: var(--fg-onAccent);
+  color: var(--accent-ink);
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
-  box-shadow: var(--elevation-1);
 }
 
 /* The name is a nicety; the avatar carries the meaning when space is short. */
