@@ -20,6 +20,7 @@ import {
 } from '../components';
 import { BLOOD_TYPES, CITIES, type BloodType, type Urgency } from '@kapka/shared';
 import { useRequests } from '../lib/useRequests';
+import { useSession } from '../lib/session';
 import { timeAgo } from '../lib/relativeTime';
 import { PATHS } from './paths';
 import styles from './Feed.module.css';
@@ -31,6 +32,26 @@ const titleCase = (value: string) => (value[0] ?? '').toUpperCase() + value.slic
 
 export default function Feed() {
   const { data, isLoading, error, refetch } = useRequests();
+  const { session, restoring } = useSession();
+
+  /*
+   * Registering is for somebody who has no account, and this screen used to
+   * ask for it three times over regardless of who was reading. A donor who is
+   * already on the list was invited to join it again; a requester or an admin
+   * was pointed at a form that can only answer "that email already has an
+   * account", because registering makes a NEW account rather than adding a
+   * donor profile to the one you are signed in to.
+   *
+   * So the primary action follows the reader: register if there is nobody
+   * signed in, your own settings if you are the donor being asked to
+   * register, and otherwise the other thing this page is for.
+   */
+  const isDonor = session?.user.role === 'donor';
+  const heroPrimary = !session
+    ? { to: PATHS.register, label: 'Register as donor' }
+    : isDonor
+      ? { to: PATHS.dashboard, label: 'Your donor settings' }
+      : null;
 
   const [urgency, setUrgency] = useState<Urgency | null>(null);
   const [bloodType, setBloodType] = useState<BloodType | null>(null);
@@ -102,13 +123,24 @@ export default function Feed() {
                 approved, we email you — no searching, no phone tree.
               </p>
               <div className={styles.heroActions}>
-                <Button to={PATHS.register} size="lg">
-                  Register as donor
-                </Button>
+                {/* Read on the session as it stands rather than waiting for
+                    the boot refresh: signed out is both the common case and
+                    what the header assumes, so the pair of buttons is stable
+                    for most readers instead of appearing a moment late. */}
+                {heroPrimary && (
+                  <Button to={heroPrimary.to} size="lg">
+                    {heroPrimary.label}
+                  </Button>
+                )}
                 {/* The hero speaks to donors, but the person whose relative
                     needs blood lands here too, and the header nav that would
-                    take them on is hidden on a phone. */}
-                <Button to={PATHS.postRequest} variant="ghost" size="lg">
+                    take them on is hidden on a phone. It leads when there is
+                    nothing above it. */}
+                <Button
+                  to={PATHS.postRequest}
+                  variant={heroPrimary ? 'ghost' : 'primary'}
+                  size="lg"
+                >
                   Post a request
                   <Icon name="arrowRight" />
                 </Button>
@@ -279,8 +311,18 @@ export default function Feed() {
                   ) : (
                     <EmptyState
                       headline="No open requests right now"
-                      body="That is good news. Register as a donor and we will email you the moment someone with your blood type needs help."
-                      action={<Button to={PATHS.register}>Register as donor</Button>}
+                      body={
+                        !session
+                          ? 'That is good news. Register as a donor and we will email you the moment someone with your blood type needs help.'
+                          : isDonor
+                            ? 'That is good news. We will email you the moment someone with your blood type needs help.'
+                            : 'That is good news. New requests appear here once an admin has approved them.'
+                      }
+                      action={
+                        session ? undefined : (
+                          <Button to={PATHS.register}>Register as donor</Button>
+                        )
+                      }
                     />
                   ))}
 
@@ -297,12 +339,21 @@ export default function Feed() {
         </Container>
       </div>
 
-      {/* Thumb zone: the primary action follows you down the page on a phone. */}
-      <div className={`${styles.mobileCta} ${scrolled ? styles.mobileCtaVisible : ''}`}>
-        <Button to={PATHS.register} fullWidth size="lg">
-          Register as donor
-        </Button>
-      </div>
+      {/* Thumb zone: the primary action follows you down the page on a phone —
+          for a reader who has an account it is a bar over the feed offering
+          them something they have already done, so it does not appear at all.
+
+          This one waits for the boot refresh, where the hero does not: it is
+          hidden until 240px of scroll anyway, so waiting costs nothing and a
+          fixed bar flashing in and out over the cards would be worse than a
+          button that settles. */}
+      {!restoring && !session && (
+        <div className={`${styles.mobileCta} ${scrolled ? styles.mobileCtaVisible : ''}`}>
+          <Button to={PATHS.register} fullWidth size="lg">
+            Register as donor
+          </Button>
+        </div>
+      )}
     </>
   );
 }

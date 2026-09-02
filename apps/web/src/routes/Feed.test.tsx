@@ -1,11 +1,13 @@
+import { useEffect, type ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { PublicBloodRequest } from '@kapka/shared';
+import type { PublicBloodRequest, UserRole } from '@kapka/shared';
 import { ThemeProvider } from '../lib/ThemeProvider';
 import { SessionProvider } from '../lib/SessionProvider';
-import { ApiError } from '../lib/api';
+import { ApiError, type Session } from '../lib/api';
+import { useSession } from '../lib/session';
 import Feed from './Feed';
 
 const listRequests = vi.fn<() => Promise<PublicBloodRequest[]>>();
@@ -43,12 +45,37 @@ const REQUESTS = [
   request({ id: 'r3', urgency: 'urgent', bloodType: 'B-', city: 'Skopje' }),
 ];
 
-const renderFeed = () =>
+const sessionAs = (role: UserRole): Session => ({
+  user: {
+    id: 'u1',
+    email: 'donor@example.com',
+    fullName: 'Ana Donor',
+    role,
+    emailVerified: true,
+  },
+  accessToken: 'token',
+});
+
+function SignedIn({ as, children }: { as: UserRole; children: ReactNode }) {
+  const { session, signIn } = useSession();
+  useEffect(() => {
+    signIn(sessionAs(as));
+  }, [as, signIn]);
+  return session ? <>{children}</> : null;
+}
+
+const renderFeed = ({ as }: { as?: UserRole } = {}) =>
   render(
     <MemoryRouter>
       <ThemeProvider>
         <SessionProvider>
-          <Feed />
+          {as ? (
+            <SignedIn as={as}>
+              <Feed />
+            </SignedIn>
+          ) : (
+            <Feed />
+          )}
         </SessionProvider>
       </ThemeProvider>
     </MemoryRouter>,
@@ -214,5 +241,42 @@ describe('the public feed', () => {
     listRequests.mockResolvedValue([]);
     renderFeed();
     expect(await screen.findByText(/No open requests right now/)).toBeInTheDocument();
+  });
+
+  it('stops asking a donor to register', async () => {
+    /* The bug this replaces: a signed-in donor read the hero, the sticky
+       thumb-zone bar and the empty state all inviting them to join a list
+       they are already on, and the form behind them can only refuse an
+       address that already has an account. */
+    renderFeed({ as: 'donor' });
+    await screen.findByText('3 open requests');
+
+    expect(screen.queryByRole('link', { name: /Register as donor/ })).toBeNull();
+    expect(screen.getByRole('link', { name: /Your donor settings/ })).toHaveAttribute(
+      'href',
+      '/me',
+    );
+  });
+
+  it('offers a requester the thing they can actually do', async () => {
+    /* Registering makes a new account rather than adding a donor profile to
+       this one, so it is not an action this reader has. */
+    renderFeed({ as: 'requester' });
+    await screen.findByText('3 open requests');
+
+    expect(screen.queryByRole('link', { name: /Register as donor/ })).toBeNull();
+    expect(screen.queryByRole('link', { name: /Your donor settings/ })).toBeNull();
+    expect(screen.getAllByRole('link', { name: /Post a request/ })[0]).toHaveAttribute(
+      'href',
+      '/requests/new',
+    );
+  });
+
+  it('keeps the invitation for a reader with no account', async () => {
+    renderFeed();
+    await screen.findByText('3 open requests');
+    expect(
+      screen.getAllByRole('link', { name: /Register as donor/ }).length,
+    ).toBeGreaterThan(1);
   });
 });
