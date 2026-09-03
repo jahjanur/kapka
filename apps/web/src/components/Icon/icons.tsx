@@ -71,6 +71,35 @@ export const ICONS = {
   droplet: (
     <path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5S12.5 5.5 12 3c-.5 2.5-2 4.9-4 6.5S5 13 5 15a7 7 0 0 0 7 7Z" />
   ),
+  calendar: (
+    <>
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18" />
+    </>
+  ),
+  calendarCheck: (
+    <>
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18" />
+      <path d="m9 15.5 2 2 4-4" />
+    </>
+  ),
+  idCard: (
+    <>
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <circle cx="8" cy="10.5" r="2" />
+      <path d="M5.5 15.5a2.5 2.5 0 0 1 5 0" />
+      <path d="M14 9.5h5M14 13.5h3" />
+    </>
+  ),
+  hospital: (
+    <>
+      <path d="M4 21V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14" />
+      <path d="M2 21h20" />
+      <path d="M12 8.5v5M9.5 11h5" />
+      <path d="M9.5 21v-3.5h5V21" />
+    </>
+  ),
   info: (
     <>
       <circle cx="12" cy="12" r="10" />

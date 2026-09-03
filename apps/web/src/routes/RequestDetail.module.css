@@ -48,75 +48,113 @@
 }
 
 /* ── The record ──────────────────────────────────────────────────────────
-   One document rather than four cards down a page. A request is a single
-   thing and four separately floating surfaces said it was four; a hairline
-   between blocks says the same boundary without the second, third and
-   fourth shadow.
+   One card, holding a head and one named panel per section.
 
-   Clipped, because the head's severity stripe and the compatibility band
-   both run to the edges and would otherwise square off the corners.
+   A query container, because what the head does at 288px of card and what it
+   does at 640px is the card's business and not the viewport's — the same
+   record is read in a phone's full width and in a 1fr column beside a 22rem
+   rail (§7.2).
    ---------------------------------------------------------------------- */
 .record {
-  overflow: hidden;
+  /* Set here rather than on the tile, because the chipped panel's body has
+     to indent by exactly the tile's width and cannot read a sibling's
+     custom property. */
+  --tile-size: var(--space-8);
+  container-type: inline-size;
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
 }
 
-.block {
-  padding: var(--space-5);
+/* ── Panels ──────────────────────────────────────────────────────────────
+   Each section on its own inset surface. On a phone this record is several
+   screens long, and a heading set in the same ink on the same white as the
+   sentence above it is a heading you scroll straight past; an edge is what
+   makes a section findable on the way back to it.
+   ---------------------------------------------------------------------- */
+.panel {
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
 }
 
-/* The rule between blocks. Every block after the first, so the head keeps its
-   own edge and nothing draws a line under the last one.
-
-   --border-subtle, not --border-hairline: hairline is transparent in the
-   light theme on purpose — it exists so a Card's own border appears only in
-   dark, where shadows do not register. A divider that has to be seen in both
-   themes is a different job. */
-.record > * + * {
-  border-block-start: 1px solid var(--border-subtle);
+/* What the hospital wrote, in the accent tint — it is the one part of the
+   record that is somebody's words rather than the product's. */
+.quote {
+  background-color: var(--accent-surface);
 }
 
-.blockHeading {
+/* The reference sections: a plain surface with an edge, so they read as
+   panels of the record rather than tinted asides. */
+.plain {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+}
+
+/* Practical instructions, in the success tint — the one panel that is about
+   what the donor does rather than what the hospital needs. */
+.practical {
+  background-color: var(--success-surface);
+}
+
+.panelHeading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
   line-height: var(--leading-snug);
-  color: var(--fg-secondary);
-}
-
-.blockBody {
-  max-inline-size: var(--measure);
-  margin-block-start: var(--space-2);
   color: var(--fg-primary);
 }
 
-/* ── Head ────────────────────────────────────────────────────────────────
-   The first block of the record, with the room its stripe needs.
+.panelBody {
+  margin-block-start: var(--space-3);
+}
+
+/* A chipped heading sets its own body in line with the heading text rather
+   than the tile, so the tile is the only thing in the left margin. */
+.panelChipped .panelBody {
+  margin-block-start: var(--space-2);
+  padding-inline-start: calc(var(--tile-size) + var(--space-3));
+}
+
+/* ── The icon on a heading or a row ──────────────────────────────────────
+   Bare in a heading, tiled in a row. The tile is what lets three rows of
+   near-identical text be told apart before any of it is read, and it is the
+   same size in every panel so the rows line up down the whole record.
    ---------------------------------------------------------------------- */
-.head {
-  position: relative;
-  padding: var(--space-5);
-  padding-inline-start: var(--space-6);
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  color: var(--accent);
 }
 
-/* Same severity stripe as the card it was opened from, so the page reads as
-   the same object rather than a new one. */
-.head::before {
-  content: '';
-  position: absolute;
-  inset-block: 0;
-  inset-inline-start: 0;
-  inline-size: 3px;
-  background-color: var(--border-default);
-}
-.head[data-urgency='critical']::before {
-  background-color: var(--danger);
-}
-.head[data-urgency='urgent']::before {
-  background-color: var(--warning);
-}
-.head[data-urgency='routine']::before {
-  background-color: var(--info);
+.chip {
+  inline-size: var(--tile-size);
+  block-size: var(--tile-size);
+  background-color: var(--accent-surface);
+  border-radius: var(--radius-sm);
 }
 
+/* Inside the tinted panel the tile has to lift off its own background, so it
+   goes the other way: the surface colour on the tint. */
+.quote .chip {
+  background-color: var(--bg-surface);
+}
+
+/* Its glyphs carry the hue; its tiles lift off the tint the same way the
+   quote panel's do. */
+.practical .icon {
+  color: var(--success-ink);
+}
+.practical .chip {
+  background-color: var(--bg-surface);
+}
+
+/* ── Head ────────────────────────────────────────────────────────────────
+   Badges, then the headline and the address with the unit beside them.
+   ---------------------------------------------------------------------- */
 .headTop {
   display: flex;
   align-items: center;
@@ -124,69 +162,78 @@
   flex-wrap: wrap;
 }
 
+/* A disc rather than the badge's default pill: at this size it is the first
+   thing on the screen, and the blood type is two or three characters, which
+   in a pill leaves it swimming in a lozenge. */
+.headBadge {
+  --pad-block: var(--space-0);
+  --pad-inline: var(--space-0);
+  --min-width: var(--space-12);
+  block-size: var(--space-12);
+}
+
 /* Pushed to the end of the badge row: it is the least of the three and it is
    the one that can wrap away on its own line without costing anything. */
 .posted {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   margin-inline-start: auto;
   font-size: var(--text-sm);
   color: var(--fg-muted);
   font-variant-numeric: tabular-nums;
 }
 
-.title {
+.headBody {
+  display: grid;
+  gap: var(--space-4);
+  align-items: center;
   margin-block-start: var(--space-4);
+}
+
+.headText {
+  min-inline-size: 0;
+}
+
+/* Held back on a narrow card. At 288px of content it would take a third of
+   the line and push "4 units of O+ needed" into four of them; from about
+   26rem of card there is room for both. */
+.headArt {
+  display: none;
+}
+
+.title {
   font-size: var(--text-2xl);
   letter-spacing: var(--tracking-tight);
 }
 
 .where {
   display: flex;
-  align-items: center;
+  align-items: start;
   gap: var(--space-2);
   margin-block-start: var(--space-3);
   font-size: var(--text-base);
   color: var(--fg-secondary);
 }
 
+/* The pin marks the first line of an address that wraps to two, so it stays
+   with that line rather than centring itself against the block. */
+.where svg {
+  flex: none;
+  margin-block-start: 0.15em;
+}
+
 .note {
   max-inline-size: var(--measure);
-  margin-block-start: var(--space-2);
-  padding-inline-start: var(--space-4);
+  padding-inline-start: var(--space-3);
   color: var(--fg-primary);
   /* Somebody at the hospital wrote this sentence, and the rule marks it as
      quoted rather than written by the product. */
   border-inline-start: 2px solid var(--accent-border);
 }
 
-/* ── Before you go ───────────────────────────────────────────────────────
-   The three practical items on one line. They are short, they are of equal
-   weight, and three bullet points down a page gave each of them the standing
-   of the eligibility rule above, which is the only one that can turn somebody
-   away at the door.
-   ---------------------------------------------------------------------- */
-.inlineList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-block-start: var(--space-2);
-  font-size: var(--text-sm);
-  color: var(--fg-secondary);
-  list-style: none;
-}
-
-/* On the item before the break rather than the one after it: as a ::before
-   the separator led the line whenever the list wrapped, which reads as a
-   bullet on a list that has none. */
-.inlineList li:not(:last-child)::after {
-  content: '·';
-  margin-inline-start: var(--space-2);
-  color: var(--fg-muted);
-}
-
 /* ── Details ─────────────────────────────────────────────────────────────
-   Label left, value right, ruled between. Capped at a measure so the two
-   halves do not drift to opposite ends of a wide column, which is how a
-   table of three rows starts reading as a table of three unrelated rows.
+   Tile, label, value at the end, ruled between.
    ---------------------------------------------------------------------- */
 .facts {
   /* A layout width, not a reading measure: --measure is 68ch and never binds
@@ -194,30 +241,96 @@
      value at the far right, reading as two unrelated lists. The pair has to
      stay close enough to be read as a pair. */
   max-inline-size: 32rem;
-  margin-block-start: var(--space-3);
 }
 
-.fact {
+/* Flex rather than three grid tracks: on a 390px phone "September 10, 2026"
+   and its label cannot share a line, and in a grid the label is what gave
+   way — "Open until" broke across two lines while the value sat whole beside
+   it. Wrapping moves the value to a line of its own instead, which is the
+   half that can afford one. */
+.fact,
+.prepList li {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-4);
+  align-items: center;
+  gap: var(--space-3);
   padding-block: var(--space-3);
 }
 
-.fact + .fact {
+.fact {
+  flex-wrap: wrap;
+}
+
+.fact + .fact,
+.prepList li + li {
   border-block-start: 1px solid var(--border-subtle);
+}
+
+/* The first and last rows sit against the panel's own padding, so they do
+   not need their own on that side as well. */
+.fact:first-child,
+.prepList li:first-child {
+  padding-block-start: var(--space-0);
+}
+.fact:last-child,
+.prepList li:last-child {
+  padding-block-end: var(--space-0);
 }
 
 .fact dt {
   color: var(--fg-secondary);
+  white-space: nowrap;
 }
 
+/* Pushed to the end of the row, and to the end of the next one when it has
+   to wrap there — the values stay in one column either way. */
 .fact dd {
   margin: 0;
+  margin-inline-start: auto;
   font-weight: var(--weight-semibold);
   font-variant-numeric: tabular-nums;
   text-align: end;
+}
+
+/* ── Before you go ───────────────────────────────────────────────────────
+   Same rows as Details, one column short — nothing here has a value.
+   ---------------------------------------------------------------------- */
+.prepList {
+  list-style: none;
+}
+
+.prepList li {
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+}
+
+/* A flex item will not wrap below its content width without this. */
+.prepList li > span {
+  min-inline-size: 0;
+}
+
+/* The eligibility rule is the one line here that can turn somebody away at
+   the door, so it is set as the record's own sentence rather than at the
+   size of the two chores under it. */
+.prepList li:first-child {
+  font-size: var(--text-base);
+  color: var(--fg-primary);
+}
+
+/* Two short instructions of equal weight on one row: separated, not stacked,
+   because a second bullet gave "eat beforehand" a line of its own. */
+.pair {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* On the item before the break rather than the one after it: as a ::before
+   the separator led the line whenever the pair wrapped, which reads as a
+   bullet on a list that has none. */
+.pair > span:not(:last-child)::after {
+  content: '·';
+  margin-inline-start: var(--space-2);
+  color: var(--fg-muted);
 }
 
 /* ── Action rail ─────────────────────────────────────────────────────────
@@ -258,6 +371,21 @@
   color: var(--fg-secondary);
 }
 
+/* The card is wide enough for the headline and the unit side by side. A
+   container query, not a media query: it is the card's width that decides,
+   and this card is 288px wide on a phone and 640px beside the rail (§7.2). */
+@container (min-inline-size: 26rem) {
+  .headBody {
+    /* A share of the card rather than a fixed width: the illustration holds
+       the same proportion at 26rem of card and at 44rem, which a px column
+       cannot. Capped so it stops growing once it is unmistakably a bag. */
+    grid-template-columns: minmax(0, 1fr) min(20cqi, calc(var(--space-24) * 1.5));
+  }
+  .headArt {
+    display: block;
+  }
+}
+
 /* Page-level layout change, so a media query by design (§7.2). */
 @media (min-width: 64rem) {
   .layout {
@@ -270,31 +398,31 @@
     position: sticky;
     inset-block-start: calc(var(--header-height) + var(--space-4));
   }
-  .facts {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .panel {
+    padding: var(--space-5);
   }
 }
 
 /* ── The compatibility banner ────────────────────────────────────────────
    Directly under the head, because for a signed-in donor it is the answer to
-   the question they opened the page with. A band across the record rather
-   than a rounded box floating inside one — the record is the frame, and a
-   second frame inside it is a frame too many.
+   the question they opened the page with. Panel-shaped, like the sections
+   under it — it is one of them, not a band laid across the card.
    ---------------------------------------------------------------------- */
 .fit {
   display: flex;
   align-items: start;
   gap: var(--space-3);
-  padding: var(--space-4) var(--space-5);
-}
-
-.fit svg {
-  flex: none;
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
 }
 
 .fitYes {
   color: var(--success-ink);
   background-color: var(--success-surface);
+}
+
+.fitYes .icon {
+  color: var(--success-ink);
 }
 
 /* Not a warning. Nothing has gone wrong and the donor has done nothing
@@ -303,6 +431,16 @@
 .fitNo {
   color: var(--fg-secondary);
   background-color: var(--bg-surface-alt);
+}
+
+.fitNo .icon {
+  color: var(--fg-secondary);
+}
+
+/* The tile inside a tinted banner lifts off it the same way the quote
+   panel's does — surface colour on the tint. */
+.fit .chip {
+  background-color: var(--bg-surface);
 }
 
 .fitHeadline {
@@ -314,30 +452,6 @@
 .fitBody {
   margin-block-start: var(--space-1);
   font-size: var(--text-sm);
-}
-
-/* ── The map ─────────────────────────────────────────────────────────────
-   Only rendered when the request carries a pin, so most of the laziness here
-   is that Leaflet is never fetched at all for one that does not.
-   ---------------------------------------------------------------------- */
-/* Clips whatever Leaflet draws to the same corner the fallback uses, so the
-   loaded map and the box it replaces are the same shape. */
-.map {
-  overflow: hidden;
-  margin-block-start: var(--space-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-}
-
-.mapLoading {
-  block-size: 16rem;
-  background-color: var(--bg-surface-alt);
-}
-
-.mapNote {
-  margin-block-start: var(--space-2);
-  font-size: var(--text-sm);
-  color: var(--fg-muted);
 }
 
 .phoneLink {

@@ -1,7 +1,8 @@
-import { lazy, Suspense, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   AppHeader,
+  BloodBag,
   BloodTypeBadge,
   BloodTypeLabel,
   Button,
@@ -21,15 +22,8 @@ import { useSession } from '../lib/session';
 import { timeAgo } from '../lib/relativeTime';
 import { directionsUrl, isDiallable, telHref } from '../lib/directions';
 import { PATHS } from './paths';
+import type { IconName } from '../components';
 import styles from './RequestDetail.module.css';
-
-/**
- * Leaflet is 150kB and this screen is opened from an email, on a phone, in a
- * corridor. It is a separate chunk, and it is only asked for at all when the
- * request actually carries a pin — most of the reason this is lazy is that
- * for a request without coordinates it is never fetched.
- */
-const HospitalMap = lazy(() => import('../components/HospitalMap/HospitalMap'));
 
 /**
  * A date, written out. Accepts a full timestamp or a bare YYYY-MM-DD.
@@ -45,20 +39,84 @@ const longDate = (iso: string) =>
     year: 'numeric',
   });
 
+type PanelTone = 'quote' | 'plain' | 'practical';
+
 /**
- * One block of the record.
+ * One named panel of the record.
  *
- * Not a card of its own: four cards stacked down a page is four objects, and
- * a request is one. They are blocks of a single document now, divided by a
- * hairline, which is how anything that has to be read as a record — a chart, a
- * statement, a report — has always been set.
+ * Each section is its own inset surface rather than a hairline band across a
+ * single sheet: on a phone the record is four screens long, and a heading in
+ * the same ink on the same white as the sentence above it is a heading you
+ * scroll straight past. A panel has an edge, so you can find the one you
+ * came back for without reading the two before it.
+ *
+ * The icon is the heading's, not decoration — it is what makes the four
+ * panels tellable apart at a glance, before any of the words are read — so
+ * it is inside the <h2> and hidden from the screen reader, which has the
+ * heading itself to navigate by.
  */
-function Block({ heading, children }: { heading: string; children: ReactNode }) {
+function Panel({
+  icon,
+  tone,
+  heading,
+  chip = false,
+  children,
+}: {
+  icon: IconName;
+  tone: PanelTone;
+  heading: string;
+  /** Sets the heading icon in a tile, for a panel whose body is indented under it. */
+  chip?: boolean;
+  children: ReactNode;
+}) {
   return (
-    <section className={styles.block}>
-      <h2 className={styles.blockHeading}>{heading}</h2>
-      {children}
+    <section className={cx(styles.panel, styles[tone], chip && styles.panelChipped)}>
+      <h2 className={styles.panelHeading}>
+        <span className={cx(styles.icon, chip && styles.chip)}>
+          <Icon name={icon} />
+        </span>
+        {heading}
+      </h2>
+      <div className={styles.panelBody}>{children}</div>
     </section>
+  );
+}
+
+/** A tiled icon, the size the rows and the chipped headings share. */
+function Tile({ icon }: { icon: IconName }) {
+  return (
+    <span className={cx(styles.icon, styles.chip)}>
+      <Icon name={icon} />
+    </span>
+  );
+}
+
+/** One labelled value of the record: icon, label, figure at the end. */
+function Fact({
+  icon,
+  label,
+  children,
+}: {
+  icon: IconName;
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className={styles.fact}>
+      <Tile icon={icon} />
+      <dt>{label}</dt>
+      <dd>{children}</dd>
+    </div>
+  );
+}
+
+/** One thing to do before going, as a row of its own. */
+function Prep({ icon, children }: { icon: IconName; children: ReactNode }) {
+  return (
+    <li>
+      <Tile icon={icon} />
+      <span>{children}</span>
+    </li>
   );
 }
 
@@ -75,8 +133,6 @@ export default function RequestDetail() {
 
   const phone = request?.contactPhone;
   const fit = request?.fit;
-  const hasPin =
-    typeof request?.hospitalLat === 'number' && typeof request.hospitalLng === 'number';
 
   return (
     <>
@@ -116,35 +172,50 @@ export default function RequestDetail() {
           {request && (
             <article className={styles.layout}>
               <div className={styles.main}>
-                {/* One record, not a stack of cards. Flush, because each block
-                    below carries its own padding and the tinted compatibility
-                    band has to reach both edges. */}
-                <Card padding="flush" className={styles.record}>
-                  <header className={styles.head} data-urgency={request.urgency}>
+                {/* One card holding the record, and inside it one named panel
+                    per section. */}
+                <Card className={styles.record}>
+                  <header>
                     <div className={styles.headTop}>
-                      <BloodTypeBadge type={request.bloodType} size="lg" />
+                      <BloodTypeBadge
+                        type={request.bloodType}
+                        size="lg"
+                        className={styles.headBadge}
+                      />
                       <UrgencyPill urgency={request.urgency} />
                       {/* How old the request is belongs beside how urgent it
                         is, not four sections down under "Details" — on a
                         critical request the two are read together. */}
                       <time className={styles.posted} dateTime={request.createdAt}>
+                        <Icon name="clock" />
                         {timeAgo(request.createdAt)}
                       </time>
                     </div>
-                    <h1 className={styles.title}>
-                      {request.unitsNeeded}
-                      {request.unitsNeeded === 1 ? ' unit' : ' units'} of{' '}
-                      <BloodTypeLabel type={request.bloodType} /> needed
-                    </h1>
-                    <p className={styles.where}>
-                      <Icon name="mapPin" />
-                      {request.hospitalName}, {request.city}
-                    </p>
-                    {/* Spelled out for a screen reader, which would otherwise
-                        read "O-" as the letter O followed by a hyphen. */}
-                    <span className="visually-hidden">
-                      {announceBloodType(request.bloodType)}
-                    </span>
+
+                    <div className={styles.headBody}>
+                      <div className={styles.headText}>
+                        <h1 className={styles.title}>
+                          {request.unitsNeeded}
+                          {request.unitsNeeded === 1 ? ' unit' : ' units'} of{' '}
+                          <BloodTypeLabel type={request.bloodType} /> needed
+                        </h1>
+                        <p className={styles.where}>
+                          <Icon name="mapPin" />
+                          {request.hospitalName}, {request.city}
+                        </p>
+                        {/* Spelled out for a screen reader, which would
+                            otherwise read "O-" as the letter O followed by a
+                            hyphen. */}
+                        <span className="visually-hidden">
+                          {announceBloodType(request.bloodType)}
+                        </span>
+                      </div>
+
+                      {/* Held back under about 26rem of card: at 360px it
+                          would take a third of the line and push the title
+                          into four. */}
+                      <BloodBag className={styles.headArt} />
+                    </div>
                   </header>
 
                   {/*
@@ -157,9 +228,14 @@ export default function RequestDetail() {
                 */}
                   {fit && (
                     <aside
-                      className={`${styles.fit} ${fit.compatible ? styles.fitYes : styles.fitNo}`}
+                      className={cx(
+                        styles.fit,
+                        fit.compatible ? styles.fitYes : styles.fitNo,
+                      )}
                     >
-                      <Icon name={fit.compatible ? 'checkCircle' : 'info'} />
+                      <span className={cx(styles.icon, styles.chip)}>
+                        <Icon name={fit.compatible ? 'checkCircle' : 'info'} />
+                      </span>
                       <div>
                         {fit.compatible ? (
                           <>
@@ -201,71 +277,51 @@ export default function RequestDetail() {
                   )}
 
                   {request.note && (
-                    <Block heading="From the hospital">
+                    <Panel icon="hospital" tone="quote" heading="From the hospital" chip>
                       <p className={styles.note}>{request.note}</p>
-                    </Block>
-                  )}
-
-                  {hasPin && (
-                    <Block heading="Where to go">
-                      <div className={styles.map}>
-                        <Suspense
-                          fallback={
-                            <div className={styles.mapLoading} aria-hidden="true" />
-                          }
-                        >
-                          <HospitalMap
-                            lat={request.hospitalLat ?? null}
-                            lng={request.hospitalLng ?? null}
-                          />
-                        </Suspense>
-                      </div>
-                      <p className={styles.mapNote}>
-                        The pin is where the hospital put it. Directions open in your maps
-                        app.
-                      </p>
-                    </Block>
+                    </Panel>
                   )}
 
                   {/* Label left, value right, a hairline between each — the
                       shape a reference block has had since long before this
-                      product, and the one people read fastest. */}
-                  <Block heading="Details">
+                      product, and the one people read fastest. The icon on
+                      each row is what the row is about, so the three can be
+                      told apart without reading the labels. */}
+                  <Panel icon="info" tone="plain" heading="Details">
                     <dl className={styles.facts}>
-                      <div className={styles.fact}>
-                        <dt>Units needed</dt>
-                        <dd data-numeric>{request.unitsNeeded}</dd>
-                      </div>
-                      <div className={styles.fact}>
-                        <dt>Open until</dt>
-                        <dd>
-                          <time dateTime={request.expiresAt}>
-                            {longDate(request.expiresAt)}
-                          </time>
-                        </dd>
-                      </div>
-                      <div className={styles.fact}>
-                        <dt>City</dt>
-                        <dd>{request.city}</dd>
-                      </div>
+                      <Fact icon="droplet" label="Units needed">
+                        {request.unitsNeeded}
+                      </Fact>
+                      <Fact icon="calendar" label="Open until">
+                        <time dateTime={request.expiresAt}>
+                          {longDate(request.expiresAt)}
+                        </time>
+                      </Fact>
+                      <Fact icon="mapPin" label="City">
+                        {request.city}
+                      </Fact>
                     </dl>
-                  </Block>
+                  </Panel>
 
                   {/* The eligibility rule is a sentence; the three practical
                       things are a line. Separating them stops the one thing
                       that can send somebody home from the door being read as
                       the fourth item in a list of chores. */}
-                  <Block heading="Before you go">
-                    <p className={styles.blockBody}>
-                      You can give again {DONATION_INTERVAL_DAYS} days after your last
-                      donation.
-                    </p>
-                    <ul className={styles.inlineList}>
-                      <li>Bring photo ID</li>
-                      <li>Eat beforehand</li>
-                      <li>Allow about an hour</li>
+                  <Panel icon="checkCircle" tone="practical" heading="Before you go">
+                    <ul className={styles.prepList}>
+                      <Prep icon="calendarCheck">
+                        You can give again {DONATION_INTERVAL_DAYS} days after your last
+                        donation.
+                      </Prep>
+                      <Prep icon="idCard">
+                        <span className={styles.pair}>
+                          <span>Bring photo ID</span>
+                          <span>Eat beforehand</span>
+                        </span>
+                      </Prep>
+                      <Prep icon="clock">Allow about an hour</Prep>
                     </ul>
-                  </Block>
+                  </Panel>
                 </Card>
               </div>
 
@@ -344,6 +400,7 @@ export default function RequestDetail() {
                  styling and worked only because of the order two stylesheets
                  happened to land in. */
               <Button to={PATHS.register} className={styles.actionButton} size="md">
+                <Icon name="heart" />
                 {/* Two labels, one shown: the long one needs 245px and the
                     button only has that much room from about 460px up. */}
                 <span className={styles.actionShort}>Register</span>
