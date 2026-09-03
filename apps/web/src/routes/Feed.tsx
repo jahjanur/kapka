@@ -178,167 +178,178 @@ export default function Feed() {
     <>
       <AppHeader />
 
-      {/* ── Hero ──────────────────────────────────────────────────────────
-          The sentence, the two ways in, and the drop. Lit from behind by
-          three slow washes of the product's own red on the canvas the rest
-          of the page uses — the point of the wash is depth, not a second
-          page.                                                            */}
-      <section className={styles.hero}>
-        <div className={styles.aurora} aria-hidden="true" />
-        <div className={styles.grid} aria-hidden="true" />
-        <Container>
-          <div className={styles.heroGrid}>
-            <div className={styles.heroCopy}>
-              <h1 className={styles.heroTitle}>
-                Be someone’s <span className={styles.heroTitleInk}>lifeline.</span>
-              </h1>
-              <p className={styles.heroLead}>
-                Every drop of your blood can bring hope and save a life.
-              </p>
-              <div className={styles.heroActions}>
-                {/* Read on the session as it stands rather than waiting for
-                    the boot refresh: signed out is both the common case and
-                    what the header assumes, so the pair of buttons is stable
-                    for most readers instead of appearing a moment late. */}
-                {heroPrimary && (
-                  <Button to={heroPrimary.to} size="lg">
-                    <Icon name="heart" />
-                    {heroPrimary.label}
-                  </Button>
-                )}
-                {/* The hero speaks to donors, but the person whose relative
-                    needs blood lands here too, and the header nav that would
-                    take them on is hidden on a phone. */}
-                <Button
-                  to={PATHS.postRequest}
-                  variant={heroPrimary ? 'secondary' : 'primary'}
-                  size="lg"
-                >
-                  <Icon name="clipboard" />
-                  Post a request
-                </Button>
-              </div>
-            </div>
-
-            {/* Decorative: the sentence beside it says everything it says.
-                Sized in the markup as well as the stylesheet, so the space it
-                will occupy is known before it arrives and nothing under it
-                jumps when it does. */}
-            <img
-              className={styles.heroArt}
-              src="/img/hero-drop.jpg"
-              alt=""
-              width={1072}
-              height={1200}
-              /* The largest thing on the first screen, so it is fetched with
-                 the markup rather than after it. */
-              fetchPriority="high"
-              decoding="async"
-            />
-          </div>
-        </Container>
-
-        {/* The product's pulse, as the line the band ends on. */}
-        <VitalSign className={styles.heroWave} />
-      </section>
-
-      {/* ── The numbers ────────────────────────────────────────────────────
-          The three the product actually knows. A "lives saved" counter would
-          be the easiest thing here to invent and the one nobody could check.
-          ------------------------------------------------------------- */}
-      <section className={styles.numbersBand} aria-label="Open requests right now">
-        <Container>
-          <dl className={styles.numbers}>
-            <Stat
-              icon="droplet"
-              label="Open requests"
-              value={stats.open}
-              loading={isLoading}
-            />
-            <Stat
-              icon="alertTriangle"
-              label="Critical"
-              value={stats.critical}
-              loading={isLoading}
-            />
-            <Stat icon="mapPin" label="Cities" value={stats.cities} loading={isLoading} />
-          </dl>
-        </Container>
-      </section>
-
-      {/* ── What is happening now ──────────────────────────────────────────
-          The live half of the page, above the list itself: the count is the
-          real one, and the link goes to the requests it counts.           */}
-      <section className={styles.nearby} aria-labelledby="nearby-heading">
-        <Container>
-          {/* The heading and the way out of the section sit on one line:
-              somebody who wants the whole list should not have to read the
-              cities first to find the link to it. */}
-          <div className={styles.nearbyHead}>
-            <h2 id="nearby-heading" className={styles.nearbyTitle}>
-              Someone nearby <span className={styles.heroTitleInk}>needs blood.</span>
-            </h2>
-            <a className={styles.viewAll} href={`#${LIST_ID}`}>
-              View all requests
-              <Icon name="chevronRight" />
-            </a>
-          </div>
-          <p className={styles.nearbyLead}>
-            See what is needed in your area, and help save a life.
-          </p>
-
-          {isLoading && (
-            /* Shaped like the chips that replace it, so nothing moves when
-               they land (§9.7). */
-            <ul className={styles.cityList} aria-hidden="true">
-              {Array.from({ length: 4 }, (_, i) => (
-                <li key={i}>
-                  <Skeleton width="7rem" height="2.5rem" shape="circle" />
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {!isLoading && byCity.length === 0 && (
-            <p className={styles.nearbyEmpty}>
-              Nothing is open right now — which is the good outcome. New requests appear
-              here as an admin approves them.
-            </p>
-          )}
-
-          {byCity.length > 0 && (
-            <ul className={styles.cityList}>
-              {byCity.map(({ city: name, count, critical }) => (
-                <li key={name}>
-                  {/* A control, not a label: this is the filter the list
-                      below already has, put where somebody is looking. */}
-                  <button
-                    type="button"
-                    className={styles.cityChip}
-                    /* Spelled out rather than left to the computed name,
-                       which reads the city and the count with nothing
-                       between them: "Skopje2". The red outline is also said
-                       here in words — colour is never the only channel. */
-                    aria-label={`${name}, ${String(count)} open ${
-                      count === 1 ? 'request' : 'requests'
-                    }${critical > 0 ? `, ${String(critical)} critical` : ''}`}
-                    onClick={() => showCity(name)}
+      {/* ── The landing view ───────────────────────────────────────────────
+          Hero, numbers and nearby are one block on purpose: it is held to at
+          least a screenful so the filter panel below can never surface as a
+          sliver of card at the bottom edge. See .landing.                 */}
+      <div className={styles.landing}>
+        {/* ── Hero ────────────────────────────────────────────────────────
+            The sentence, the two ways in, and the drop. Lit from behind by
+            three slow washes of the product's own red on the canvas the rest
+            of the page uses — the point of the wash is depth, not a second
+            page.                                                          */}
+        <section className={styles.hero}>
+          <div className={styles.aurora} aria-hidden="true" />
+          <div className={styles.grid} aria-hidden="true" />
+          <Container>
+            <div className={styles.heroGrid}>
+              <div className={styles.heroCopy}>
+                <h1 className={styles.heroTitle}>
+                  Be someone’s <span className={styles.heroTitleInk}>lifeline.</span>
+                </h1>
+                <p className={styles.heroLead}>
+                  Every drop of your blood can bring hope and save a life.
+                </p>
+                <div className={styles.heroActions}>
+                  {/* Read on the session as it stands rather than waiting for
+                      the boot refresh: signed out is both the common case and
+                      what the header assumes, so the pair of buttons is stable
+                      for most readers instead of appearing a moment late. */}
+                  {heroPrimary && (
+                    <Button to={heroPrimary.to} size="lg">
+                      <Icon name="heart" />
+                      {heroPrimary.label}
+                    </Button>
+                  )}
+                  {/* The hero speaks to donors, but the person whose relative
+                      needs blood lands here too, and the header nav that would
+                      take them on is hidden on a phone. */}
+                  <Button
+                    to={PATHS.postRequest}
+                    variant={heroPrimary ? 'secondary' : 'primary'}
+                    size="lg"
                   >
-                    <Icon name="mapPin" />
-                    {/* Its own element so it is the thing that truncates: as
-                        a bare text node it pushed the count out of the chip
-                        instead, and Kumanovo lost its number. */}
-                    <span className={styles.cityName}>{name}</span>
-                    <span className={styles.cityCount} data-numeric>
-                      {count}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Container>
-      </section>
+                    <Icon name="clipboard" />
+                    Post a request
+                  </Button>
+                </div>
+              </div>
+
+              {/* Decorative: the sentence beside it says everything it says.
+                  Sized in the markup as well as the stylesheet, so the space it
+                  will occupy is known before it arrives and nothing under it
+                  jumps when it does. */}
+              <img
+                className={styles.heroArt}
+                src="/img/hero-drop.jpg"
+                alt=""
+                width={1072}
+                height={1200}
+                /* The largest thing on the first screen, so it is fetched with
+                   the markup rather than after it. */
+                fetchPriority="high"
+                decoding="async"
+              />
+            </div>
+          </Container>
+
+          {/* The product's pulse, as the line the band ends on. */}
+          <VitalSign className={styles.heroWave} />
+        </section>
+
+        {/* ── The numbers ────────────────────────────────────────────────────
+            The three the product actually knows. A "lives saved" counter would
+            be the easiest thing here to invent and the one nobody could check.
+            ------------------------------------------------------------- */}
+        <section className={styles.numbersBand} aria-label="Open requests right now">
+          <Container>
+            <dl className={styles.numbers}>
+              <Stat
+                icon="droplet"
+                label="Open requests"
+                value={stats.open}
+                loading={isLoading}
+              />
+              <Stat
+                icon="alertTriangle"
+                label="Critical"
+                value={stats.critical}
+                loading={isLoading}
+              />
+              <Stat
+                icon="mapPin"
+                label="Cities"
+                value={stats.cities}
+                loading={isLoading}
+              />
+            </dl>
+          </Container>
+        </section>
+
+        {/* ── What is happening now ──────────────────────────────────────────
+            The live half of the page, above the list itself: the count is the
+            real one, and the link goes to the requests it counts.           */}
+        <section className={styles.nearby} aria-labelledby="nearby-heading">
+          <Container>
+            {/* The heading and the way out of the section sit on one line:
+                somebody who wants the whole list should not have to read the
+                cities first to find the link to it. */}
+            <div className={styles.nearbyHead}>
+              <h2 id="nearby-heading" className={styles.nearbyTitle}>
+                Someone nearby <span className={styles.heroTitleInk}>needs blood.</span>
+              </h2>
+              <a className={styles.viewAll} href={`#${LIST_ID}`}>
+                View all requests
+                <Icon name="chevronRight" />
+              </a>
+            </div>
+            <p className={styles.nearbyLead}>
+              See what is needed in your area, and help save a life.
+            </p>
+
+            {isLoading && (
+              /* Shaped like the chips that replace it, so nothing moves when
+                 they land (§9.7). */
+              <ul className={styles.cityList} aria-hidden="true">
+                {Array.from({ length: 4 }, (_, i) => (
+                  <li key={i}>
+                    <Skeleton width="7rem" height="2.5rem" shape="circle" />
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {!isLoading && byCity.length === 0 && (
+              <p className={styles.nearbyEmpty}>
+                Nothing is open right now — which is the good outcome. New requests appear
+                here as an admin approves them.
+              </p>
+            )}
+
+            {byCity.length > 0 && (
+              <ul className={styles.cityList}>
+                {byCity.map(({ city: name, count, critical }) => (
+                  <li key={name}>
+                    {/* A control, not a label: this is the filter the list
+                        below already has, put where somebody is looking. */}
+                    <button
+                      type="button"
+                      className={styles.cityChip}
+                      /* Spelled out rather than left to the computed name,
+                         which reads the city and the count with nothing
+                         between them: "Skopje2". The red outline is also said
+                         here in words — colour is never the only channel. */
+                      aria-label={`${name}, ${String(count)} open ${
+                        count === 1 ? 'request' : 'requests'
+                      }${critical > 0 ? `, ${String(critical)} critical` : ''}`}
+                      onClick={() => showCity(name)}
+                    >
+                      <Icon name="mapPin" />
+                      {/* Its own element so it is the thing that truncates: as
+                          a bare text node it pushed the count out of the chip
+                          instead, and Kumanovo lost its number. */}
+                      <span className={styles.cityName}>{name}</span>
+                      <span className={styles.cityCount} data-numeric>
+                        {count}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Container>
+        </section>
+      </div>
 
       {/* ── Filters and list ───────────────────────────────────────────────
           One grid holds both, so the filters can be a strip above the cards

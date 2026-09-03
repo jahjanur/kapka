@@ -2,6 +2,31 @@
    Public feed (§9.1). Mobile-first: written narrow, widened upward.
    ========================================================================= */
 
+/* ── The landing view ─────────────────────────────────────────────────────
+   Hero, numbers and nearby, held to at least a screenful.
+
+   Without it the filter panel below surfaces at the bottom edge as a strip of
+   card three millimetres tall — too little to read, too little to press, and
+   indistinguishable from a rendering fault. Whether it happened at all came
+   down to how tall the device was, which is not a thing to leave to chance.
+   The fold now lands on a boundary somebody chose.
+
+   lvh rather than svh or dvh: the largest viewport is the one with the
+   browser's own chrome retracted, and sizing to anything smaller brings the
+   sliver straight back the moment the URL bar hides. The height this leaves
+   below the fold while the bar is showing costs nothing — nobody can see it.
+   The vh line above it is the fallback, and on the browsers that need one it
+   already means the largest viewport.
+
+   A whole viewport, with nothing subtracted for the header: the hero starts
+   at the top of the page and the header sits over it on blurred glass rather
+   than above it in the flow.
+   ---------------------------------------------------------------------- */
+.landing {
+  min-block-size: 100vh;
+  min-block-size: 100lvh;
+}
+
 /* ── Hero ────────────────────────────────────────────────────────────────
    The sentence and the drop, side by side from 360px up: the illustration is
    half the message here, and stacking it under the buttons would put it below
