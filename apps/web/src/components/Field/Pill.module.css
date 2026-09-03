@@ -26,6 +26,25 @@
   box-shadow: var(--glow-soft);
 }
 
+/*
+ * The focus ring belongs to the pill, not to the input inside it.
+ *
+ * global.css gives every focused input a 2px outline. Inside a pill that is
+ * drawn as a hard rectangle across a rounded surface, sitting inside the
+ * pill's own accent border — two focus indicators for one control, and the
+ * inner one the wrong shape. The outline moves out here instead, where it
+ * follows the radius of the thing that actually looks like the control.
+ *
+ * Keyed on the input rather than :focus-within, so that tabbing on to the
+ * show-password button moves the ring to the button instead of leaving it
+ * sitting around the whole pill — a ring that does not move is a ring that
+ * has stopped saying where you are.
+ */
+.pill:has(.pillInput:focus-visible) {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
 /* The invalid state belongs to the pill, since the pill is what is drawn. */
 .pill:has([aria-invalid='true']) {
   border-color: var(--danger);
@@ -43,6 +62,22 @@
   color: var(--accent-ink);
   background-color: var(--accent-surface);
   border-radius: var(--radius-sm);
+}
+
+/* The control's own outline goes, because the pill above draws it instead.
+   Focus is not being removed — removing it is what leaves a keyboard user
+   with no idea where they are. It is being drawn once, in the right place. */
+.pillInput:focus-visible {
+  outline: none;
+}
+
+/* Forced colours throw away the pill's border and box-shadow, so the outline
+   is the only indicator left standing. It has to be a system colour there, on
+   whichever element is carrying it. */
+@media (forced-colors: active) {
+  .pill:has(.pillInput:focus-visible) {
+    outline-color: Highlight;
+  }
 }
 
 /* The control keeps its type and its hit area and gives up its surface — two
