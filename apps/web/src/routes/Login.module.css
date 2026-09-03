@@ -33,7 +33,33 @@
   border-radius: var(--radius-md);
 }
 
+/* The greeting's heart: filled, lifted, and let down to a tint — an aside
+   to the word, not a second word. */
+.titleHeart {
+  display: inline-block;
+  margin-inline-start: var(--space-2);
+  font-size: var(--text-base);
+  vertical-align: super;
+  opacity: 0.7;
+}
+.titleHeart svg {
+  fill: currentColor;
+  stroke: none;
+}
+
+.submitArrow {
+  position: absolute;
+  inset-inline-end: var(--space-5);
+}
+
+/* On its own line under the question, set as the action it is. */
 .link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  margin-block-start: var(--space-2);
+  min-block-size: var(--hit-min);
   color: var(--accent-ink);
   font-weight: var(--weight-semibold);
 }

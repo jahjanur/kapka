@@ -33,8 +33,16 @@
 }
 
 .pillIcon {
+  display: inline-grid;
+  place-items: center;
   flex: none;
-  color: var(--fg-muted);
+  inline-size: var(--space-8);
+  block-size: var(--space-8);
+  /* The glyph's size, not the text's — it sits in a tile, next to nothing. */
+  font-size: var(--text-base);
+  color: var(--accent-ink);
+  background-color: var(--accent-surface);
+  border-radius: var(--radius-sm);
 }
 
 /* The control keeps its type and its hit area and gives up its surface — two

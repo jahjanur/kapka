@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../Icon/Icon';
 import { cx } from '../../lib/cx';
+import { AuthScene, DROP_PATH } from './AuthScene';
 import styles from './AuthLayout.module.css';
 
 interface AuthLayoutProps {
@@ -13,8 +14,13 @@ interface AuthLayoutProps {
   back?: string;
   /** Shown opposite the arrow — "1 of 2" and its bar. */
   progress?: { step: number; of: number } | undefined;
-  /** The brand droplet above the title, for a screen with no back arrow. */
+  /** The brand emblem astride the band's edge — the screen that leads with
+   *  the product rather than a step. */
   mark?: boolean;
+  /** The landscape along the bottom — for a screen short enough to have a
+   *  bottom. The sign-up form scrolls; drawing under it would only put
+   *  texture behind the last field. */
+  scene?: boolean;
   children: ReactNode;
   /** Under the card, on the band: the way across to the other screen. */
   footer?: ReactNode;
@@ -41,6 +47,7 @@ export function AuthLayout({
   back,
   progress,
   mark = false,
+  scene = false,
   children,
   footer,
   centred = false,
@@ -88,19 +95,43 @@ export function AuthLayout({
             </ol>
           )}
 
-          {mark && (
-            <span className={styles.mark} aria-hidden="true">
-              <Icon name="droplet" />
-            </span>
-          )}
-
           {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
         </div>
+
+        {mark && (
+          /* The product's drop, filled and lit, seated on the curve with the
+             lower half on the white — the one place on the screen where the
+             brand is the subject. Drawn from the sprite's own droplet path,
+             with a darker pool clipped inside it, so the emblem and the
+             favicon can never drift apart. */
+          <span className={styles.mark} aria-hidden="true">
+            <svg className={styles.markDrop} viewBox="0 0 24 24" focusable="false">
+              <defs>
+                <clipPath id="kapka-auth-mark">
+                  <path d={DROP_PATH} />
+                </clipPath>
+              </defs>
+              <path className={styles.markBody} d={DROP_PATH} />
+              {/* Centred in the lower bulb with a rim of white all round —
+                  liquid held in the drop. Flush with an edge it reads as a
+                  hole in it. */}
+              <circle
+                className={styles.markPool}
+                cx="12"
+                cy="17.6"
+                r="3.9"
+                clipPath="url(#kapka-auth-mark)"
+              />
+            </svg>
+          </span>
+        )}
       </div>
 
       <div className={styles.card}>{children}</div>
 
       {footer && <p className={styles.footer}>{footer}</p>}
+
+      {scene && <AuthScene />}
     </div>
   );
 }

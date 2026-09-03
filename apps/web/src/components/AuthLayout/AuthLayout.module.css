@@ -33,19 +33,20 @@
   pointer-events: none;
 }
 
-/* Sign-in: the card sits in the middle of the screen, and the pour still
-   starts at the top of it.
+/* Sign-in: the band is a third of the screen, the emblem sits astride its
+   edge, and the card floats clear below both.
 
-   The band's height is what centres the card, not a margin on the card: the
-   red has to run off the top edge, and centring the whole composition moved
-   it down the page and left a white strip above the pour. 40dvh puts the
-   band's edge just above halfway, and the card straddles it. */
+   The end padding is the emblem's room: half of it hangs inside the band,
+   and the title and subtitle have to stop above it. */
 .pageCentred .band {
   display: grid;
   align-content: end;
-  min-block-size: 40dvh;
-  /* Deeper too: on this screen the band is most of what there is. */
-  padding-block: var(--space-10) var(--space-20);
+  min-block-size: 38dvh;
+  padding-block: var(--space-10) calc(var(--emblem-size) + var(--space-6));
+  /* The pour settles symmetrically on this screen: the emblem sits at its
+     lowest point, and an off-centre dip put the emblem on a slope. */
+  border-end-start-radius: 50% 3rem;
+  border-end-end-radius: 50% 3rem;
 }
 
 .band {
@@ -140,19 +141,52 @@
   background-color: var(--fg-onAccent);
 }
 
-/* The droplet, for a screen that leads with the product rather than a step. */
+/* ── The emblem ──────────────────────────────────────────────────────────
+   The product's drop on a lit disc, seated on the band's curve — half on
+   the red, half on the white, which is what stitches the two regions into
+   one screen. The rings are white let down to a breath, so they read as a
+   glow on the band and all but vanish once they cross onto the canvas.
+
+   The size lives on the page, not the band: the card's clearance below is
+   calculated from it, and a custom property does not cross to a sibling.
+   ---------------------------------------------------------------------- */
+.page {
+  --emblem-size: calc(var(--space-24) + var(--space-2));
+}
+
 .mark {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline-start: 50%;
+  translate: -50% 50%;
   display: grid;
   place-items: center;
-  inline-size: 3.5rem;
-  block-size: 3.5rem;
-  margin-block-start: var(--space-6);
-  margin-inline: auto;
-  font-size: var(--text-2xl);
+  inline-size: var(--emblem-size);
+  block-size: var(--emblem-size);
   color: var(--fg-onAccent);
-  background-color: var(--surface-glass-onAccent);
+  background-color: var(--accent);
+  background-image: var(--gradient-accent);
   border: 1px solid var(--border-onAccent);
   border-radius: var(--radius-full);
+  box-shadow:
+    0 0 0 var(--space-3) color-mix(in oklab, var(--slate-0) 9%, transparent),
+    0 0 0 var(--space-6) color-mix(in oklab, var(--slate-0) 4%, transparent),
+    var(--glow-accent-strong);
+}
+
+.markDrop {
+  inline-size: 52%;
+  block-size: 52%;
+}
+
+.markBody {
+  fill: var(--fg-onAccent);
+}
+
+/* The darker pool inside the drop — the same crimson the disc is made of,
+   so the emblem still carries exactly one hue. */
+.markPool {
+  fill: var(--accent-active);
 }
 
 .subtitle {
@@ -161,6 +195,18 @@
   text-align: center;
   color: var(--fg-onAccent);
   opacity: 0.9;
+}
+
+/* On the emblem screen the title is the greeting, not a step name, and it is
+   set like one. The subtitle closes up under it. */
+.pageCentred .title {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-tight);
+}
+.pageCentred .subtitle {
+  margin-block-start: var(--space-2);
 }
 
 /* Lifted into the band by its own margin: the overlap is what makes the two
@@ -186,6 +232,13 @@
   }
 }
 
+/* Under the emblem rather than lifted into the band: on this screen the
+   overlap job is the emblem's, and a card pulled up into the red would sit
+   on top of it. */
+.pageCentred .card {
+  margin-block-start: calc(var(--emblem-size) / 2 + var(--space-8));
+}
+
 .footer {
   position: relative;
   z-index: 1;
@@ -206,5 +259,61 @@
   .card,
   .footer {
     margin-inline: auto;
+  }
+}
+
+/* ── The scene ───────────────────────────────────────────────────────────
+   The landscape along the bottom — see AuthScene.tsx for what it is and why.
+   Below the card and the footer in the stack, above the wash; it crops from
+   its sides on a narrow screen, so everything that matters is drawn in the
+   middle of its viewBox.
+   ---------------------------------------------------------------------- */
+.scene {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: 0;
+  block-size: clamp(9rem, 26dvh, 15rem);
+  pointer-events: none;
+}
+
+.sceneArt {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.sceneLine,
+.sceneLineFaint {
+  fill: none;
+  stroke: var(--accent-border);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sceneLine {
+  opacity: 0.55;
+}
+
+.sceneLineFaint {
+  opacity: 0.35;
+}
+
+/* The drop fades in from nothing at its tip to the full surface tint where
+   it meets the ground — resting, not printed on. */
+.sceneDropFaint {
+  stop-color: color-mix(in oklab, var(--accent-surface) 25%, transparent);
+}
+
+.sceneDropFull {
+  stop-color: var(--accent-surface);
+}
+
+/* Forced colours strip the tints and leave stray outlines standing on
+   nothing. The scene says nothing, so it goes. */
+@media (forced-colors: active) {
+  .scene {
+    display: none;
   }
 }

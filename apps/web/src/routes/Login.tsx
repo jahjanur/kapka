@@ -61,16 +61,26 @@ export default function Login() {
 
   return (
     <AuthLayout
-      title="Welcome back"
-      subtitle="Sign in to your account"
+      title={
+        <>
+          Welcome back
+          {/* The little heart is punctuation, not information. */}
+          <span className={styles.titleHeart} aria-hidden="true">
+            <Icon name="heart" />
+          </span>
+        </>
+      }
+      subtitle="Sign in to continue saving lives"
       back={PATHS.register}
       mark
+      scene
       centred
       footer={
         <>
-          Don’t have an account?{' '}
+          Don’t have an account?
           <Link className={styles.link} to={PATHS.createAccount}>
             Create one
+            <Icon name="chevronRight" />
           </Link>
         </>
       }
@@ -139,6 +149,10 @@ export default function Login() {
           loadingLabel="Signing in…"
         >
           Sign in
+          {/* At the edge rather than beside the label, so the label stays
+              centred on the button and the arrow points off it — a door
+              handle, not part of the word. */}
+          <Icon name="arrowRight" className={styles.submitArrow} />
         </Button>
       </form>
     </AuthLayout>
