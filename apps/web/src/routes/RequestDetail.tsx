@@ -101,10 +101,15 @@ function Fact({
   label: string;
   children: ReactNode;
 }) {
+  /* The tile lives inside the <dt>, not beside it: a <dl>'s groups may hold
+     only <dt> and <dd>, and a decoration slipped between them is an axe
+     failure — which is how this screen went 0.94 on CI. */
   return (
     <div className={styles.fact}>
-      <Tile icon={icon} />
-      <dt>{label}</dt>
+      <dt>
+        <Tile icon={icon} />
+        {label}
+      </dt>
       <dd>{children}</dd>
     </div>
   );
