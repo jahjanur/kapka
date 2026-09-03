@@ -29,6 +29,10 @@ export function WelcomeArt() {
             <stop className={styles.fillTop} offset="0" />
             <stop className={styles.fillBottom} offset="1" />
           </linearGradient>
+          <radialGradient id="kapka-welcome-halo">
+            <stop className={styles.haloIn} offset="0" />
+            <stop className={styles.haloOut} offset="1" />
+          </radialGradient>
           {/* The bag's own outline, so the blood inside stops where the bag
               does — a rectangle of fill and a rounded bag disagree at the
               two bottom corners, which is exactly where the eye goes. */}
@@ -37,7 +41,8 @@ export function WelcomeArt() {
           </clipPath>
         </defs>
 
-        {/* The halo: two rings, and the wash behind them is the container's. */}
+        {/* The halo: a wash, and two rings standing in it. */}
+        <ellipse fill="url(#kapka-welcome-halo)" cx="160" cy="104" rx="150" ry="118" />
         <circle className={styles.ring} cx="160" cy="104" r="100" />
         <circle className={styles.ringInner} cx="160" cy="104" r="72" />
 

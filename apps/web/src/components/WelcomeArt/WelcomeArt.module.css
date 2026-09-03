@@ -3,34 +3,36 @@
    in the dark theme instead of needing a second copy.
    ========================================================================= */
 
+/* The picture is the page's slack: it fills whatever height the words and
+   the buttons leave it and no more, which is what lets the gate be one
+   screen on a phone and on a desktop without the text resizing. The wrapper
+   takes the height it is given; the drawing scales inside it and keeps its
+   own proportions. */
 .art {
-  position: relative;
-  inline-size: 100%;
-  max-inline-size: 22rem;
-  margin-inline: auto;
-}
-
-/* The wash the rings sit in. On the element rather than in the SVG because a
-   radial gradient in CSS follows the box at any aspect ratio, and one in the
-   viewBox does not. */
-.art::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background-image: radial-gradient(
-    58% 46% at 50% 45%,
-    var(--aurora-core) 0%,
-    transparent 72%
-  );
+  display: flex;
+  justify-content: center;
+  min-block-size: 0;
 }
 
 .svg {
-  position: relative;
-  z-index: 1;
   display: block;
-  inline-size: 100%;
-  block-size: auto;
+  block-size: 100%;
+  inline-size: auto;
+  /* On a narrow screen width binds before height does, and without this the
+     drawing would keep its height and run off both edges. */
+  max-inline-size: 100%;
+}
+
+.haloIn {
+  stop-color: var(--aurora-core);
+}
+
+/* The same colour at zero opacity, not `transparent`: SVG reads transparent
+   as transparent BLACK and interpolates towards it, which turned the wash
+   into a grey smudge behind the bag. */
+.haloOut {
+  stop-color: var(--aurora-core);
+  stop-opacity: 0;
 }
 
 /* ── The halo ────────────────────────────────────────────────────────────── */

@@ -4,6 +4,16 @@
    else.
    ========================================================================= */
 
+/* The whole gate is meant to be one screen: an illustration, a sentence, two
+   buttons and the town, with nothing below the fold. So the page is exactly
+   the height left under the header, and everything in it is sized against
+   that height rather than against a comfortable desktop and left to overflow
+   on a phone.
+
+   No overflow:hidden. If a window really is too short — a 320px-tall
+   landscape phone, or somebody running a 24px base font — the page scrolls
+   rather than swallowing its own buttons. Clipping content to keep a promise
+   about scrolling is the wrong way round. */
 .page {
   position: relative;
   display: grid;
@@ -11,9 +21,22 @@
      scene holds the floor. `1fr auto` rather than centring: centred, the
      column drifted down into the town on a tall screen. */
   grid-template-rows: 1fr auto;
-  min-block-size: calc(100dvh - var(--header-height));
-  padding-block-start: var(--space-6);
+  block-size: calc(100dvh - var(--header-height));
+  padding-block-start: clamp(var(--space-2), 2dvh, var(--space-6));
   overflow-x: clip;
+}
+
+/* The column fills its row, and its first child — the illustration — is the
+   part that gives: everything below it is text and controls at their own
+   size, and shrinking those to win a scrollbar would be the wrong trade. */
+.container {
+  display: grid;
+  /* minmax(0, 1fr), not the implicit auto row: an auto row sizes to its
+     content and quietly overflows the height it was given, which is exactly
+     what it did — the column stayed 1005px tall inside a 675px box and the
+     page grew a scrollbar anyway. */
+  grid-template-rows: minmax(0, 1fr);
+  min-block-size: 0;
 }
 
 .container {
@@ -22,13 +45,20 @@
 }
 
 .inner {
+  display: grid;
+  min-block-size: 0;
+  /* The art row, floored so it cannot vanish entirely on a short screen, and
+     everything after it at its natural height. */
+  grid-template-rows: minmax(4.5rem, 1fr);
+  grid-auto-rows: auto;
+  inline-size: 100%;
   max-inline-size: var(--measure-narrow);
   margin-inline: auto;
   text-align: center;
 }
 
 .title {
-  margin-block-start: var(--space-6);
+  margin-block-start: clamp(var(--space-3), 2.5dvh, var(--space-6));
   font-size: var(--text-2xl);
   letter-spacing: var(--tracking-tight);
   text-wrap: balance;
@@ -54,7 +84,7 @@
 .actions {
   display: grid;
   gap: var(--space-3);
-  margin-block-start: var(--space-8);
+  margin-block-start: clamp(var(--space-4), 4dvh, var(--space-8));
 }
 
 /* At the ends rather than beside the label, so the label stays optically
@@ -78,7 +108,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  margin-block-start: var(--space-6);
+  margin-block-start: clamp(var(--space-3), 3dvh, var(--space-6));
   font-size: var(--text-sm);
   color: var(--fg-muted);
 }
@@ -96,7 +126,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  margin-block-start: var(--space-5);
+  margin-block-start: clamp(var(--space-3), 2.5dvh, var(--space-5));
   padding: var(--space-4);
   text-align: start;
   background-color: var(--accent-surface);
@@ -141,7 +171,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  margin-block: var(--space-8) var(--space-6);
+  margin-block: clamp(var(--space-3), 2.5dvh, var(--space-5)) var(--space-2);
   font-size: var(--text-sm);
   color: var(--fg-muted);
 }
@@ -155,7 +185,7 @@
 .scene {
   align-self: end;
   z-index: 0;
-  block-size: clamp(7rem, 24vw, 12rem);
+  block-size: clamp(4.5rem, 13dvh, 9.5rem);
 }
 
 /* One column of buttons at every width — this is a choice between two
@@ -163,6 +193,6 @@
    just gets roomier around it. */
 @media (min-width: 48rem) {
   .page {
-    padding-block-start: var(--space-10);
+    padding-block-start: clamp(var(--space-4), 4dvh, var(--space-10));
   }
 }
