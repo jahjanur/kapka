@@ -1,0 +1,136 @@
+/* ============================================================================
+   The gate's hero. Every value a token, so the whole picture re-tints itself
+   in the dark theme instead of needing a second copy.
+   ========================================================================= */
+
+.art {
+  position: relative;
+  inline-size: 100%;
+  max-inline-size: 22rem;
+  margin-inline: auto;
+}
+
+/* The wash the rings sit in. On the element rather than in the SVG because a
+   radial gradient in CSS follows the box at any aspect ratio, and one in the
+   viewBox does not. */
+.art::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: radial-gradient(
+    58% 46% at 50% 45%,
+    var(--aurora-core) 0%,
+    transparent 72%
+  );
+}
+
+.svg {
+  position: relative;
+  z-index: 1;
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+}
+
+/* ── The halo ────────────────────────────────────────────────────────────── */
+.ring,
+.ringInner {
+  fill: none;
+  stroke: var(--accent-border);
+}
+
+.ring {
+  opacity: 0.4;
+}
+
+.ringInner {
+  opacity: 0.25;
+}
+
+/* Wide of the figures and well back from them: texture, not a third subject. */
+.heart {
+  fill: var(--accent-border);
+  opacity: 0.5;
+}
+
+/* ── The bag ─────────────────────────────────────────────────────────────── */
+.bagBody {
+  fill: var(--bg-surface);
+}
+
+.bagEdge {
+  fill: none;
+  stroke: var(--border-subtle);
+  stroke-width: 1.5;
+}
+
+.bagTab {
+  fill: var(--bg-surface);
+  stroke: var(--border-subtle);
+  stroke-width: 1.5;
+}
+
+.fillTop {
+  stop-color: var(--accent);
+}
+
+.fillBottom {
+  stop-color: var(--accent-active);
+}
+
+.label {
+  fill: var(--accent-surface);
+}
+
+.labelText {
+  fill: var(--accent-ink);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: var(--weight-bold);
+}
+
+/* ── The drop ────────────────────────────────────────────────────────────── */
+.dropTop {
+  stop-color: var(--accent);
+}
+
+.dropBottom {
+  stop-color: var(--accent-active);
+}
+
+.dropMark {
+  fill: none;
+  stroke: var(--fg-onAccent);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+
+/* ── Tube and trace ─────────────────────────────────────────────────────── */
+.tube,
+.trace,
+.traceGhost {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tube {
+  stroke-width: 3;
+}
+
+/* The tails: the rhythm arriving and leaving, rather than a line that starts
+   and stops in mid-air. */
+.traceGhost {
+  opacity: 0.3;
+}
+
+/* The drawing is decoration and its colours are tints; forced colours strip
+   both and leave a heap of outlines standing on nothing. */
+@media (forced-colors: active) {
+  .art {
+    display: none;
+  }
+}

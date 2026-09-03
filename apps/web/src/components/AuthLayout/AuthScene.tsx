@@ -1,12 +1,5 @@
+import { DROP_PATH, HEART_PATH } from '../Icon/brandPaths';
 import styles from './AuthLayout.module.css';
-
-/** The droplet, as drawn in the icon sprite — one path, reused at any size. */
-export const DROP_PATH =
-  'M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5S12.5 5.5 12 3c-.5 2.5-2 4.9-4 6.5S5 13 5 15a7 7 0 0 0 7 7Z';
-
-/** The heart from the sprite, for the scene's little heart-flowers. */
-const HEART_PATH =
-  'M20.8 5.6a5.5 5.5 0 0 0-7.8 0L12 6.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 22l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8Z';
 
 /**
  * The landscape at the bottom of the sign-in screen: a drop of blood resting

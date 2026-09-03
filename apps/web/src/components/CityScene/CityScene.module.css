@@ -1,0 +1,63 @@
+/* ============================================================================
+   The town at the foot of the gate. Three tints and nothing else: the
+   further back a shape is, the paler it is drawn, which is the only depth
+   cue a picture this quiet can afford.
+   ========================================================================= */
+
+.scene {
+  position: relative;
+  inline-size: 100%;
+  pointer-events: none;
+}
+
+.svg {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+/* Furthest back, and palest. */
+.hillFar {
+  fill: color-mix(in oklab, var(--accent-surface) 62%, transparent);
+}
+
+/* The blocks, a shade up from the hill they stand on. */
+.city {
+  fill: color-mix(in oklab, var(--accent-border) 42%, transparent);
+}
+
+/* The hospital is the subject, so it is the one building drawn at full
+   tint — and its cross is the only shape here at full accent. */
+.hospital {
+  fill: color-mix(in oklab, var(--accent-border) 72%, transparent);
+}
+
+.cross {
+  fill: var(--accent);
+  opacity: 0.5;
+}
+
+/* Punched out of the buildings in the page's own ground colour, so a window
+   reads as a hole in the block rather than a mark on it. */
+.windows {
+  fill: none;
+  stroke: var(--bg-canvas);
+  stroke-width: 5;
+  stroke-linecap: round;
+  opacity: 0.75;
+}
+
+.trees {
+  fill: color-mix(in oklab, var(--accent-border) 55%, transparent);
+}
+
+/* Nearest, strongest, and the shape that closes the bottom of the page. */
+.hillNear {
+  fill: color-mix(in oklab, var(--accent-surface) 100%, transparent);
+}
+
+@media (forced-colors: active) {
+  .scene {
+    display: none;
+  }
+}

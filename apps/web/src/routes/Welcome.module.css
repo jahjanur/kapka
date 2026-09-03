@@ -1,14 +1,24 @@
 /* ============================================================================
-   The gate: illustration, one sentence, two ways in.
+   The gate: an illustration, one sentence, two ways in, and a town under all
+   of it. Mobile-first — this screen is a phone screen before it is anything
+   else.
    ========================================================================= */
 
-/* Centred in what is left of the screen under the header, so the two choices
-   sit in the thumb's reach rather than at the top of a tall empty page. */
 .page {
+  position: relative;
   display: grid;
-  align-content: center;
+  /* The content sits at the top of what is left under the header and the
+     scene holds the floor. `1fr auto` rather than centring: centred, the
+     column drifted down into the town on a tall screen. */
+  grid-template-rows: 1fr auto;
   min-block-size: calc(100dvh - var(--header-height));
-  padding-block: var(--space-8) var(--space-12);
+  padding-block-start: var(--space-6);
+  overflow-x: clip;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
 }
 
 .inner {
@@ -17,128 +27,142 @@
   text-align: center;
 }
 
-/* ── The illustration ────────────────────────────────────────────────────── */
-.art {
-  position: relative;
-  padding-block-end: var(--space-6);
-  margin-block-end: var(--space-8);
-  border-block-end: 1px solid var(--border-subtle);
-}
-
-.artRow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-10);
-}
-
-/* A blood bag: a rounded rectangle with a filled lower two thirds and a
-   label panel at the top, which is all a bag is at this size. */
-.bag {
-  position: relative;
-  display: block;
-  inline-size: 4.5rem;
-  block-size: 6rem;
-  overflow: hidden;
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-xl) var(--radius-xl);
-  box-shadow: var(--elevation-2);
-}
-
-.bagFill {
-  position: absolute;
-  inset-block-end: 0;
-  inset-inline: 0;
-  block-size: 68%;
-  background-image: var(--gradient-accent);
-}
-
-.bagLabel {
-  position: absolute;
-  inset-block-start: var(--space-2);
-  inset-inline-start: var(--space-2);
-  display: grid;
-  place-items: center;
-  inline-size: 1.25rem;
-  block-size: 1.25rem;
-  font-size: var(--text-xs);
-  font-weight: var(--weight-bold);
-  color: var(--accent-ink);
-  background-color: var(--accent-surface);
-  border-radius: var(--radius-xs);
-}
-
-/* The droplet stands in for the heart of the reference sketch: it is the
-   product's own mark, and a second organ drawn in CSS would be a worse one. */
-.heart {
-  display: grid;
-  place-items: center;
-  inline-size: 4rem;
-  block-size: 4rem;
-  font-size: var(--text-2xl);
-  color: var(--fg-onAccent);
-  background-image: var(--gradient-accent);
-  border-radius: var(--radius-full);
-  box-shadow: var(--glow-accent);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .heart {
-    animation: beat var(--dur-beat) var(--ease-fluid) infinite;
-  }
-}
-
-@keyframes beat {
-  0%,
-  70%,
-  100% {
-    scale: 1;
-  }
-  80% {
-    scale: 1.08;
-  }
-  90% {
-    scale: 0.98;
-  }
-}
-
-/* The trace runs under both of them, joining the two. */
-/* Held to the width of the two figures above it, so it reads as the line
-   between them rather than a rule across the page. */
-.trace {
-  max-inline-size: 17rem;
-  margin-block-start: var(--space-2);
-  margin-inline: auto;
-}
-
 .title {
+  margin-block-start: var(--space-6);
   font-size: var(--text-2xl);
   letter-spacing: var(--tracking-tight);
   text-wrap: balance;
 }
 
+.titleAccent {
+  color: var(--accent-ink);
+}
+
 .lead {
   margin-block-start: var(--space-3);
+  margin-inline: auto;
+  max-inline-size: var(--measure);
   font-size: var(--text-base);
   color: var(--fg-secondary);
 }
 
-/* Stacked, full width, thumb-sized: this is a phone screen first, and the two
-   choices are equal in weight even though only one is filled. */
+/* ── The two ways in ─────────────────────────────────────────────────────
+   Stacked, full width, thumb-sized. Equal in weight even though only one is
+   filled: which one you want depends on whether you have an account, not on
+   which the product would prefer.
+   ---------------------------------------------------------------------- */
 .actions {
   display: grid;
   gap: var(--space-3);
   margin-block-start: var(--space-8);
 }
 
-.aside {
+/* At the ends rather than beside the label, so the label stays optically
+   centred in the button and the two rows line up down their icons. */
+.actionIcon {
+  position: absolute;
+  inset-inline-start: var(--space-5);
+}
+
+.actionChevron {
+  position: absolute;
+  inset-inline-end: var(--space-5);
+}
+
+/* ── The divider ─────────────────────────────────────────────────────────
+   A rule with a word sitting in it. Drawn as two flex fillers rather than a
+   border and a negative margin, which is the version that survives a change
+   of background colour.
+   ---------------------------------------------------------------------- */
+.or {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
   margin-block-start: var(--space-6);
   font-size: var(--text-sm);
   color: var(--fg-muted);
 }
 
+.or::before,
+.or::after {
+  content: '';
+  flex: 1 1 0;
+  block-size: 1px;
+  background-color: var(--border-subtle);
+}
+
+/* ── The other errand ────────────────────────────────────────────────── */
+.aside {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-block-start: var(--space-5);
+  padding: var(--space-4);
+  text-align: start;
+  background-color: var(--accent-surface);
+  border-radius: var(--radius-lg);
+}
+
+.asideIcon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: var(--space-10);
+  block-size: var(--space-10);
+  font-size: var(--text-lg);
+  color: var(--accent);
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-full);
+}
+
+.asideLead {
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+}
+
 .asideLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-block-size: var(--hit-min);
   color: var(--accent-ink);
   font-weight: var(--weight-semibold);
+  text-decoration: none;
+}
+@media (hover: hover) {
+  .asideLink:hover {
+    text-decoration: underline;
+  }
+}
+
+/* ── The floor ───────────────────────────────────────────────────────── */
+.privacy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-block: var(--space-8) var(--space-6);
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+}
+
+/* In the second row of the page grid, so it holds the bottom of the screen
+   whatever the column above it comes to.
+
+   An explicit height, because the scene slices to fill its box: with an auto
+   height there is no box to fill and the drawing collapses to a strip with
+   its hills cropped off. */
+.scene {
+  align-self: end;
+  z-index: 0;
+  block-size: clamp(7rem, 24vw, 12rem);
+}
+
+/* One column of buttons at every width — this is a choice between two
+   things, and side by side they start looking like a toolbar. The screen
+   just gets roomier around it. */
+@media (min-width: 48rem) {
+  .page {
+    padding-block-start: var(--space-10);
+  }
 }

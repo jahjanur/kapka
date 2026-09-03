@@ -2,7 +2,8 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../Icon/Icon';
 import { cx } from '../../lib/cx';
-import { AuthScene, DROP_PATH } from './AuthScene';
+import { DROP_PATH } from '../Icon/brandPaths';
+import { AuthScene } from './AuthScene';
 import styles from './AuthLayout.module.css';
 
 interface AuthLayoutProps {
