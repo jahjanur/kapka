@@ -70,6 +70,27 @@ const envSchema = z.object({
    */
   SENTRY_ENVIRONMENT: z.string().default(''),
 
+  /**
+   * Where this API answers from, for the one URL that has to be absolute and
+   * has to be ours: the Google redirect URI.
+   *
+   * Empty means "the same origin as the app", which is true in production and
+   * in staging — the web app serves /api itself. On a laptop the two are
+   * different ports, so this is set to the API's own origin.
+   */
+  API_BASE_URL: z.string().default(''),
+
+  /**
+   * Sign in with Google. Empty means the provider is simply not offered:
+   * /auth/providers stops listing it and the button never renders (§9.2).
+   *
+   * The secret is the client secret from the Google Cloud console, and it is
+   * a secret in the ordinary sense — it never reaches the browser, and the
+   * code exchange that uses it happens server-side.
+   */
+  GOOGLE_CLIENT_ID: z.string().default(''),
+  GOOGLE_CLIENT_SECRET: z.string().default(''),
+
   MAIL_TRANSPORT: z.enum(['smtp', 'sendgrid']).default('smtp'),
   SMTP_HOST: z.string().default('localhost'),
   SMTP_PORT: z.coerce.number().int().positive().default(1025),
@@ -81,6 +102,8 @@ export interface Env extends z.infer<typeof envSchema> {
   /** Strict allow-list, never a wildcard (§12). */
   corsOrigins: string[];
   isProduction: boolean;
+  /** Both halves of the Google credentials are present. */
+  googleEnabled: boolean;
 }
 
 /**
@@ -142,6 +165,18 @@ export function parseEnv(source: NodeJS.ProcessEnv = process.env): Env {
   /* A confirmation link pointing at a laptop is a dead link in every donor's
      inbox, and nothing in production would notice — the mail sends perfectly
      well, it just cannot be acted on. Caught at boot instead. */
+  /* ── Half a set of OAuth credentials is a misconfiguration ────────────
+     Not a validation rule on either field: each is independently optional,
+     and it is the pair that has to be all or nothing. Setting only the id
+     would otherwise produce a button that redirects to Google and then fails
+     the code exchange, which is the worst of both states.                 */
+  if ((data.GOOGLE_CLIENT_ID === '') !== (data.GOOGLE_CLIENT_SECRET === '')) {
+    throw new Error(
+      'Refusing to start: GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set together.\n' +
+        'Set both to offer Sign in with Google, or neither to leave it off.',
+    );
+  }
+
   if (isProduction && new URL(data.APP_BASE_URL).hostname === 'localhost') {
     throw new Error(
       `APP_BASE_URL is still ${data.APP_BASE_URL} with NODE_ENV=production.\n` +
@@ -171,6 +206,13 @@ export function parseEnv(source: NodeJS.ProcessEnv = process.env): Env {
     // Stripped once, here, so no caller has to think about whether the
     // configured value ended in a slash before appending a path.
     APP_BASE_URL: data.APP_BASE_URL.replace(/\/$/, ''),
+    /* Falls back to the app's own origin, which is what production and
+       staging are: one host serving the site and /api behind it. */
+    API_BASE_URL: (data.API_BASE_URL === ''
+      ? data.APP_BASE_URL
+      : data.API_BASE_URL
+    ).replace(/\/$/, ''),
+    googleEnabled: data.GOOGLE_CLIENT_ID !== '',
     corsOrigins: data.CORS_ORIGINS.split(',')
       .map((origin) => origin.trim())
       .filter(Boolean),

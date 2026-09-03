@@ -98,6 +98,9 @@ export interface ApprovalOutcome {
   warning: string | null;
 }
 
+/** The third-party sign-ins the product knows how to offer. */
+export type AuthProvider = 'google';
+
 /** What the resend endpoint reports back. */
 export interface ResendResult {
   sent: boolean;
@@ -135,6 +138,22 @@ export interface ApiClient {
    * went wrong — an unreachable server — still throws.
    */
   restoreSession(): Promise<Session | null>;
+  /**
+   * Which third-party sign-ins this deployment offers, e.g. `['google']`.
+   *
+   * Asked rather than assumed: the credentials live on the server, and a
+   * button for a provider that is not configured would send somebody to a
+   * failure. Empty is the normal answer for a deployment that offers none.
+   */
+  listAuthProviders(): Promise<AuthProvider[]>;
+  /**
+   * Where to send the browser to start signing in with a provider.
+   *
+   * A URL rather than a method, because this one is a navigation and not a
+   * fetch: the whole flow is redirects the API issues, which is what keeps it
+   * clear of the app's `connect-src 'self'` policy.
+   */
+  authStartUrl(provider: AuthProvider): string;
   /**
    * Posts a request (§9.3). Signed in only — the API answers 401 otherwise.
    *
@@ -268,6 +287,13 @@ function createHttpClient(baseUrl: string): ApiClient {
         method: 'POST',
         body: JSON.stringify(input),
       });
+    },
+    async listAuthProviders() {
+      const { providers } = await call<{ providers: AuthProvider[] }>('/auth/providers');
+      return providers;
+    },
+    authStartUrl(provider) {
+      return `${baseUrl}/auth/${provider}`;
     },
     async restoreSession() {
       try {
@@ -416,6 +442,15 @@ function createDemoClient(): ApiClient {
     new Promise((resolve) => setTimeout(() => resolve(value), 350));
 
   return {
+    /*
+     * Reported as available so the gate can be built and looked at without a
+     * server, which is the whole purpose of this client. Pressing the button
+     * in this mode goes to /api and finds nothing — the same as every other
+     * thing on these screens, which are invented data behind a banner that
+     * says so.
+     */
+    listAuthProviders: () => latency<AuthProvider[]>(['google']),
+    authStartUrl: (provider) => `/api/auth/${provider}`,
     listRequests: () => latency([...SEED_REQUESTS]),
     async getRequest(id, accessToken) {
       const found = SEED_REQUESTS.find((request) => request.id === id);

@@ -2,11 +2,20 @@ import type { DonorNotification } from '@kapka/shared';
 import type {
   AuthRepository,
   DonorProfileRecord,
+  IdentityProvider,
+  IdentityUserInput,
   RefreshRecord,
   RegisterInput,
   UserRecord,
   VerificationRecord,
 } from './repository';
+
+/** One row of user_identities, as the fake keeps it. */
+interface FakeIdentity {
+  userId: string;
+  provider: IdentityProvider;
+  subject: string;
+}
 
 /**
  * An in-memory AuthRepository for tests.
@@ -22,6 +31,7 @@ export function createFakeAuthRepository(): AuthRepository & {
   tokens: Map<string, RefreshRecord & { tokenHash: string; replacedBy: string | null }>;
   verifications: Map<string, VerificationRecord & { tokenHash: string; createdAt: Date }>;
   notifications: (DonorNotification & { donorId: string })[];
+  identities: FakeIdentity[];
   addUser(
     user: Partial<UserRecord> & Pick<UserRecord, 'email' | 'passwordHash'>,
   ): UserRecord;
@@ -37,6 +47,7 @@ export function createFakeAuthRepository(): AuthRepository & {
     VerificationRecord & { tokenHash: string; createdAt: Date }
   >();
   const notifications: (DonorNotification & { donorId: string })[] = [];
+  const identities: FakeIdentity[] = [];
   let sequence = 0;
   const nextId = () => `id-${String(++sequence)}`;
 
@@ -62,6 +73,7 @@ export function createFakeAuthRepository(): AuthRepository & {
     tokens,
     verifications,
     notifications,
+    identities,
     addUser,
 
     findDonorProfile(userId) {
@@ -98,6 +110,48 @@ export function createFakeAuthRepository(): AuthRepository & {
 
     findUserById(id) {
       return Promise.resolve(users.get(id) ?? null);
+    },
+
+    findUserByIdentity(provider: IdentityProvider, subject: string) {
+      const found = identities.find(
+        /* The provider comparison is redundant only for as long as
+           IdentityProvider has one member, and the real query it stands in for
+           keys on both columns. Dropping it would make the fake match an Apple
+           identity on a Google lookup the day Apple lands, which is precisely
+           the divergence between the two repositories that the fake exists to
+           avoid. */
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        (identity) => identity.provider === provider && identity.subject === subject,
+      );
+      return Promise.resolve(found ? (users.get(found.userId) ?? null) : null);
+    },
+
+    linkIdentity(userId: string, provider: IdentityProvider, subject: string) {
+      // Same idempotence the ON CONFLICT gives the real one.
+      const already = identities.some(
+        // Same as above: one account may hold one identity per provider.
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        (identity) => identity.userId === userId && identity.provider === provider,
+      );
+      if (!already) identities.push({ userId, provider, subject });
+      return Promise.resolve();
+    },
+
+    createUserFromIdentity(input: IdentityUserInput) {
+      const user = addUser({
+        email: input.email,
+        // No password, and no donor profile — see the interface.
+        passwordHash: null,
+        fullName: input.fullName,
+        emailVerified: input.emailVerified,
+        role: 'donor',
+      });
+      identities.push({
+        userId: user.id,
+        provider: input.provider,
+        subject: input.subject,
+      });
+      return Promise.resolve(user);
     },
 
     createUser(input: RegisterInput) {

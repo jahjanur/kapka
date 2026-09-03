@@ -1,0 +1,32 @@
+/* ============================================================================
+   The landing after a provider sign-in — a message and a way on.
+   ========================================================================= */
+
+.waiting {
+  text-align: center;
+  color: var(--fg-secondary);
+}
+
+.message {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block-end: var(--space-4);
+  padding: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--danger-ink);
+  background-color: var(--danger-surface);
+  border-radius: var(--radius-md);
+}
+
+.messageIcon {
+  flex: none;
+}
+
+.link {
+  display: block;
+  margin-block-start: var(--space-4);
+  text-align: center;
+  color: var(--accent-ink);
+  font-weight: var(--weight-semibold);
+}

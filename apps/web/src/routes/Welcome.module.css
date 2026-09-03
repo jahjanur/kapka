@@ -121,47 +121,43 @@
   background-color: var(--border-subtle);
 }
 
-/* ── The other errand ────────────────────────────────────────────────── */
-.aside {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  margin-block-start: clamp(var(--space-3), 2.5dvh, var(--space-5));
-  padding: var(--space-4);
-  text-align: start;
-  background-color: var(--accent-surface);
-  border-radius: var(--radius-lg);
-}
-
-.asideIcon {
+/* ── The other ways in ──────────────────────────────────────────────────
+   One row on a phone, because there is only ever a provider or two and a
+   stacked pair of them would push the privacy line off a short screen.
+   ---------------------------------------------------------------------- */
+.providers {
   display: grid;
-  place-items: center;
-  flex: none;
-  inline-size: var(--space-10);
-  block-size: var(--space-10);
-  font-size: var(--text-lg);
-  color: var(--accent);
-  background-color: var(--bg-surface);
-  border-radius: var(--radius-full);
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  margin-block-start: clamp(var(--space-3), 2.5dvh, var(--space-4));
 }
 
-.asideLead {
-  font-size: var(--text-sm);
-  color: var(--fg-secondary);
-}
-
-.asideLink {
+/* Sized and weighted like the secondary Button above it, deliberately: these
+   are the same kind of thing — a way in — and the only reason they are not
+   Buttons is that they leave the app entirely. */
+.provider {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
+  justify-content: center;
+  gap: var(--space-2);
   min-block-size: var(--hit-min);
-  color: var(--accent-ink);
+  padding-inline: var(--space-4);
+  font-size: var(--text-base);
   font-weight: var(--weight-semibold);
+  color: var(--fg-primary);
   text-decoration: none;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
 }
+
 @media (hover: hover) {
-  .asideLink:hover {
-    text-decoration: underline;
+  .provider:hover {
+    border-color: var(--border-strong);
   }
 }
 

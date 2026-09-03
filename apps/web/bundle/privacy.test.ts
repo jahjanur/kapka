@@ -40,6 +40,7 @@ const MUST_MENTION: Record<string, string[]> = {
   audit_log: ['approvals, rejections and expiries'],
   refresh_tokens: ['session'],
   email_verification_tokens: ['confirmation link'],
+  user_identities: ['sign in with google', 'account link'],
 };
 
 function tablesInMigrations(): string[] {
@@ -76,7 +77,15 @@ describe('the privacy notice', () => {
 
   it('names every outside party the code actually talks to', () => {
     // Anything the browser or the server reaches, the reader is owed.
-    for (const party of ['sendgrid', 'openstreetmap', 'google maps', 'render']) {
+    for (const party of [
+      'sendgrid',
+      'openstreetmap',
+      'google maps',
+      /* Distinct from "google maps", which the notice already names for a
+         different reason — matching on bare "google" would pass on that. */
+      'google sign-in',
+      'render',
+    ]) {
       expect(notice).toContain(party);
     }
   });

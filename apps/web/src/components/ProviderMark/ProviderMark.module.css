@@ -1,0 +1,8 @@
+/* Sized in em, like the icon sprite, so a provider button and a native one
+   line up whatever size the label is set at. */
+.mark {
+  display: inline-block;
+  inline-size: 1.25em;
+  block-size: 1.25em;
+  flex: none;
+}

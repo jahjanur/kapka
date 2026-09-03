@@ -98,6 +98,12 @@ export default function Privacy() {
                 service that delivers the mail.
               </p>
               <p className={styles.body}>
+                If you sign in with Google, we keep the account link that makes that work:
+                Google&rsquo;s own id for you, and nothing else from them. We never
+                receive your Google password, and we cannot see anything else in your
+                Google account. Unlink it by deleting your Kapka account.
+              </p>
+              <p className={styles.body}>
                 We also keep an administrative log of approvals, rejections and expiries —
                 who did what, and when — so a decision that reached thousands of people
                 can be accounted for afterwards.
@@ -154,6 +160,15 @@ export default function Privacy() {
                     Only if you press &ldquo;Directions&rdquo;. That opens Google Maps
                     with the hospital as the destination, and from that point you are on
                     Google&rsquo;s site under their terms, not ours.
+                  </dd>
+                </div>
+                <div>
+                  <dt>Google Sign-In</dt>
+                  <dd>
+                    Only if you choose it. Pressing &ldquo;Google&rdquo; takes you to
+                    Google to sign in, so they know you signed in to Kapka. They tell us
+                    your email address, your name, and their own id for you. If you never
+                    press it, Google is never told anything.
                   </dd>
                 </div>
                 <div>

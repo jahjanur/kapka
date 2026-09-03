@@ -18,11 +18,29 @@ export type DonorProfilePatch = DonorProfilePatchInput;
 export interface UserRecord {
   id: string;
   email: string;
-  passwordHash: string;
+  /**
+   * Null for an account that has only ever signed in with a provider.
+   *
+   * Not a hash of a random string nobody knows: that would leave a value here
+   * that says the account has a password when it has none, and every check
+   * against it would be a slow way of learning nothing.
+   */
+  passwordHash: string | null;
   role: UserRole;
   fullName: string;
   isActive: boolean;
   emailVerified: boolean;
+}
+
+/** The providers user_identities.provider accepts. */
+export type IdentityProvider = 'google';
+
+export interface IdentityUserInput {
+  email: string;
+  fullName: string;
+  emailVerified: boolean;
+  provider: IdentityProvider;
+  subject: string;
 }
 
 export interface RefreshRecord {
@@ -101,6 +119,42 @@ export interface AuthRepository {
   deleteUser(userId: string): Promise<boolean>;
   /** Creates the user and the donor profile in one transaction (§4). */
   createUser(input: RegisterInput): Promise<UserRecord>;
+
+  /**
+   * The account this provider subject belongs to, if it has one (§9.2).
+   *
+   * Keyed on the subject, never the email — an email address can be
+   * reassigned by whoever owns the domain, and a provider subject cannot.
+   */
+  findUserByIdentity(
+    provider: IdentityProvider,
+    subject: string,
+  ): Promise<UserRecord | null>;
+
+  /**
+   * Attaches a provider identity to an account that already exists.
+   *
+   * Idempotent: two callbacks racing on the first sign-in must not make two
+   * rows, and the second must not fail.
+   */
+  linkIdentity(
+    userId: string,
+    provider: IdentityProvider,
+    subject: string,
+  ): Promise<void>;
+
+  /**
+   * Creates an account from a provider identity, with no password and no
+   * donor profile, and links the identity — one transaction, because an
+   * account with neither a password nor an identity cannot be signed into by
+   * anybody and would just sit there holding the email address.
+   *
+   * No donor profile, because Google knows neither a blood type nor a city
+   * and both are NOT NULL. That is a supported state, not a gap: a requester
+   * and an admin have no profile either, which is what findDonorProfile
+   * returning null has always meant.
+   */
+  createUserFromIdentity(input: IdentityUserInput): Promise<UserRecord>;
   storeRefreshToken(userId: string, tokenHash: string, expiresAt: Date): Promise<string>;
   findRefreshToken(tokenHash: string): Promise<RefreshRecord | null>;
   /** Revokes `oldId` and issues a replacement, linked for traceability. */
@@ -137,7 +191,7 @@ export interface AuthRepository {
 interface UserRow {
   id: string;
   email: string;
-  password_hash: string;
+  password_hash: string | null;
   role: UserRole;
   full_name: string;
   is_active: boolean;
@@ -283,6 +337,50 @@ export function createPgAuthRepository(db: pg.Pool = pool): AuthRepository {
           `INSERT INTO donor_profiles (user_id, blood_type, city, last_donation_date)
            VALUES ($1, $2, $3, $4)`,
           [row.id, input.bloodType, input.city, input.lastDonationDate],
+        );
+        return toUser(row);
+      }, db);
+    },
+
+    async findUserByIdentity(provider, subject) {
+      const { rows } = await db.query<UserRow>(
+        `SELECT ${USER_COLUMNS.split(', ')
+          .map((column) => `u.${column}`)
+          .join(', ')}
+           FROM users u
+           JOIN user_identities i ON i.user_id = u.id
+          WHERE i.provider = $1 AND i.subject = $2`,
+        [provider, subject],
+      );
+      return rows[0] ? toUser(rows[0]) : null;
+    },
+
+    async linkIdentity(userId, provider, subject) {
+      /* Idempotent by the table's own UNIQUE (user_id, provider): two tabs
+         finishing the same first sign-in race here, and the loser must be a
+         no-op rather than a 500. */
+      await db.query(
+        `INSERT INTO user_identities (user_id, provider, subject)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (user_id, provider) DO NOTHING`,
+        [userId, provider, subject],
+      );
+    },
+
+    async createUserFromIdentity(input) {
+      return withTransaction(async (client) => {
+        const { rows } = await client.query<UserRow>(
+          `INSERT INTO users (email, password_hash, full_name, role, email_verified)
+           VALUES ($1, NULL, $2, 'donor', $3)
+           RETURNING ${USER_COLUMNS}`,
+          [input.email, input.fullName, input.emailVerified],
+        );
+        const row = rows[0];
+        if (!row) throw new Error('user insert returned no row');
+
+        await client.query(
+          `INSERT INTO user_identities (user_id, provider, subject) VALUES ($1, $2, $3)`,
+          [row.id, input.provider, input.subject],
         );
         return toUser(row);
       }, db);

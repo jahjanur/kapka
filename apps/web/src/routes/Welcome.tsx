@@ -1,6 +1,21 @@
-import { AppHeader, Button, CityScene, Container, Icon, WelcomeArt } from '../components';
+import { useEffect, useState, type ReactElement } from 'react';
+import {
+  AppHeader,
+  Button,
+  CityScene,
+  Container,
+  GoogleMark,
+  Icon,
+  WelcomeArt,
+} from '../components';
+import { api, type AuthProvider } from '../lib/api';
 import { PATHS } from './paths';
 import styles from './Welcome.module.css';
+
+/** What each provider's button says and shows. */
+const PROVIDERS: Record<AuthProvider, { label: string; mark: () => ReactElement }> = {
+  google: { label: 'Google', mark: GoogleMark },
+};
 
 /**
  * The gate at /register (§9.2).
@@ -17,6 +32,32 @@ import styles from './Welcome.module.css';
  * something, and an arrow is what says so before the words are read.
  */
 export default function Welcome() {
+  /*
+   * Asked of the API rather than assumed, because the credentials live on the
+   * server: a deployment with none configured offers none, and renders no
+   * button rather than one that leads to a failure.
+   *
+   * Empty until the answer arrives, so the row appears rather than
+   * disappearing — the reverse would move the buttons under somebody's thumb
+   * as they reached for them.
+   */
+  const [providers, setProviders] = useState<AuthProvider[]>([]);
+
+  useEffect(() => {
+    let live = true;
+    void api
+      .listAuthProviders()
+      .then((available) => {
+        if (live) setProviders(available);
+      })
+      /* A gate that cannot reach the API still has both of its own buttons,
+         which are the ones that matter. Nothing is worth saying here. */
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, []);
+
   return (
     <>
       <AppHeader />
@@ -48,29 +89,41 @@ export default function Welcome() {
               </Button>
             </div>
 
-            {/* The word is decoration over a rule; the rule is what does the
-                dividing, and it is drawn by the row rather than by a border
-                on the word. */}
-            <p className={styles.or}>
-              <span>or</span>
-            </p>
+            {providers.length > 0 && (
+              <>
+                {/* The word is decoration over a rule; the rule is what does
+                    the dividing, and it is drawn by the row rather than by a
+                    border on the word. */}
+                <p className={styles.or}>
+                  <span>or continue with</span>
+                </p>
 
-            {/* Somebody whose relative needs blood lands on this screen too,
-                and neither button above is for them. A panel rather than a
-                third button: it is a different errand, not a third way to do
-                the same one. */}
-            <div className={styles.aside}>
-              <span className={styles.asideIcon}>
-                <Icon name="heart" />
-              </span>
-              <div>
-                <p className={styles.asideLead}>Need blood rather than giving it?</p>
-                <a className={styles.asideLink} href={PATHS.postRequest}>
-                  Post a request
-                  <Icon name="chevronRight" />
-                </a>
-              </div>
-            </div>
+                {/*
+                  Plain anchors, not Buttons and not fetches. The whole flow
+                  is redirects the API issues — this link leaves the app, the
+                  API sends the browser to Google, and it comes back to
+                  /auth/callback with a session cookie already set. That is
+                  what keeps it clear of the app's `connect-src 'self'` policy
+                  and its script-src hash pin, which an in-page provider SDK
+                  would need unpicked (§12).
+                */}
+                <div className={styles.providers}>
+                  {providers.map((provider) => {
+                    const { label, mark: Mark } = PROVIDERS[provider];
+                    return (
+                      <a
+                        key={provider}
+                        className={styles.provider}
+                        href={api.authStartUrl(provider)}
+                      >
+                        <Mark />
+                        {label}
+                      </a>
+                    );
+                  })}
+                </div>
+              </>
+            )}
 
             <p className={styles.privacy}>
               <Icon name="shieldCheck" />

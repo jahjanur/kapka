@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type Response } from 'express';
 import { apiError, loginSchema, registerSchema, verifyEmailSchema } from '@kapka/shared';
 import { authRateLimit } from '../middleware/rateLimit';
 import { validateBody } from '../middleware/validate';
@@ -6,10 +6,21 @@ import { requireAuth } from '../middleware/auth';
 import { getAuth } from '../auth/context';
 import { redact } from '../redact';
 import {
+  OAUTH_STATE_COOKIE,
   REFRESH_COOKIE,
+  clearOauthStateCookieOptions,
   clearRefreshCookieOptions,
+  oauthStateCookieOptions,
   refreshCookieOptions,
 } from '../auth/cookies';
+import {
+  authorizationUrl,
+  beginHandshake,
+  exchangeCode,
+  statesMatch,
+  type GoogleIdentity,
+} from '../auth/google';
+import { env } from '../env';
 import { hashPassword, verifyAgainstNobody, verifyPassword } from '../auth/passwords';
 import {
   ACCESS_TOKEN_TTL_SECONDS,
@@ -58,6 +69,9 @@ function sessionBody(user: UserRecord, accessToken: string): SessionBody {
     user: publicUser(user),
   };
 }
+
+/** Where the browser is sent when the handshake finishes, either way. */
+const OAUTH_LANDING = '/auth/callback';
 
 /**
  * `sendVerification` is injectable for the same reason the repository is: the
@@ -110,6 +124,181 @@ export function createAuthRouter(
     setCookie(REFRESH_COOKIE, token, refreshCookieOptions());
   }
 
+  /**
+   * GET /api/auth/providers — which third-party sign-ins are on offer.
+   *
+   * The web app asks once and renders the buttons it is told about. A button
+   * for a provider whose credentials are not configured would redirect to a
+   * failure, and a control that cannot do its job is worse than no control.
+   */
+  router.get('/auth/providers', (_req, res) => {
+    res.json({ providers: env.googleEnabled ? ['google'] : [] });
+  });
+
+  /**
+   * The account this Google identity signs into: the one already linked to
+   * the subject, the one holding the same verified address, or a new one.
+   *
+   * Null means the sign-in must be refused — see the linking rule below.
+   */
+  async function resolveGoogleUser(identity: GoogleIdentity): Promise<UserRecord | null> {
+    const linked = await repository.findUserByIdentity('google', identity.subject);
+    if (linked) return linked;
+
+    const existing = await repository.findUserByEmail(identity.email);
+    if (existing) {
+      /*
+       * The linking rule, and the one decision in this file worth arguing
+       * about.
+       *
+       * Attaching a provider identity to an account that already has the
+       * same email is how somebody signs in on Monday with a password and on
+       * Tuesday with Google and gets the same account, which is what anybody
+       * would expect. It is also, if the address is not verified at Google,
+       * how somebody takes over an account they do not own: create a Google
+       * account claiming ana@example.com, never prove you read that mailbox,
+       * sign in here, and be Ana.
+       *
+       * Google's own verification is the only evidence available at this
+       * point, so an unverified address linking to an existing account is
+       * refused outright (§12). A new account is a different matter — there
+       * is nothing to take over — and gets made below with email_verified
+       * carrying whatever Google actually said.
+       */
+      if (!identity.emailVerified) return null;
+      await repository.linkIdentity(existing.id, 'google', identity.subject);
+      return existing;
+    }
+
+    return repository.createUserFromIdentity({
+      email: identity.email,
+      fullName: identity.fullName,
+      emailVerified: identity.emailVerified,
+      provider: 'google',
+      subject: identity.subject,
+    });
+  }
+
+  /** Everything that can go wrong ends up back on the gate, saying so. */
+  function failToApp(res: Response, reason: string): void {
+    res.clearCookie(OAUTH_STATE_COOKIE, clearOauthStateCookieOptions());
+    res.redirect(`${env.APP_BASE_URL}${OAUTH_LANDING}?error=${reason}`);
+  }
+
+  /**
+   * GET /api/auth/google — the start of the handshake (§9.2).
+   *
+   * A 302 the API issues, not a link the page opens, and not Google's in-page
+   * SDK: the web app's CSP is `connect-src 'self'` with a script-src hash
+   * pin, and a redirect from here is not governed by the document's policy at
+   * all. See auth/google.ts.
+   */
+  router.get('/auth/google', (_req, res) => {
+    if (!env.googleEnabled) {
+      res.status(404).json(apiError('NOT_FOUND', 'Google sign-in is not configured.'));
+      return;
+    }
+
+    const handshake = beginHandshake();
+    /* state and the PKCE verifier travel in a Lax cookie, because the trip
+       back from Google is a cross-site navigation and the Strict refresh
+       cookie would not be sent on it. */
+    res.cookie(OAUTH_STATE_COOKIE, JSON.stringify(handshake), oauthStateCookieOptions());
+    res.redirect(authorizationUrl(handshake));
+  });
+
+  /**
+   * GET /api/auth/google/callback — the other end of it.
+   *
+   * Ends in a redirect either way rather than a JSON body: the browser
+   * arrives here by navigation, so what it can be given is a page, and the
+   * page it should be given is the app.
+   */
+  router.get('/auth/google/callback', async (req, res) => {
+    if (!env.googleEnabled) {
+      res.status(404).json(apiError('NOT_FOUND', 'Google sign-in is not configured.'));
+      return;
+    }
+
+    const query = req.query as Record<string, string | undefined>;
+    /* The person pressed cancel on Google's screen. Not an error to log — it
+       is a decision, and the only thing owed to them is the way back. */
+    if (typeof query.error === 'string') {
+      failToApp(res, 'cancelled');
+      return;
+    }
+
+    const cookies = req.cookies as Record<string, string | undefined> | undefined;
+    const raw = cookies?.[OAUTH_STATE_COOKIE];
+    const code = query.code;
+    const state = query.state;
+
+    if (
+      typeof raw !== 'string' ||
+      typeof code !== 'string' ||
+      typeof state !== 'string'
+    ) {
+      // No cookie usually means the ten minutes ran out, or a bare callback
+      // URL was opened by hand.
+      failToApp(res, 'expired');
+      return;
+    }
+
+    let handshake: { state?: unknown; codeVerifier?: unknown };
+    try {
+      handshake = JSON.parse(raw) as typeof handshake;
+    } catch {
+      failToApp(res, 'expired');
+      return;
+    }
+
+    if (
+      typeof handshake.state !== 'string' ||
+      typeof handshake.codeVerifier !== 'string' ||
+      !statesMatch(handshake.state, state)
+    ) {
+      /* The CSRF check. A callback whose state does not match the one this
+         browser started with is somebody else's — most likely an attacker
+         feeding their own authorization code to a logged-in victim, which
+         would otherwise link the victim's browser to the attacker's Google
+         account (§12). */
+      failToApp(res, 'state');
+      return;
+    }
+
+    let identity;
+    try {
+      identity = await exchangeCode(code, handshake.codeVerifier);
+    } catch (error) {
+      /* Redacted: the token endpoint quotes the request back, client_secret
+         and all, and this is the one error whose body must never be logged
+         verbatim. */
+      console.error(`[auth] google sign-in failed: ${redact(error)}`);
+      failToApp(res, 'provider');
+      return;
+    }
+
+    const user = await resolveGoogleUser(identity);
+    if (!user) {
+      failToApp(res, 'unverified');
+      return;
+    }
+    if (!user.isActive) {
+      failToApp(res, 'inactive');
+      return;
+    }
+
+    res.clearCookie(OAUTH_STATE_COOKIE, clearOauthStateCookieOptions());
+    await startSession(user.id, (name, value, options) =>
+      res.cookie(name, value, options),
+    );
+    /* No access token in the URL. The refresh cookie is set, and the app
+       trades it for one on boot the same way it does after a reload — a token
+       in a query string ends up in history, in logs and in the Referer of
+       everything the next page loads (§12). */
+    res.redirect(`${env.APP_BASE_URL}${OAUTH_LANDING}`);
+  });
+
   router.post('/auth/register', validateBody(registerSchema), async (req, res) => {
     const input = req.body as import('@kapka/shared').RegisterInput;
 
@@ -153,9 +342,15 @@ export function createAuthRouter(
     // email, deactivated account. Anything more specific tells an attacker
     // which emails have accounts (§12). The dummy comparison keeps the timing
     // the same when there is no user to check against.
-    const ok = user
-      ? await verifyPassword(password, user.passwordHash)
-      : await verifyAgainstNobody(password);
+    /* A null hash is an account that has only ever signed in with a
+       provider. It has no password, so no password can be right — but it
+       still has to cost what a real check costs, or the timing says "this
+       address exists and uses Google", which is exactly the kind of thing
+       this endpoint refuses to say (§12). */
+    const ok =
+      user && user.passwordHash !== null
+        ? await verifyPassword(password, user.passwordHash)
+        : await verifyAgainstNobody(password);
 
     if (!user || !ok || !user.isActive) {
       res

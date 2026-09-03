@@ -14,6 +14,7 @@ const PostRequest = lazy(() => import('./routes/PostRequest'));
 const AdminQueue = lazy(() => import('./routes/AdminQueue'));
 const Dashboard = lazy(() => import('./routes/Dashboard'));
 const Welcome = lazy(() => import('./routes/Welcome'));
+const AuthCallback = lazy(() => import('./routes/AuthCallback'));
 const Register = lazy(() => import('./routes/Register'));
 const Login = lazy(() => import('./routes/Login'));
 const VerifyEmail = lazy(() => import('./routes/VerifyEmail'));
@@ -64,6 +65,7 @@ export function App() {
                   <Route path={PATHS.dashboard} element={<Dashboard />} />
                   {/* The gate, the form and the way back in. */}
                   <Route path={PATHS.register} element={<Welcome />} />
+                  <Route path={PATHS.authCallback} element={<AuthCallback />} />
                   <Route path={PATHS.createAccount} element={<Register />} />
                   <Route path={PATHS.login} element={<Login />} />
                   <Route path={PATHS.verifyEmail} element={<VerifyEmail />} />

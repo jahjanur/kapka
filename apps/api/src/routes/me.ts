@@ -121,6 +121,13 @@ export function createMeRouter(repository: AuthRepository): Router {
    * The password again, because this cannot be undone and takes the requests
    * they posted with it. One field for the person; everything, for somebody
    * holding a borrowed session.
+   *
+   * An account that signed up with Google has no password to re-enter, and
+   * has to be deletable anyway — §12 promises deletion to everybody, and a
+   * promise that cannot be kept for a whole class of account is not one. For
+   * those the access token is the whole of the proof: it is fifteen minutes
+   * old at most, it was issued to a browser that completed the provider's own
+   * sign-in, and there is no second factor available to ask for.
    */
   router.delete(
     '/me',
@@ -134,7 +141,10 @@ export function createMeRouter(repository: AuthRepository): Router {
       if (!user) return;
 
       const { password } = req.body as DeleteAccountInput;
-      if (!(await verifyPassword(password, user.passwordHash))) {
+      if (
+        user.passwordHash !== null &&
+        !(await verifyPassword(password, user.passwordHash))
+      ) {
         /* Not the generic login message: the caller is already authenticated
            and knows the account exists, so there is nothing to protect by
            being vague — only a person to confuse. */

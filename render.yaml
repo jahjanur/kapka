@@ -55,6 +55,18 @@ services:
         value: https://kapka-staging.onrender.com
       - key: CORS_ORIGINS
         value: https://kapka-staging.onrender.com
+      # ── Sign in with Google (§9.2) ──────────────────────────────────────
+      # Both are set by hand in the dashboard, or the provider is simply not
+      # offered: the API refuses to start with only one of them, and with
+      # neither it reports no providers and the button never renders.
+      #
+      # The redirect URI to register against the OAuth client is
+      # <APP_BASE_URL>/api/auth/google/callback — API_BASE_URL is left unset
+      # here on purpose, because the site and /api are one origin on Render.
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
       # env.ts: "Render puts one proxy in front of a service, so one." More
       # and a client can spoof its way out of every rate limit; fewer and the
       # whole internet shares one bucket.
@@ -180,6 +192,18 @@ services:
         value: https://kapka.onrender.com
       - key: CORS_ORIGINS
         value: https://kapka.onrender.com
+      # ── Sign in with Google (§9.2) ──────────────────────────────────────
+      # Both are set by hand in the dashboard, or the provider is simply not
+      # offered: the API refuses to start with only one of them, and with
+      # neither it reports no providers and the button never renders.
+      #
+      # The redirect URI to register against the OAuth client is
+      # <APP_BASE_URL>/api/auth/google/callback — API_BASE_URL is left unset
+      # here on purpose, because the site and /api are one origin on Render.
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
       - key: TRUST_PROXY_HOPS
         value: 1
       - key: SENTRY_DSN

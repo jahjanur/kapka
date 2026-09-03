@@ -36,6 +36,12 @@ export const PATHS = {
    * email does not link at the API directly.
    */
   verifyEmail: '/verify-email',
+  /**
+   * Where the browser lands coming back from a provider's sign-in. It carries
+   * no token — the session arrives as an httpOnly cookie, and the page trades
+   * it for one the same way a reload does (§12).
+   */
+  authCallback: '/auth/callback',
 } as const;
 
 /**
