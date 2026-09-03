@@ -3,9 +3,8 @@
    ========================================================================= */
 
 .page {
-  /* Room for the action bar, which is fixed and would otherwise sit on top of
-     the last thing on the page — usually the "before you go" advice. */
-  padding-block-end: var(--space-24);
+  /* The end padding is room for the action bar, which is fixed and would
+     otherwise sit on top of the last thing on the page. */
   padding-block: var(--space-5) var(--space-24);
 }
 
@@ -43,21 +42,25 @@
 }
 
 /* Same reason as the feed's hero column: a long hospital name must wrap
-   rather than widen the track. */
+   rather than widen the track.
+
+   The gap lives here rather than on the sections: they are Cards now, and a
+   Card sets no outer margin ever — spacing between them is the parent's job,
+   which is what keeps the stack composable (§8). */
 .main {
+  display: grid;
+  gap: var(--space-4);
   min-inline-size: 0;
+  align-content: start;
 }
 
 /* ── Head ────────────────────────────────────────────────────────────────── */
+/* Composes Card for its surface, and adds only what a lead card needs: the
+   severity stripe, and the room to clear it. */
 .head {
-  padding: var(--space-5);
-  padding-inline-start: var(--space-6);
   position: relative;
   overflow: hidden;
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--elevation-1);
+  padding-inline-start: var(--space-6);
 }
 
 /* Same severity stripe as the card it was opened from, so the page reads as
@@ -87,6 +90,15 @@
   flex-wrap: wrap;
 }
 
+/* Pushed to the end of the badge row: it is the least of the three and it is
+   the one that can wrap away on its own line without costing anything. */
+.posted {
+  margin-inline-start: auto;
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 .title {
   margin-block-start: var(--space-4);
   font-size: var(--text-2xl);
@@ -102,32 +114,59 @@
   color: var(--fg-secondary);
 }
 
-/* ── Sections ────────────────────────────────────────────────────────────── */
-.section {
-  margin-block-start: var(--space-8);
-}
-
+/* ── Sections ────────────────────────────────────────────────────────────
+   A named card each, headed the way the feed's filter panel heads its own:
+   an accent icon and the name in sentence case, not a muted eyebrow in caps.
+   The eyebrows read as labels on a form; these read as somewhere to go.
+   ---------------------------------------------------------------------- */
 .sectionHeading {
-  font-size: var(--text-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-base);
   font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  color: var(--fg-muted);
+  line-height: var(--leading-snug);
+  color: var(--fg-primary);
 }
 
-.sectionLead,
+.sectionIcon {
+  flex: none;
+  color: var(--accent);
+}
+
 .note {
   max-inline-size: var(--measure);
   margin-block-start: var(--space-3);
+  padding-inline-start: var(--space-4);
+  color: var(--fg-primary);
+  /* Somebody at the hospital wrote this sentence; the rule says so without a
+     second surface inside a surface. */
+  border-inline-start: 2px solid var(--accent-border);
+}
+
+/* ── Before you go ───────────────────────────────────────────────────────
+   Four things to do rather than one paragraph containing four things.
+   ---------------------------------------------------------------------- */
+.checklist {
+  display: grid;
+  gap: var(--space-2);
+  max-inline-size: var(--measure);
+  margin-block-start: var(--space-3);
+  list-style: none;
+}
+
+.checklist li {
+  display: flex;
+  align-items: start;
+  gap: var(--space-2);
   color: var(--fg-secondary);
 }
 
-.note {
-  padding: var(--space-4);
-  color: var(--fg-primary);
-  background-color: var(--bg-surface-alt);
-  border-inline-start: 2px solid var(--border-default);
-  border-radius: var(--radius-md);
+.checklist svg {
+  flex: none;
+  /* Optically on the first line of text rather than above it. */
+  margin-block-start: 0.15em;
+  color: var(--success);
 }
 
 .facts {
@@ -138,29 +177,24 @@
 }
 
 .fact dt {
-  font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
+  font-size: var(--text-sm);
   color: var(--fg-muted);
 }
 
 .fact dd {
   margin: 0;
   margin-block-start: var(--space-1);
-  font-size: var(--text-lg);
-  font-weight: var(--weight-medium);
+  /* Not --text-lg: at that size "September 10, 2026" wraps onto a second line
+     in a two-column grid on a phone, and a date broken across lines reads as
+     two dates for a moment. Weight carries the value instead. */
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
   font-variant-numeric: tabular-nums;
 }
 
-/* ── Action rail ─────────────────────────────────────────────────────────── */
-.actionCard {
-  padding: var(--space-5);
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--elevation-2);
-}
+/* ── Action rail ─────────────────────────────────────────────────────────
+   Composes Card, like every other surface on the page.
+   ---------------------------------------------------------------------- */
 
 .actionHeading {
   font-size: var(--text-lg);
@@ -180,11 +214,9 @@
 }
 
 .contactHeading {
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  color: var(--fg-muted);
+  color: var(--fg-primary);
 }
 
 .contactBody {
@@ -209,7 +241,7 @@
     inset-block-start: calc(var(--header-height) + var(--space-4));
   }
   .facts {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -307,13 +339,30 @@
   gap: var(--space-3);
 }
 
-.action {
-  display: inline-flex;
-  flex: 1;
+/* Sizing only, for the Button that stands in for the second action when
+   there is no number to call yet. Everything about how it looks is Button's. */
+.action,
+.actionButton {
+  flex: 1 1 0;
   /* A flex item will not shrink below its content without this — the default
      min-inline-size is auto, which is what let a long label push the button
      off the right edge of the screen rather than squeezing it. */
   min-inline-size: 0;
+}
+
+/* The second action is the one somebody came here to press, and it is the one
+   carrying the longer label. Giving it the larger share of the row is what
+   lets that label appear 90px earlier than an even split would. */
+.actionPrimary,
+.actionButton {
+  flex-grow: 1.4;
+}
+
+.action {
+  display: inline-flex;
+  /* A flex item will not shrink below its content without this — the default
+     min-inline-size is auto, which is what let a long label push the button
+     off the right edge of the screen rather than squeezing it. */
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
@@ -328,13 +377,16 @@
   border-radius: var(--radius-md);
 }
 
-/* Long enough for the button to say what it does, short enough for two of
-   them to fit across 360px. */
+/* Long enough for the button to say what it does, short enough that it fits.
+   The long label measures 245px at this weight and size; with the 1.4 share
+   above, the button reaches that at about 460px of viewport, so that is where
+   it appears. It used to appear at 416px, and from there to 550px the label
+   simply hung out of both ends of its own button. */
 .actionLong {
   display: none;
 }
 
-@media (min-width: 26rem) {
+@media (min-width: 29rem) {
   .actionShort {
     display: none;
   }
@@ -356,6 +408,18 @@
   .actionPrimary:hover {
     background-color: var(--accent-hover);
     border-color: var(--accent-hover);
+  }
+}
+
+/* On a desktop the two actions are still here and still fixed, but they stop
+   stretching to a 1100px-wide container: a button that wide reads as a banner
+   rather than something to press. Natural width, at the start of the column
+   the page is read down. */
+@media (min-width: 64rem) {
+  .action,
+  .actionButton {
+    flex: 0 0 auto;
+    min-inline-size: 12rem;
   }
 }
 

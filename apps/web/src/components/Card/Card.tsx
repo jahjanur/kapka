@@ -16,7 +16,10 @@ interface CardOwnProps {
   /** Applied only when the card renders as a button. Defaults to `button`. */
   type?: 'button' | 'submit' | 'reset';
   children?: ReactNode;
-  className?: string;
+  /* `| undefined` explicitly: noUncheckedIndexedAccess types every CSS-module
+     lookup as `string | undefined`, and exactOptionalPropertyTypes means a
+     bare `className?: string` cannot be handed one. Same note as FilterBar. */
+  className?: string | undefined;
 }
 
 /**

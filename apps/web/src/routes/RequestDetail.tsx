@@ -1,18 +1,21 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, type ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   AppHeader,
   BloodTypeBadge,
   BloodTypeLabel,
   Button,
+  Card,
   Container,
   EmptyState,
   ErrorState,
   Icon,
+  type IconName,
   Skeleton,
   Stack,
   UrgencyPill,
 } from '../components';
+import { cx } from '../lib/cx';
 import { announceBloodType, DONATION_INTERVAL_DAYS } from '@kapka/shared';
 import { useRequest } from '../lib/useRequests';
 import { useSession } from '../lib/session';
@@ -42,6 +45,32 @@ const longDate = (iso: string) =>
     month: 'long',
     year: 'numeric',
   });
+
+/**
+ * Every section on this page is a card with a named heading, and the icon is
+ * what you find it by when you are scrolling past on a phone. Same shape as
+ * the feed's filter panel — one page reading like the other is the whole
+ * point of having a design at all.
+ */
+function Section({
+  icon,
+  heading,
+  children,
+}: {
+  icon: IconName;
+  heading: string;
+  children: ReactNode;
+}) {
+  return (
+    <Card as="section">
+      <h2 className={styles.sectionHeading}>
+        <Icon name={icon} className={styles.sectionIcon} />
+        {heading}
+      </h2>
+      {children}
+    </Card>
+  );
+}
 
 /** One request in full (§9.4). */
 export default function RequestDetail() {
@@ -97,10 +126,16 @@ export default function RequestDetail() {
           {request && (
             <article className={styles.layout}>
               <div className={styles.main}>
-                <header className={styles.head} data-urgency={request.urgency}>
+                <Card as="header" className={styles.head} data-urgency={request.urgency}>
                   <div className={styles.headTop}>
                     <BloodTypeBadge type={request.bloodType} size="lg" />
                     <UrgencyPill urgency={request.urgency} />
+                    {/* How old the request is belongs beside how urgent it
+                        is, not four sections down under "Details" — on a
+                        critical request the two are read together. */}
+                    <time className={styles.posted} dateTime={request.createdAt}>
+                      {timeAgo(request.createdAt)}
+                    </time>
                   </div>
                   <h1 className={styles.title}>
                     {request.unitsNeeded}
@@ -116,7 +151,7 @@ export default function RequestDetail() {
                   <span className="visually-hidden">
                     {announceBloodType(request.bloodType)}
                   </span>
-                </header>
+                </Card>
 
                 {/*
                   The answer comes from the API, which reads the same
@@ -172,15 +207,13 @@ export default function RequestDetail() {
                 )}
 
                 {request.note && (
-                  <section className={styles.section}>
-                    <h2 className={styles.sectionHeading}>From the hospital</h2>
+                  <Section icon="clipboard" heading="From the hospital">
                     <p className={styles.note}>{request.note}</p>
-                  </section>
+                  </Section>
                 )}
 
                 {hasPin && (
-                  <section className={styles.section}>
-                    <h2 className={styles.sectionHeading}>Where to go</h2>
+                  <Section icon="mapPin" heading="Where to go">
                     <Suspense
                       fallback={<div className={styles.mapLoading} aria-hidden="true" />}
                     >
@@ -193,23 +226,14 @@ export default function RequestDetail() {
                       The pin is where the hospital put it. Directions open in your maps
                       app.
                     </p>
-                  </section>
+                  </Section>
                 )}
 
-                <section className={styles.section}>
-                  <h2 className={styles.sectionHeading}>Details</h2>
+                <Section icon="info" heading="Details">
                   <dl className={styles.facts}>
                     <div className={styles.fact}>
                       <dt>Units needed</dt>
                       <dd data-numeric>{request.unitsNeeded}</dd>
-                    </div>
-                    <div className={styles.fact}>
-                      <dt>Posted</dt>
-                      <dd>
-                        <time dateTime={request.createdAt}>
-                          {timeAgo(request.createdAt)}
-                        </time>
-                      </dd>
                     </div>
                     <div className={styles.fact}>
                       <dt>Open until</dt>
@@ -224,21 +248,38 @@ export default function RequestDetail() {
                       <dd>{request.city}</dd>
                     </div>
                   </dl>
-                </section>
+                </Section>
 
-                <section className={styles.section}>
-                  <h2 className={styles.sectionHeading}>Before you go</h2>
-                  <p className={styles.sectionLead}>
-                    You can give again {DONATION_INTERVAL_DAYS} days after your last
-                    donation. Bring photo ID, eat beforehand, and allow about an hour.
-                  </p>
-                </section>
+                {/* Four things to do, as four things rather than one
+                    paragraph. This is read standing up, one-handed, on the
+                    way out of the door. */}
+                <Section icon="checkCircle" heading="Before you go">
+                  <ul className={styles.checklist}>
+                    <li>
+                      <Icon name="check" />
+                      You can give again {DONATION_INTERVAL_DAYS} days after your last
+                      donation.
+                    </li>
+                    <li>
+                      <Icon name="check" />
+                      Bring photo ID.
+                    </li>
+                    <li>
+                      <Icon name="check" />
+                      Eat beforehand.
+                    </li>
+                    <li>
+                      <Icon name="check" />
+                      Allow about an hour.
+                    </li>
+                  </ul>
+                </Section>
               </div>
 
               {/* Sticky on a wide screen, and the first thing under the fold
                   on a phone — either way it is never more than a scroll away. */}
               <aside className={styles.rail}>
-                <div className={styles.actionCard}>
+                <Card>
                   <h2 className={styles.actionHeading}>Can you help?</h2>
                   <p className={styles.actionBody}>
                     Register with your blood type and city. We email you whenever a
@@ -265,7 +306,7 @@ export default function RequestDetail() {
                       </p>
                     )}
                   </div>
-                </div>
+                </Card>
               </aside>
             </article>
           )}
@@ -297,18 +338,21 @@ export default function RequestDetail() {
 
             {isDiallable(phone) ? (
               <a
-                className={`${styles.action} ${styles.actionPrimary}`}
+                className={cx(styles.action, styles.actionPrimary)}
                 href={telHref(phone)}
               >
                 <Icon name="phone" />
                 Call the hospital
               </a>
             ) : (
-              <Button to={PATHS.register} className={styles.action} size="md">
-                {/* Two labels, one shown. At 360px the long one and
-                    "Directions" together are wider than the screen, and the
-                    button that was cut in half was the call to action. The
-                    header solves it the same way. */}
+              /* A Button, styled as one — the class it carries sizes it in the
+                 row and nothing else. It used to also carry .action, which set
+                 a surface and a border over the top of Button's own primary
+                 styling and worked only because of the order two stylesheets
+                 happened to land in. */
+              <Button to={PATHS.register} className={styles.actionButton} size="md">
+                {/* Two labels, one shown: the long one needs 245px and the
+                    button only has that much room from about 460px up. */}
                 <span className={styles.actionShort}>Register</span>
                 <span className={styles.actionLong}>Register to see the number</span>
               </Button>
