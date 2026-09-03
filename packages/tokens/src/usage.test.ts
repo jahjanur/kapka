@@ -239,7 +239,7 @@ describe('the header height is derived, not repeated', () => {
     const header = componentCss.find((f) => f.name.includes('AppHeader'));
     const feed = componentCss.find((f) => f.name.includes('Feed.module'));
     expect(header?.source).toContain('calc(var(--header-height)');
-    expect(feed?.source).toContain('inset-block-start: var(--header-height)');
+    expect(feed?.source).toContain('inset-block-start: calc(var(--header-height)');
   });
 
   it('fixes the header box rather than setting a floor for it', () => {

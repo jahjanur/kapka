@@ -435,66 +435,87 @@
    and the same chips wrap into stacked groups.
    ---------------------------------------------------------------------- */
 .filters {
-  position: sticky;
-  inset-block-start: var(--header-height);
-  z-index: var(--z-sticky);
-  display: grid;
-  gap: var(--space-2);
-  /* Out to the screen edges, so cards pass under the chrome rather than
-     appearing beside it. The gutter is given back as padding, which also
-     lets the first chip start flush with the text above it. */
-  margin-inline: calc(var(--container-gutter) * -1);
-  padding: var(--space-2) var(--container-gutter);
-  background-color: color-mix(in oklab, var(--bg-canvas) var(--tint-chrome), transparent);
-  backdrop-filter: blur(var(--blur-chrome));
-  /* Above the strip, not below it: the rule is where the page ends and the
-     list begins, and the filters belong to the list. Below them it read as a
-     line drawn under the page's last section with the filters stranded on
-     the wrong side of it.
+  padding: var(--space-5);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-2);
 
-     Nothing is lost while the strip is stuck to the header — what passes
-     underneath goes under blurred glass, which is what separates them. */
-  border-block-start: 1px solid var(--border-subtle);
+  /* Nothing here scrolls sideways: the panel stacks its sections at every
+     width, so FilterBar's row is told to wrap wherever it is. It exposes
+     these three for exactly that — see the note in FilterBar.module.css. */
+  --filter-wrap: wrap;
+  --filter-overflow: visible;
+  --filter-snap: none;
 }
 
-/* A group is one flex item of the scroller, so the strip scrolls across both
-   of them as one movement rather than snapping between two scrollers. */
+/* ── The panel ────────────────────────────────────────────────────────────
+   Three sections down a column: location, blood type, urgency.
+   ---------------------------------------------------------------------- */
+.strip {
+  display: grid;
+  gap: var(--space-5);
+}
+
+/* A group is one flex item of FilterBar's row, and each takes a line of its
+   own so its heading sits above its own chips rather than beside them. */
 .group {
   display: flex;
   flex: none;
   flex-wrap: wrap;
+  flex-basis: 100%;
   align-items: center;
   gap: var(--space-2);
 }
 
+/* A section heading, not an eyebrow: the icon carries the section at a glance
+   and the accent colour ties the three of them together down the panel. It is
+   aria-hidden — the group beside it and the control below it are already
+   named, and a heading that repeats them is a heading read out twice. */
 .groupLabel {
-  flex: none;
-  font-size: var(--text-xs);
+  display: flex;
+  /* A line of its own above its chips — `flex: none` here would reset the
+     basis back to auto and drop the heading in beside the first chip. */
+  flex: 0 0 100%;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-base);
   font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  color: var(--fg-muted);
+  line-height: var(--leading-snug);
+  color: var(--fg-primary);
 }
 
-.divider {
+.groupIcon {
   flex: none;
-  align-self: stretch;
-  inline-size: 1px;
-  margin-inline: var(--space-1);
+  color: var(--accent);
+}
+
+/* A rule across the panel between blood type and urgency. Not between
+   location and blood type: one rule marks where the control types change,
+   two would just be stripes. */
+.divider {
+  flex-basis: 100%;
+  block-size: 1px;
+  margin-block: var(--space-2);
   background-color: var(--border-subtle);
 }
 
-/* City and Clear, outside the scroller: city is the filter most people reach
-   for, and it must never be somewhere you have to swipe to. */
+/* The location section: heading, field, and Clear when there is something to
+   clear. Stacked like every other section. */
 .controls {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
+  display: grid;
+  gap: var(--space-3);
+
+  /* The field sits on the panel, not in a well cut into it: on a white card
+     the inset surface reads as a different material. Rebound rather than
+     overridden, so the control keeps deciding what to do with it. */
+  --bg-inset: var(--bg-surface);
 }
 
-.controls > *:first-child {
-  flex: 1;
-  max-inline-size: 18rem;
+/* Its own width, not the panel's — a full-width button under the location
+   field reads as belonging to it. */
+.controls > button {
+  justify-self: start;
 }
 
 .page {
@@ -554,13 +575,15 @@
 }
 
 /* ── The rail (§9.1, 64rem and up) ───────────────────────────────────────
-   The filters stop being chrome laid over the feed and become a column
-   beside it. Same element, same chips, same sticky rule — only the shape
-   changes.
+   The panel stops sitting above the feed and moves beside it. Same element,
+   same sections, same shape — it only changes where it stands, and it pins
+   itself there while the list scrolls past.
    ---------------------------------------------------------------------- */
 @media (min-width: 64rem) {
   .layout {
-    --rail-width: 14rem;
+    /* Wide enough that "Critical" and "Urgent" read as a row rather than a
+       column of one-chip lines. */
+    --rail-width: 16rem;
     grid-template-columns: minmax(0, var(--rail-width)) minmax(0, 1fr);
     gap: var(--space-8);
     /* Required, not cosmetic: a stretched grid item is as tall as its row,
@@ -568,48 +591,20 @@
     align-items: start;
   }
 
+  /* Only pinned in the column. Above the feed it is a panel the height of
+     three sections, and pinning that to a phone would leave the list reading
+     through a slot. */
   .filters {
-    /* Nothing scrolls underneath a column, so the chrome comes off. */
-    margin-inline: 0;
-    padding: 0;
-    background: none;
-    backdrop-filter: none;
-    border-block-start: 0;
-    gap: var(--space-5);
+    position: sticky;
     inset-block-start: calc(var(--header-height) + var(--space-6));
-
-    /* There is nothing to swipe with in a 14rem column, so the strip is told
-       to wrap instead of scroll. FilterBar exposes these three for exactly
-       this case — see the note in FilterBar.module.css. */
-    --filter-wrap: wrap;
-    --filter-overflow: visible;
-    --filter-snap: none;
-  }
-
-  /* Each group takes its own line, with its label above its chips. */
-  .group,
-  .groupLabel {
-    flex-basis: 100%;
-  }
-
-  /* The stacking already separates them. */
-  .divider {
-    display: none;
-  }
-
-  .controls {
-    flex-wrap: wrap;
-  }
-
-  .controls > *:first-child {
-    max-inline-size: none;
+    z-index: var(--z-sticky);
   }
 }
 
-/* Landscape, or any short window: the filter strip wraps to three lines at
-   this width and pinning it costs half the viewport. It scrolls away with
-   the rest, and the thumb-zone CTA goes entirely — there is no thumb zone
-   worth protecting on a screen this short. */
+/* Landscape, or any short window: pinning a panel this tall costs half the
+   viewport even in the rail. It scrolls away with the rest, and the
+   thumb-zone CTA goes entirely — there is no thumb zone worth protecting on
+   a screen this short. */
 @media (max-height: 30rem) {
   .filters {
     position: static;

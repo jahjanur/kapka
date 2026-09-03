@@ -83,7 +83,7 @@ const renderFeed = ({ as }: { as?: UserRole } = {}) =>
 
 /** The city control is a listbox we draw, not a <select> — see Picker. */
 async function pickCity(user: ReturnType<typeof userEvent.setup>, name: string) {
-  await user.click(screen.getByRole('combobox', { name: /City/ }));
+  await user.click(screen.getByRole('combobox', { name: /Location/ }));
   await user.click(screen.getByRole('option', { name }));
 }
 
@@ -221,7 +221,7 @@ describe('the public feed', () => {
     expect(screen.queryByRole('button', { name: /^Filters/ })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Critical' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'O negative' })).toBeInTheDocument();
-    expect(screen.getByLabelText('City')).toBeInTheDocument();
+    expect(screen.getByLabelText('Location')).toBeInTheDocument();
   });
 
   it('names each set of chips for a screen reader', async () => {
@@ -246,7 +246,7 @@ describe('the public feed', () => {
     await screen.findByText('3 open requests');
 
     const filters = screen.getByRole('complementary', { name: 'Filter requests' });
-    expect(within(filters).getByLabelText('City')).toBeInTheDocument();
+    expect(within(filters).getByLabelText('Location')).toBeInTheDocument();
     // The cards are not inside it.
     expect(within(filters).queryByRole('link', { name: /Mother Teresa/ })).toBeNull();
   });

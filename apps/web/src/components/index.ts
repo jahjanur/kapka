@@ -19,7 +19,12 @@ export { AppHeader } from './AppHeader/AppHeader';
 export { AuthLayout } from './AuthLayout/AuthLayout';
 export { EmptyState } from './EmptyState/EmptyState';
 export { ErrorState } from './ErrorState/ErrorState';
-export { FilterBar, FilterChip, FilterGroupLabel } from './FilterBar/FilterBar';
+export {
+  FilterBar,
+  FilterChip,
+  FilterGroupLabel,
+  type ChipTone,
+} from './FilterBar/FilterBar';
 export { RequestCard, RequestCardSkeleton } from './RequestCard/RequestCard';
 export { Skeleton } from './Skeleton/Skeleton';
 export { UrgencyPill } from './UrgencyPill/UrgencyPill';

@@ -24,20 +24,34 @@ export function FilterBar({
   );
 }
 
+/** The semantic colours a chip can carry instead of the accent. */
+export type ChipTone = 'danger' | 'warning' | 'info';
+
 interface ChipProps {
   selected: boolean;
   onClick: () => void;
   children: ReactNode;
+  /**
+   * Paints the chip in one of the semantic colours rather than the accent,
+   * for a filter whose values already mean something in colour elsewhere in
+   * the product — urgency being the one that does.
+   */
+  tone?: ChipTone | undefined;
 }
 
-export function FilterChip({ selected, onClick, children }: ChipProps) {
+export function FilterChip({ selected, onClick, children, tone }: ChipProps) {
   return (
     <button
       type="button"
       className={styles.chip}
+      data-tone={tone}
       aria-pressed={selected}
       onClick={onClick}
     >
+      {/* Decorative, and deliberately so: the label beside it already says
+          which level this is, and the accessible name has to stay exactly
+          "Critical". Colour is never the only channel (§10). */}
+      {tone !== undefined && <span className={styles.dot} aria-hidden="true" />}
       {children}
     </button>
   );

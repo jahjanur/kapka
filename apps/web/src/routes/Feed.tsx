@@ -9,6 +9,7 @@ import {
   Field,
   FilterBar,
   FilterChip,
+  type ChipTone,
   Grid,
   Icon,
   type IconName,
@@ -28,6 +29,14 @@ import styles from './Feed.module.css';
 
 const URGENCIES: Urgency[] = ['critical', 'urgent', 'routine'];
 const URGENCY_RANK: Record<Urgency, number> = { critical: 0, urgent: 1, routine: 2 };
+
+/* The same three colours the pill on the card uses, so the filter and the
+   thing it filters to are recognisably the same level. */
+const URGENCY_TONE: Record<Urgency, ChipTone> = {
+  critical: 'danger',
+  urgent: 'warning',
+  routine: 'info',
+};
 
 /** What "View all requests" jumps to. */
 const LIST_ID = 'requests';
@@ -340,65 +349,99 @@ export default function Feed() {
           <div className={styles.layout}>
             <aside className={styles.filters} aria-label="Filter requests">
               {/*
-                One swipeable strip on a phone: eleven chips will not fit
-                across 360px, and stacking them costs the space the first
-                request needs. In the rail there is nothing to swipe with, so
-                the same row is told to wrap instead — FilterBar exposes
-                --filter-wrap for exactly this.
+                Three sections — location, blood type, urgency — in that
+                order, because a donor filters by the type they can give
+                before anything else and the list is sorted by urgency
+                already. Stacked in the rail, where they are a panel with
+                room to breathe. On a phone the same markup is one swipeable
+                strip: eleven chips will not fit across 360px, and stacking
+                them costs the space the first request needs. FilterBar
+                exposes --filter-wrap and friends for exactly that switch.
               */}
-              <FilterBar label="Urgency and blood type">
-                <div className={styles.group} role="group" aria-label="Filter by urgency">
-                  <span className={styles.groupLabel}>Urgency</span>
-                  {URGENCIES.map((level) => (
-                    <FilterChip
-                      key={level}
-                      selected={urgency === level}
-                      onClick={() => setUrgency(urgency === level ? null : level)}
-                    >
-                      {titleCase(level)}
-                    </FilterChip>
-                  ))}
+              <div className={styles.strip}>
+                {/* Location leads and never scrolls — it is the filter most
+                    people reach for, and it must never be somewhere you have
+                    to swipe to. A field in the panel, a chip in the strip. */}
+                <div className={styles.controls}>
+                  {/* Decorative: the control's own label says the same word,
+                      and saying it twice is what a screen reader would read
+                      out twice. */}
+                  <span className={styles.groupLabel} aria-hidden="true">
+                    <Icon name="mapPin" className={styles.groupIcon} />
+                    Location
+                  </span>
+
+                  <Field label="Location" hideLabel>
+                    <Picker
+                      placeholder="Anywhere"
+                      icon="mapPin"
+                      options={CITIES}
+                      value={city}
+                      onChange={setCity}
+                    />
+                  </Field>
+
+                  {activeFilters > 0 && (
+                    <Button variant="ghost" size="sm" onClick={clearFilters}>
+                      <Icon name="close" />
+                      Clear
+                    </Button>
+                  )}
                 </div>
 
-                <span className={styles.divider} aria-hidden="true" />
-
-                <div
-                  className={styles.group}
-                  role="group"
-                  aria-label="Filter by blood type"
-                >
-                  <span className={styles.groupLabel}>Blood type</span>
-                  {BLOOD_TYPES.map((type) => (
+                <FilterBar label="Blood type and urgency">
+                  <div
+                    className={styles.group}
+                    role="group"
+                    aria-label="Filter by blood type"
+                  >
+                    <span className={styles.groupLabel} aria-hidden="true">
+                      <Icon name="droplet" className={styles.groupIcon} />
+                      Blood type
+                    </span>
+                    {/* "No blood type filter" as a chip of its own. Pressing
+                        the selected chip again clears it too, but nobody
+                        discovers that — this is the way out you can see. */}
                     <FilterChip
-                      key={type}
-                      selected={bloodType === type}
-                      onClick={() => setBloodType(bloodType === type ? null : type)}
+                      selected={bloodType === null}
+                      onClick={() => setBloodType(null)}
                     >
-                      <BloodTypeLabel type={type} />
+                      All
                     </FilterChip>
-                  ))}
-                </div>
-              </FilterBar>
+                    {BLOOD_TYPES.map((type) => (
+                      <FilterChip
+                        key={type}
+                        selected={bloodType === type}
+                        onClick={() => setBloodType(bloodType === type ? null : type)}
+                      >
+                        <BloodTypeLabel type={type} />
+                      </FilterChip>
+                    ))}
+                  </div>
 
-              {/* Outside the scroller. City is the filter most people reach
-                  for, and it should never be somewhere you have to swipe to. */}
-              <div className={styles.controls}>
-                <Field label="City" hideLabel>
-                  <Picker
-                    placeholder="Anywhere"
-                    icon="mapPin"
-                    options={CITIES}
-                    value={city}
-                    onChange={setCity}
-                  />
-                </Field>
+                  <span className={styles.divider} aria-hidden="true" />
 
-                {activeFilters > 0 && (
-                  <Button variant="ghost" size="sm" onClick={clearFilters}>
-                    <Icon name="close" />
-                    Clear
-                  </Button>
-                )}
+                  <div
+                    className={styles.group}
+                    role="group"
+                    aria-label="Filter by urgency"
+                  >
+                    <span className={styles.groupLabel} aria-hidden="true">
+                      <Icon name="alertTriangle" className={styles.groupIcon} />
+                      Urgency
+                    </span>
+                    {URGENCIES.map((level) => (
+                      <FilterChip
+                        key={level}
+                        tone={URGENCY_TONE[level]}
+                        selected={urgency === level}
+                        onClick={() => setUrgency(urgency === level ? null : level)}
+                      >
+                        {titleCase(level)}
+                      </FilterChip>
+                    ))}
+                  </div>
+                </FilterBar>
               </div>
             </aside>
 
