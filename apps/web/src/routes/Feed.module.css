@@ -18,13 +18,27 @@
    The vh line above it is the fallback, and on the browsers that need one it
    already means the largest viewport.
 
-   A whole viewport, with nothing subtracted for the header: the hero starts
-   at the top of the page and the header sits over it on blurred glass rather
-   than above it in the flow.
+   The header height comes off because this box starts below it in the flow.
+   The hero climbs back up under it on a negative margin — the header sits
+   over the hero on blurred glass rather than above it — and inside a flex
+   container that margin no longer collapses through to here.
    ---------------------------------------------------------------------- */
 .landing {
-  min-block-size: 100vh;
-  min-block-size: 100lvh;
+  min-block-size: calc(100vh - var(--header-height));
+  min-block-size: calc(100lvh - var(--header-height));
+
+  /* Where the slack goes when the viewport is taller than the content. Left
+     to itself it piles up under the last section as a void below the city
+     chips; spread between the three it reads as the view breathing. Nothing
+     shrinks — on a screen shorter than the content these are three stacked
+     sections and this does nothing at all. */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.landing > * {
+  flex: none;
 }
 
 /* ── Hero ────────────────────────────────────────────────────────────────
@@ -299,7 +313,11 @@
      nobody can use. */
   gap: var(--space-1);
   inline-size: 100%;
-  min-block-size: var(--hit-min);
+  /* Taller than the 44px floor: at the floor, with the type this narrow, the
+     chips read as a squat afterthought under a section heading twice their
+     weight. Height is the one dimension here with room to give — the inline
+     axis is spoken for by "Kumanovo". */
+  min-block-size: calc(var(--hit-min) + var(--space-2));
   padding-inline: var(--space-2);
   font-family: inherit;
   font-size: var(--text-xs);
