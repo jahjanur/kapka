@@ -169,23 +169,23 @@ describe('one request in full', () => {
     expect(getRequest).toHaveBeenCalledWith('r2', 'access-token');
   });
 
-  it('never loads the map for a request with no pin', async () => {
-    /* Leaflet is 150kB and this screen opens from an email on a phone. Most
-       of the point of the lazy import is that it is never fetched at all. */
-    renderAt();
-    await screen.findByText('City General Hospital, Skopje');
-    expect(screen.queryByText(/stub map/)).toBeNull();
-    expect(screen.queryByText('Where to go')).toBeNull();
-  });
+  it('never loads a map, pin or no pin', async () => {
+    /* The screen used to draw the hospital on OSM tiles. It does not any
+       more: "Directions" hands the donor the navigation app already on their
+       phone, and a picture of the street they are standing on cost them
+       150kB of Leaflet to be told what the button below it does better.
 
-  it('shows the map when there is somewhere to point it', async () => {
+       The pin has not stopped mattering — it is what that link points at,
+       which the test above this one holds down. It just is not drawn. */
     getRequest.mockResolvedValue({
       ...REQUEST,
       hospitalLat: 41.9981,
       hospitalLng: 21.4254,
     });
     renderAt();
-    expect(await screen.findByText('stub map 41.9981,21.4254')).toBeInTheDocument();
+    await screen.findByText('City General Hospital, Skopje');
+    expect(screen.queryByText(/stub map/)).toBeNull();
+    expect(screen.queryByText('Where to go')).toBeNull();
   });
 
   it('tells a compatible donor their own type can help, by name', async () => {

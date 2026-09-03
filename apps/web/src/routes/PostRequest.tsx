@@ -502,8 +502,8 @@ export default function PostRequest() {
                   Where it is <span className={styles.optional}>Optional</span>
                 </h2>
                 <p className={styles.mapHelp}>
-                  Click the map to drop a pin on the hospital. Donors get a map on the
-                  request, which beats an address they have to search for.
+                  Click the map to drop a pin on the hospital. It is what "Directions"
+                  hands the donor's maps app — the door, rather than a name to search for.
                 </p>
 
                 <Suspense
