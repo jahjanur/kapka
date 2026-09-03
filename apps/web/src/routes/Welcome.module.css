@@ -121,6 +121,24 @@
   background-color: var(--border-subtle);
 }
 
+/*
+ * Held in place while the answer is on its way, not hidden.
+ *
+ * display:none would give the space back, and the buttons above would jump
+ * up the screen the moment the providers landed — a 106px shift, arriving
+ * about a third of a second in, right under the thumb of somebody already
+ * reaching for "Create account". visibility keeps the box exactly where it
+ * will be, and takes the links out of the tab order and the accessibility
+ * tree while they are not yet real.
+ *
+ * A deployment with no providers configured does collapse this row once, on
+ * the first answer. That is one shift on a screen nobody has interacted with
+ * yet, and the alternative is a permanent gap where a button never appears.
+ */
+.providerBlock[data-pending] {
+  visibility: hidden;
+}
+
 /* ── The other ways in ──────────────────────────────────────────────────
    One row on a phone, because there is only ever a provider or two and a
    stacked pair of them would push the privacy line off a short screen.

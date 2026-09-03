@@ -18,6 +18,15 @@ const PROVIDERS: Record<AuthProvider, { label: string; mark: () => ReactElement 
 };
 
 /**
+ * Stands in for the real list while it is still being asked for.
+ *
+ * Only its height is ever used — the row is invisible until the answer
+ * lands. One button and two are the same height, because the row lays them
+ * out side by side, so this reserves the right space whatever comes back.
+ */
+const PENDING: AuthProvider[] = ['google'];
+
+/**
  * The gate at /register (§9.2).
  *
  * Every "Register as donor" button in the product used to drop the reader
@@ -37,11 +46,13 @@ export default function Welcome() {
    * server: a deployment with none configured offers none, and renders no
    * button rather than one that leads to a failure.
    *
-   * Empty until the answer arrives, so the row appears rather than
-   * disappearing — the reverse would move the buttons under somebody's thumb
-   * as they reached for them.
+   * `null` until the answer arrives, and that is not the same as `[]`. The
+   * row has to hold its own space while it waits, or it drops in when the
+   * answer lands and shoves everything above it 106px up the screen — which
+   * is exactly what it used to do, under the thumb of somebody already
+   * reaching for "Create account".
    */
-  const [providers, setProviders] = useState<AuthProvider[]>([]);
+  const [providers, setProviders] = useState<AuthProvider[] | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -51,12 +62,23 @@ export default function Welcome() {
         if (live) setProviders(available);
       })
       /* A gate that cannot reach the API still has both of its own buttons,
-         which are the ones that matter. Nothing is worth saying here. */
-      .catch(() => undefined);
+         which are the ones that matter, so there is nothing to say here.
+         There is something to DO: settle on "none", or the row stays in its
+         reserved-but-invisible state for good and leaves a gap where a
+         button is never going to appear. */
+      .catch(() => {
+        if (live) setProviders([]);
+      });
     return () => {
       live = false;
     };
   }, []);
+
+  const pending = providers === null;
+  /* While pending the row is drawn from the placeholder and hidden, so the
+     space it reserves is the real row's own height rather than a number
+     guessed in the stylesheet. */
+  const shown = providers ?? PENDING;
 
   return (
     <>
@@ -89,8 +111,8 @@ export default function Welcome() {
               </Button>
             </div>
 
-            {providers.length > 0 && (
-              <>
+            {(pending || shown.length > 0) && (
+              <div className={styles.providerBlock} data-pending={pending || undefined}>
                 {/* The word is decoration over a rule; the rule is what does
                     the dividing, and it is drawn by the row rather than by a
                     border on the word. */}
@@ -108,7 +130,7 @@ export default function Welcome() {
                   would need unpicked (§12).
                 */}
                 <div className={styles.providers}>
-                  {providers.map((provider) => {
+                  {shown.map((provider) => {
                     const { label, mark: Mark } = PROVIDERS[provider];
                     return (
                       <a
@@ -122,7 +144,7 @@ export default function Welcome() {
                     );
                   })}
                 </div>
-              </>
+              </div>
             )}
 
             <p className={styles.privacy}>

@@ -449,7 +449,11 @@ function createDemoClient(): ApiClient {
      * thing on these screens, which are invented data behind a banner that
      * says so.
      */
-    listAuthProviders: () => latency<AuthProvider[]>(['google']),
+    /* No artificial latency on this one. The delay everywhere else in this
+       client is there to make invented data feel like a network; here it
+       would only hold up the layout settling, and the row above already
+       reserves its space either way. */
+    listAuthProviders: () => Promise.resolve<AuthProvider[]>(['google']),
     authStartUrl: (provider) => `/api/auth/${provider}`,
     listRequests: () => latency([...SEED_REQUESTS]),
     async getRequest(id, accessToken) {
