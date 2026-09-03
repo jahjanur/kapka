@@ -185,7 +185,11 @@
 .scene {
   align-self: end;
   z-index: 0;
-  block-size: clamp(4.5rem, 13dvh, 9.5rem);
+  /* Width-led, not height-led: the drawing is 8:1, and a band that keeps
+     roughly that shape is one the scene can fill without losing its roofs
+     off the top. Floored so it survives a short screen, capped so it never
+     eats the page. */
+  block-size: clamp(5rem, 11vw, 11rem);
 }
 
 /* One column of buttons at every width — this is a choice between two

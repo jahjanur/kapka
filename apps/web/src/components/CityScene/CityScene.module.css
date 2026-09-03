@@ -21,6 +21,11 @@
   fill: color-mix(in oklab, var(--accent-surface) 62%, transparent);
 }
 
+/* The rise the trees stand on, between the far hill and the near one. */
+.hillMid {
+  fill: color-mix(in oklab, var(--accent-surface) 80%, transparent);
+}
+
 /* The blocks, a shade up from the hill they stand on. */
 .city {
   fill: color-mix(in oklab, var(--accent-border) 42%, transparent);
@@ -53,7 +58,12 @@
 
 /* Nearest, strongest, and the shape that closes the bottom of the page. */
 .hillNear {
-  fill: color-mix(in oklab, var(--accent-surface) 100%, transparent);
+  fill: var(--accent-surface);
+}
+
+/* On the near hill, so they read as the closest thing in the picture. */
+.bushes {
+  fill: color-mix(in oklab, var(--accent-border) 50%, transparent);
 }
 
 @media (forced-colors: active) {
