@@ -21,8 +21,14 @@
     box-shadow var(--dur-fast) var(--ease-out);
 }
 
+/*
+ * The glow only. The accent border used to go here too, but it was this
+ * pill's whole focus treatment back when the ring below did not exist —
+ * together they drew two concentric red rings around one field, where every
+ * other input in the app draws one. The border stays the colour it was and
+ * the ring says where you are.
+ */
 .pill:focus-within {
-  border-color: var(--accent);
   box-shadow: var(--glow-soft);
 }
 
