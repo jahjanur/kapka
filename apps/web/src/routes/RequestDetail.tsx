@@ -10,7 +10,6 @@ import {
   EmptyState,
   ErrorState,
   Icon,
-  type IconName,
   Skeleton,
   Stack,
   UrgencyPill,
@@ -47,28 +46,19 @@ const longDate = (iso: string) =>
   });
 
 /**
- * Every section on this page is a card with a named heading, and the icon is
- * what you find it by when you are scrolling past on a phone. Same shape as
- * the feed's filter panel — one page reading like the other is the whole
- * point of having a design at all.
+ * One block of the record.
+ *
+ * Not a card of its own: four cards stacked down a page is four objects, and
+ * a request is one. They are blocks of a single document now, divided by a
+ * hairline, which is how anything that has to be read as a record — a chart, a
+ * statement, a report — has always been set.
  */
-function Section({
-  icon,
-  heading,
-  children,
-}: {
-  icon: IconName;
-  heading: string;
-  children: ReactNode;
-}) {
+function Block({ heading, children }: { heading: string; children: ReactNode }) {
   return (
-    <Card as="section">
-      <h2 className={styles.sectionHeading}>
-        <Icon name={icon} className={styles.sectionIcon} />
-        {heading}
-      </h2>
+    <section className={styles.block}>
+      <h2 className={styles.blockHeading}>{heading}</h2>
       {children}
-    </Card>
+    </section>
   );
 }
 
@@ -126,34 +116,38 @@ export default function RequestDetail() {
           {request && (
             <article className={styles.layout}>
               <div className={styles.main}>
-                <Card as="header" className={styles.head} data-urgency={request.urgency}>
-                  <div className={styles.headTop}>
-                    <BloodTypeBadge type={request.bloodType} size="lg" />
-                    <UrgencyPill urgency={request.urgency} />
-                    {/* How old the request is belongs beside how urgent it
+                {/* One record, not a stack of cards. Flush, because each block
+                    below carries its own padding and the tinted compatibility
+                    band has to reach both edges. */}
+                <Card padding="flush" className={styles.record}>
+                  <header className={styles.head} data-urgency={request.urgency}>
+                    <div className={styles.headTop}>
+                      <BloodTypeBadge type={request.bloodType} size="lg" />
+                      <UrgencyPill urgency={request.urgency} />
+                      {/* How old the request is belongs beside how urgent it
                         is, not four sections down under "Details" — on a
                         critical request the two are read together. */}
-                    <time className={styles.posted} dateTime={request.createdAt}>
-                      {timeAgo(request.createdAt)}
-                    </time>
-                  </div>
-                  <h1 className={styles.title}>
-                    {request.unitsNeeded}
-                    {request.unitsNeeded === 1 ? ' unit' : ' units'} of{' '}
-                    <BloodTypeLabel type={request.bloodType} /> needed
-                  </h1>
-                  <p className={styles.where}>
-                    <Icon name="mapPin" />
-                    {request.hospitalName}, {request.city}
-                  </p>
-                  {/* Spelled out for a screen reader, which would otherwise
-                      read "O-" as the letter O followed by a hyphen. */}
-                  <span className="visually-hidden">
-                    {announceBloodType(request.bloodType)}
-                  </span>
-                </Card>
+                      <time className={styles.posted} dateTime={request.createdAt}>
+                        {timeAgo(request.createdAt)}
+                      </time>
+                    </div>
+                    <h1 className={styles.title}>
+                      {request.unitsNeeded}
+                      {request.unitsNeeded === 1 ? ' unit' : ' units'} of{' '}
+                      <BloodTypeLabel type={request.bloodType} /> needed
+                    </h1>
+                    <p className={styles.where}>
+                      <Icon name="mapPin" />
+                      {request.hospitalName}, {request.city}
+                    </p>
+                    {/* Spelled out for a screen reader, which would otherwise
+                        read "O-" as the letter O followed by a hyphen. */}
+                    <span className="visually-hidden">
+                      {announceBloodType(request.bloodType)}
+                    </span>
+                  </header>
 
-                {/*
+                  {/*
                   The answer comes from the API, which reads the same
                   blood_compatibility table the matching query reads. It is
                   not worked out here on purpose: a second copy of a medical
@@ -161,119 +155,118 @@ export default function RequestDetail() {
                   gets emailed, and getting its direction backwards produces a
                   screen that runs and is wrong (§3, §5.1).
                 */}
-                {fit && (
-                  <aside
-                    className={`${styles.fit} ${fit.compatible ? styles.fitYes : styles.fitNo}`}
-                  >
-                    <Icon name={fit.compatible ? 'checkCircle' : 'info'} />
-                    <div>
-                      {fit.compatible ? (
-                        <>
-                          <p className={styles.fitHeadline}>
-                            Your <BloodTypeLabel type={fit.bloodType} /> can help here
-                          </p>
-                          {fit.eligibleFrom ? (
-                            /* Compatible and cannot give yet. Saying only the
+                  {fit && (
+                    <aside
+                      className={`${styles.fit} ${fit.compatible ? styles.fitYes : styles.fitNo}`}
+                    >
+                      <Icon name={fit.compatible ? 'checkCircle' : 'info'} />
+                      <div>
+                        {fit.compatible ? (
+                          <>
+                            <p className={styles.fitHeadline}>
+                              Your <BloodTypeLabel type={fit.bloodType} /> can help here
+                            </p>
+                            {fit.eligibleFrom ? (
+                              /* Compatible and cannot give yet. Saying only the
                                first half sends somebody to a hospital that
                                will turn them away at the door. */
-                            <p className={styles.fitBody}>
-                              You are eligible to give again on{' '}
-                              <time dateTime={fit.eligibleFrom}>
-                                {longDate(fit.eligibleFrom)}
-                              </time>
-                              , {DONATION_INTERVAL_DAYS} days after your last donation.
+                              <p className={styles.fitBody}>
+                                You are eligible to give again on{' '}
+                                <time dateTime={fit.eligibleFrom}>
+                                  {longDate(fit.eligibleFrom)}
+                                </time>
+                                , {DONATION_INTERVAL_DAYS} days after your last donation.
+                              </p>
+                            ) : (
+                              <p className={styles.fitBody}>
+                                You are eligible to give now. The hospital's number is at
+                                the bottom of this page.
+                              </p>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <p className={styles.fitHeadline}>
+                              This patient cannot receive{' '}
+                              <BloodTypeLabel type={fit.bloodType} />
                             </p>
-                          ) : (
                             <p className={styles.fitBody}>
-                              You are eligible to give now. The hospital's number is at
-                              the bottom of this page.
+                              Nothing to do here — but you will be emailed the moment a
+                              request your type can help with is approved near you.
                             </p>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          <p className={styles.fitHeadline}>
-                            This patient cannot receive{' '}
-                            <BloodTypeLabel type={fit.bloodType} />
-                          </p>
-                          <p className={styles.fitBody}>
-                            Nothing to do here — but you will be emailed the moment a
-                            request your type can help with is approved near you.
-                          </p>
-                        </>
-                      )}
-                    </div>
-                  </aside>
-                )}
+                          </>
+                        )}
+                      </div>
+                    </aside>
+                  )}
 
-                {request.note && (
-                  <Section icon="clipboard" heading="From the hospital">
-                    <p className={styles.note}>{request.note}</p>
-                  </Section>
-                )}
+                  {request.note && (
+                    <Block heading="From the hospital">
+                      <p className={styles.note}>{request.note}</p>
+                    </Block>
+                  )}
 
-                {hasPin && (
-                  <Section icon="mapPin" heading="Where to go">
-                    <Suspense
-                      fallback={<div className={styles.mapLoading} aria-hidden="true" />}
-                    >
-                      <HospitalMap
-                        lat={request.hospitalLat ?? null}
-                        lng={request.hospitalLng ?? null}
-                      />
-                    </Suspense>
-                    <p className={styles.mapNote}>
-                      The pin is where the hospital put it. Directions open in your maps
-                      app.
-                    </p>
-                  </Section>
-                )}
+                  {hasPin && (
+                    <Block heading="Where to go">
+                      <div className={styles.map}>
+                        <Suspense
+                          fallback={
+                            <div className={styles.mapLoading} aria-hidden="true" />
+                          }
+                        >
+                          <HospitalMap
+                            lat={request.hospitalLat ?? null}
+                            lng={request.hospitalLng ?? null}
+                          />
+                        </Suspense>
+                      </div>
+                      <p className={styles.mapNote}>
+                        The pin is where the hospital put it. Directions open in your maps
+                        app.
+                      </p>
+                    </Block>
+                  )}
 
-                <Section icon="info" heading="Details">
-                  <dl className={styles.facts}>
-                    <div className={styles.fact}>
-                      <dt>Units needed</dt>
-                      <dd data-numeric>{request.unitsNeeded}</dd>
-                    </div>
-                    <div className={styles.fact}>
-                      <dt>Open until</dt>
-                      <dd>
-                        <time dateTime={request.expiresAt}>
-                          {longDate(request.expiresAt)}
-                        </time>
-                      </dd>
-                    </div>
-                    <div className={styles.fact}>
-                      <dt>City</dt>
-                      <dd>{request.city}</dd>
-                    </div>
-                  </dl>
-                </Section>
+                  {/* Label left, value right, a hairline between each — the
+                      shape a reference block has had since long before this
+                      product, and the one people read fastest. */}
+                  <Block heading="Details">
+                    <dl className={styles.facts}>
+                      <div className={styles.fact}>
+                        <dt>Units needed</dt>
+                        <dd data-numeric>{request.unitsNeeded}</dd>
+                      </div>
+                      <div className={styles.fact}>
+                        <dt>Open until</dt>
+                        <dd>
+                          <time dateTime={request.expiresAt}>
+                            {longDate(request.expiresAt)}
+                          </time>
+                        </dd>
+                      </div>
+                      <div className={styles.fact}>
+                        <dt>City</dt>
+                        <dd>{request.city}</dd>
+                      </div>
+                    </dl>
+                  </Block>
 
-                {/* Four things to do, as four things rather than one
-                    paragraph. This is read standing up, one-handed, on the
-                    way out of the door. */}
-                <Section icon="checkCircle" heading="Before you go">
-                  <ul className={styles.checklist}>
-                    <li>
-                      <Icon name="check" />
+                  {/* The eligibility rule is a sentence; the three practical
+                      things are a line. Separating them stops the one thing
+                      that can send somebody home from the door being read as
+                      the fourth item in a list of chores. */}
+                  <Block heading="Before you go">
+                    <p className={styles.blockBody}>
                       You can give again {DONATION_INTERVAL_DAYS} days after your last
                       donation.
-                    </li>
-                    <li>
-                      <Icon name="check" />
-                      Bring photo ID.
-                    </li>
-                    <li>
-                      <Icon name="check" />
-                      Eat beforehand.
-                    </li>
-                    <li>
-                      <Icon name="check" />
-                      Allow about an hour.
-                    </li>
-                  </ul>
-                </Section>
+                    </p>
+                    <ul className={styles.inlineList}>
+                      <li>Bring photo ID</li>
+                      <li>Eat beforehand</li>
+                      <li>Allow about an hour</li>
+                    </ul>
+                  </Block>
+                </Card>
               </div>
 
               {/* Sticky on a wide screen, and the first thing under the fold

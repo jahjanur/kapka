@@ -42,24 +42,58 @@
 }
 
 /* Same reason as the feed's hero column: a long hospital name must wrap
-   rather than widen the track.
-
-   The gap lives here rather than on the sections: they are Cards now, and a
-   Card sets no outer margin ever — spacing between them is the parent's job,
-   which is what keeps the stack composable (§8). */
+   rather than widen the track. */
 .main {
-  display: grid;
-  gap: var(--space-4);
   min-inline-size: 0;
-  align-content: start;
 }
 
-/* ── Head ────────────────────────────────────────────────────────────────── */
-/* Composes Card for its surface, and adds only what a lead card needs: the
-   severity stripe, and the room to clear it. */
+/* ── The record ──────────────────────────────────────────────────────────
+   One document rather than four cards down a page. A request is a single
+   thing and four separately floating surfaces said it was four; a hairline
+   between blocks says the same boundary without the second, third and
+   fourth shadow.
+
+   Clipped, because the head's severity stripe and the compatibility band
+   both run to the edges and would otherwise square off the corners.
+   ---------------------------------------------------------------------- */
+.record {
+  overflow: hidden;
+}
+
+.block {
+  padding: var(--space-5);
+}
+
+/* The rule between blocks. Every block after the first, so the head keeps its
+   own edge and nothing draws a line under the last one.
+
+   --border-subtle, not --border-hairline: hairline is transparent in the
+   light theme on purpose — it exists so a Card's own border appears only in
+   dark, where shadows do not register. A divider that has to be seen in both
+   themes is a different job. */
+.record > * + * {
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.blockHeading {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  color: var(--fg-secondary);
+}
+
+.blockBody {
+  max-inline-size: var(--measure);
+  margin-block-start: var(--space-2);
+  color: var(--fg-primary);
+}
+
+/* ── Head ────────────────────────────────────────────────────────────────
+   The first block of the record, with the room its stripe needs.
+   ---------------------------------------------------------------------- */
 .head {
   position: relative;
-  overflow: hidden;
+  padding: var(--space-5);
   padding-inline-start: var(--space-6);
 }
 
@@ -114,82 +148,76 @@
   color: var(--fg-secondary);
 }
 
-/* ── Sections ────────────────────────────────────────────────────────────
-   A named card each, headed the way the feed's filter panel heads its own:
-   an accent icon and the name in sentence case, not a muted eyebrow in caps.
-   The eyebrows read as labels on a form; these read as somewhere to go.
-   ---------------------------------------------------------------------- */
-.sectionHeading {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-base);
-  font-weight: var(--weight-semibold);
-  line-height: var(--leading-snug);
-  color: var(--fg-primary);
-}
-
-.sectionIcon {
-  flex: none;
-  color: var(--accent);
-}
-
 .note {
   max-inline-size: var(--measure);
-  margin-block-start: var(--space-3);
+  margin-block-start: var(--space-2);
   padding-inline-start: var(--space-4);
   color: var(--fg-primary);
-  /* Somebody at the hospital wrote this sentence; the rule says so without a
-     second surface inside a surface. */
+  /* Somebody at the hospital wrote this sentence, and the rule marks it as
+     quoted rather than written by the product. */
   border-inline-start: 2px solid var(--accent-border);
 }
 
 /* ── Before you go ───────────────────────────────────────────────────────
-   Four things to do rather than one paragraph containing four things.
+   The three practical items on one line. They are short, they are of equal
+   weight, and three bullet points down a page gave each of them the standing
+   of the eligibility rule above, which is the only one that can turn somebody
+   away at the door.
    ---------------------------------------------------------------------- */
-.checklist {
-  display: grid;
+.inlineList {
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--space-2);
-  max-inline-size: var(--measure);
-  margin-block-start: var(--space-3);
+  margin-block-start: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
   list-style: none;
 }
 
-.checklist li {
-  display: flex;
-  align-items: start;
-  gap: var(--space-2);
-  color: var(--fg-secondary);
+/* On the item before the break rather than the one after it: as a ::before
+   the separator led the line whenever the list wrapped, which reads as a
+   bullet on a list that has none. */
+.inlineList li:not(:last-child)::after {
+  content: '·';
+  margin-inline-start: var(--space-2);
+  color: var(--fg-muted);
 }
 
-.checklist svg {
-  flex: none;
-  /* Optically on the first line of text rather than above it. */
-  margin-block-start: 0.15em;
-  color: var(--success);
-}
-
+/* ── Details ─────────────────────────────────────────────────────────────
+   Label left, value right, ruled between. Capped at a measure so the two
+   halves do not drift to opposite ends of a wide column, which is how a
+   table of three rows starts reading as a table of three unrelated rows.
+   ---------------------------------------------------------------------- */
 .facts {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* A layout width, not a reading measure: --measure is 68ch and never binds
+     here, which left the label at the far left of a 700px column and its
+     value at the far right, reading as two unrelated lists. The pair has to
+     stay close enough to be read as a pair. */
+  max-inline-size: 32rem;
+  margin-block-start: var(--space-3);
+}
+
+.fact {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
   gap: var(--space-4);
-  margin-block-start: var(--space-4);
+  padding-block: var(--space-3);
+}
+
+.fact + .fact {
+  border-block-start: 1px solid var(--border-subtle);
 }
 
 .fact dt {
-  font-size: var(--text-sm);
-  color: var(--fg-muted);
+  color: var(--fg-secondary);
 }
 
 .fact dd {
   margin: 0;
-  margin-block-start: var(--space-1);
-  /* Not --text-lg: at that size "September 10, 2026" wraps onto a second line
-     in a two-column grid on a phone, and a date broken across lines reads as
-     two dates for a moment. Weight carries the value instead. */
-  font-size: var(--text-base);
   font-weight: var(--weight-semibold);
   font-variant-numeric: tabular-nums;
+  text-align: end;
 }
 
 /* ── Action rail ─────────────────────────────────────────────────────────
@@ -207,10 +235,12 @@
   color: var(--fg-secondary);
 }
 
+/* Same correction as the record's dividers: this rule was drawn in the
+   transparent hairline and so existed only in the dark theme. */
 .contact {
   margin-block-start: var(--space-5);
   padding-block-start: var(--space-5);
-  border-block-start: 1px solid var(--border-hairline);
+  border-block-start: 1px solid var(--border-subtle);
 }
 
 .contactHeading {
@@ -246,16 +276,16 @@
 }
 
 /* ── The compatibility banner ────────────────────────────────────────────
-   Directly under the hero, because for a signed-in donor it is the answer to
-   the question they opened the page with.
+   Directly under the head, because for a signed-in donor it is the answer to
+   the question they opened the page with. A band across the record rather
+   than a rounded box floating inside one — the record is the frame, and a
+   second frame inside it is a frame too many.
    ---------------------------------------------------------------------- */
 .fit {
   display: flex;
   align-items: start;
   gap: var(--space-3);
-  padding: var(--space-4);
-  border-radius: var(--radius-lg);
-  border: 1px solid transparent;
+  padding: var(--space-4) var(--space-5);
 }
 
 .fit svg {
@@ -265,7 +295,6 @@
 .fitYes {
   color: var(--success-ink);
   background-color: var(--success-surface);
-  border-color: var(--success);
 }
 
 /* Not a warning. Nothing has gone wrong and the donor has done nothing
@@ -274,11 +303,10 @@
 .fitNo {
   color: var(--fg-secondary);
   background-color: var(--bg-surface-alt);
-  border-color: var(--border-subtle);
 }
 
 .fitHeadline {
-  font-size: var(--text-lg);
+  font-size: var(--text-base);
   font-weight: var(--weight-semibold);
   line-height: var(--leading-snug);
 }
@@ -292,17 +320,24 @@
    Only rendered when the request carries a pin, so most of the laziness here
    is that Leaflet is never fetched at all for one that does not.
    ---------------------------------------------------------------------- */
+/* Clips whatever Leaflet draws to the same corner the fallback uses, so the
+   loaded map and the box it replaces are the same shape. */
+.map {
+  overflow: hidden;
+  margin-block-start: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
 .mapLoading {
   block-size: 16rem;
   background-color: var(--bg-surface-alt);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-lg);
 }
 
 .mapNote {
   margin-block-start: var(--space-2);
   font-size: var(--text-sm);
-  color: var(--fg-secondary);
+  color: var(--fg-muted);
 }
 
 .phoneLink {

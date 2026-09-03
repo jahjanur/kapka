@@ -42,6 +42,25 @@ describe('the Content Security Policy', () => {
     expect(scriptSrc).not.toContain('unsafe-eval');
   });
 
+  it('allows the tile host the map actually asks for', () => {
+    /*
+     * A CSP host wildcard matches a subdomain, not the bare name, so
+     * `*.tile.openstreetmap.org` does not allow `tile.openstreetmap.org` —
+     * which is the URL HospitalMap builds. Every tile was refused, and a
+     * refused tile is not an error anyone sees: the map just renders empty.
+     * Read out of the component so the two cannot drift apart.
+     */
+    const map = readFileSync(
+      new URL('../src/components/HospitalMap/HospitalMap.tsx', import.meta.url).pathname,
+      'utf8',
+    );
+    const tileUrl = /L\.tileLayer\('(https:\/\/[^/']+)/.exec(map)?.[1] ?? '';
+    expect(tileUrl).not.toBe('');
+
+    const imgSrc = /img-src ([^;]+)/.exec(csp)?.[1] ?? '';
+    expect(imgSrc).toContain(tileUrl);
+  });
+
   it('locks down the directives an injection would reach for', () => {
     expect(csp).toContain("object-src 'none'");
     expect(csp).toContain("base-uri 'self'");

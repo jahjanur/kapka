@@ -20,7 +20,11 @@
       through the style attribute by design (Grid's --col-min, Skeleton's
       width), which is a shape no hash can cover.
 
-      img-src allows OpenStreetMap because the map tiles come from there.
+      img-src allows OpenStreetMap because the map tiles come from there. Both
+      spellings of the host, because a CSP wildcard matches a subdomain and
+      not the bare name: *.tile.openstreetmap.org does not cover
+      tile.openstreetmap.org, which is the host HospitalMap actually asks for,
+      and every tile was being blocked.
       connect-src is 'self' because the API is served from the same origin;
       a deployment that splits them has to add the API origin here.
 
@@ -31,7 +35,7 @@
     -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-DwRj04hfjcXprycgjHSADDS+mzHOtGteZyc+l7YEWHQ='; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.tile.openstreetmap.org; font-src 'self'; connect-src 'self';"
+      content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-DwRj04hfjcXprycgjHSADDS+mzHOtGteZyc+l7YEWHQ='; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org https://*.tile.openstreetmap.org; font-src 'self'; connect-src 'self';"
     />
     <title>Kapka</title>
     <meta
