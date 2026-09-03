@@ -98,6 +98,14 @@ export default function Privacy() {
                 service that delivers the mail.
               </p>
               <p className={styles.body}>
+                If you add a profile picture, we keep that picture. It is shown to you, on
+                your own profile, and to nobody else — it is never on the public feed and
+                never sent to a hospital. Your phone writes the place a photo was taken
+                into the file; your browser resizes the picture before it is sent, which
+                removes that and everything else the camera recorded. Remove the picture
+                at any time, from the same place you added it.
+              </p>
+              <p className={styles.body}>
                 If you sign in with Google, we keep the account link that makes that work:
                 Google&rsquo;s own id for you, and nothing else from them. We never
                 receive your Google password, and we cannot see anything else in your

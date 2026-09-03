@@ -41,6 +41,7 @@ const MUST_MENTION: Record<string, string[]> = {
   refresh_tokens: ['session'],
   email_verification_tokens: ['confirmation link'],
   user_identities: ['sign in with google', 'account link'],
+  user_avatars: ['profile picture', 'to nobody else'],
 };
 
 function tablesInMigrations(): string[] {

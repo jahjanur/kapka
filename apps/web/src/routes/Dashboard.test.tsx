@@ -33,6 +33,12 @@ vi.mock('../lib/api', async () => {
       updateDonorProfile: (patch: DonorProfilePatchInput, token: string) =>
         updateDonorProfile(patch, token),
       resendVerification: (token: string) => resendVerification(token),
+      /* The profile picture is the AvatarPicker's business and has its own
+         tests; this page only has to keep working while it says there is
+         none. */
+      getAvatar: () => Promise.resolve(null),
+      setAvatar: () => Promise.resolve(),
+      removeAvatar: () => Promise.resolve(),
     },
   };
 });

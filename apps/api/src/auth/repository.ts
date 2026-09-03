@@ -32,6 +32,12 @@ export interface UserRecord {
   emailVerified: boolean;
 }
 
+export interface AvatarRecord {
+  image: Buffer;
+  /** Sniffed from the bytes when it was stored, never claimed by a caller. */
+  contentType: string;
+}
+
 /** The providers user_identities.provider accepts. */
 export type IdentityProvider = 'google';
 
@@ -119,6 +125,13 @@ export interface AuthRepository {
   deleteUser(userId: string): Promise<boolean>;
   /** Creates the user and the donor profile in one transaction (§4). */
   createUser(input: RegisterInput): Promise<UserRecord>;
+
+  /** Somebody's profile picture, or null if they have not set one (§9.5). */
+  findAvatar(userId: string): Promise<AvatarRecord | null>;
+  /** Replaces whatever was there — one picture per person, not a gallery. */
+  saveAvatar(userId: string, image: Buffer, contentType: string): Promise<void>;
+  /** Returns false if there was nothing to remove. */
+  deleteAvatar(userId: string): Promise<boolean>;
 
   /**
    * The account this provider subject belongs to, if it has one (§9.2).
@@ -340,6 +353,37 @@ export function createPgAuthRepository(db: pg.Pool = pool): AuthRepository {
         );
         return toUser(row);
       }, db);
+    },
+
+    async findAvatar(userId) {
+      const { rows } = await db.query<{ image: Buffer; content_type: string }>(
+        'SELECT image, content_type FROM user_avatars WHERE user_id = $1',
+        [userId],
+      );
+      const row = rows[0];
+      return row ? { image: row.image, contentType: row.content_type } : null;
+    },
+
+    async saveAvatar(userId, image, contentType) {
+      /* Upsert, because setting a picture when you already have one is the
+         ordinary case and two round trips to discover that would be one too
+         many. */
+      await db.query(
+        `INSERT INTO user_avatars (user_id, image, content_type)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (user_id)
+         DO UPDATE SET image = EXCLUDED.image,
+                       content_type = EXCLUDED.content_type,
+                       updated_at = now()`,
+        [userId, image, contentType],
+      );
+    },
+
+    async deleteAvatar(userId) {
+      const { rowCount } = await db.query('DELETE FROM user_avatars WHERE user_id = $1', [
+        userId,
+      ]);
+      return (rowCount ?? 0) > 0;
     },
 
     async findUserByIdentity(provider, subject) {

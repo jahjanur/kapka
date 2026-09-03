@@ -6,6 +6,7 @@ export { BloodBag } from './BloodBag/BloodBag';
 export { WelcomeArt } from './WelcomeArt/WelcomeArt';
 export { CityScene } from './CityScene/CityScene';
 export { GoogleMark } from './ProviderMark/ProviderMark';
+export { AvatarPicker } from './AvatarPicker/AvatarPicker';
 export { Field } from './Field/Field';
 export { useFieldContext, type FieldContextValue } from './Field/FieldContext';
 export { Input } from './Input/Input';

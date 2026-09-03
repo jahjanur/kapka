@@ -139,6 +139,18 @@ export interface ApiClient {
    */
   restoreSession(): Promise<Session | null>;
   /**
+   * The caller's own profile picture, or null if they have not set one.
+   *
+   * A Blob rather than a URL, because the endpoint takes a bearer token and
+   * an <img src> cannot send one — the screen makes an object URL out of
+   * this. It is private to the person in it (§12), which is the other reason
+   * it is not simply a public path.
+   */
+  getAvatar(accessToken: string): Promise<Blob | null>;
+  /** Replaces whatever is there. The blob is already a square thumbnail. */
+  setAvatar(image: Blob, accessToken: string): Promise<void>;
+  removeAvatar(accessToken: string): Promise<void>;
+  /**
    * Which third-party sign-ins this deployment offers, e.g. `['google']`.
    *
    * Asked rather than assumed: the credentials live on the server, and a
@@ -288,6 +300,40 @@ function createHttpClient(baseUrl: string): ApiClient {
         body: JSON.stringify(input),
       });
     },
+    async getAvatar(accessToken) {
+      const response = await fetch(`${baseUrl}/me/avatar`, {
+        headers: { authorization: `Bearer ${accessToken}` },
+        credentials: 'include',
+      });
+      // 404 is the ordinary answer for somebody who has not set one.
+      if (response.status === 404) return null;
+      if (!response.ok) {
+        throw new ApiError(
+          'INTERNAL',
+          'That picture could not be loaded.',
+          response.status,
+        );
+      }
+      return response.blob();
+    },
+    async setAvatar(image, accessToken) {
+      /* The bytes, not JSON: base64 would be a third larger, and the API
+         checks the bytes themselves anyway. */
+      await call<undefined>('/me/avatar', {
+        method: 'PUT',
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          'content-type': image.type,
+        },
+        body: image,
+      });
+    },
+    async removeAvatar(accessToken) {
+      await call<undefined>('/me/avatar', {
+        method: 'DELETE',
+        headers: { authorization: `Bearer ${accessToken}` },
+      });
+    },
     async listAuthProviders() {
       const { providers } = await call<{ providers: AuthProvider[] }>('/auth/providers');
       return providers;
@@ -426,6 +472,8 @@ const DEMO_PROFILE: DonorProfile = {
  */
 let demoUser: SessionUser = DEMO_USER;
 let demoProfile: DonorProfile = { ...DEMO_PROFILE };
+/** The picture set in this tab, if any — see the demo client below. */
+let demoAvatar: Blob | null = null;
 /** False once somebody has registered in this tab — see listMyNotifications. */
 let demoUntouched = true;
 
@@ -454,6 +502,18 @@ function createDemoClient(): ApiClient {
        would only hold up the layout settling, and the row above already
        reserves its space either way. */
     listAuthProviders: () => Promise.resolve<AuthProvider[]>(['google']),
+    /* Kept in this tab only, like everything else here. A picture set in demo
+       mode is gone on reload, which is the honest behaviour for a client with
+       no server behind it. */
+    getAvatar: () => latency(demoAvatar),
+    setAvatar: (image: Blob) => {
+      demoAvatar = image;
+      return latency(undefined);
+    },
+    removeAvatar: () => {
+      demoAvatar = null;
+      return latency(undefined);
+    },
     authStartUrl: (provider) => `/api/auth/${provider}`,
     listRequests: () => latency([...SEED_REQUESTS]),
     async getRequest(id, accessToken) {

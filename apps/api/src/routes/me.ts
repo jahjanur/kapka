@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, raw } from 'express';
 import {
   apiError,
   deleteAccountSchema,
@@ -11,6 +11,7 @@ import { verifyPassword } from '../auth/passwords';
 import { REFRESH_COOKIE, clearRefreshCookieOptions } from '../auth/cookies';
 import { requireAuth } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
+import { AVATAR_MAX_BYTES, sniffImageType } from '../media/avatar';
 import type { AuthRepository } from '../auth/repository';
 
 /**
@@ -52,6 +53,93 @@ export function createMeRouter(repository: AuthRepository): Router {
    * Their own rows only, scoped in the query. A donor asked to give blood by
    * an automated system is owed a plain answer to "what have you sent me".
    */
+  /**
+   * GET /api/me/avatar — the caller's own profile picture (§9.5).
+   *
+   * Authenticated, and private to the person in it. A donor's face is not
+   * something this product puts on a public URL: §12 keeps contact details
+   * off the public feed, and a photograph is more identifying than a phone
+   * number. It is shown to them, in their own session, and nowhere else.
+   *
+   * That is also why it is not an <img src> the browser fetches on its own —
+   * the API takes a bearer token, so the app fetches the bytes and makes an
+   * object URL out of them.
+   */
+  router.get('/me/avatar', requireAuth(repository), async (_req, res) => {
+    const auth = getAuth(res);
+    if (!auth) return;
+
+    const avatar = await repository.findAvatar(auth.userId);
+    if (!avatar) {
+      res.status(404).json(apiError('NOT_FOUND', 'No picture has been set.'));
+      return;
+    }
+
+    /* The type sniffed when it was stored, never one a caller chose. With
+       helmet's nosniff, that is what decides how the browser treats these
+       bytes. */
+    res.setHeader('Content-Type', avatar.contentType);
+    /* Private, because a shared cache holding one donor's face keyed on a URL
+       every donor shares is a way to serve it to the wrong one. */
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.send(avatar.image);
+  });
+
+  /**
+   * PUT /api/me/avatar — set it.
+   *
+   * Takes the raw bytes rather than JSON: base64 in a body is a third bigger
+   * for no gain, and the bytes are what has to be checked anyway.
+   *
+   * `type: () => true` accepts any declared Content-Type on purpose. What the
+   * caller calls it is not evidence — the check that matters is the sniff
+   * below, and refusing on the header first would only teach a caller which
+   * header to send.
+   */
+  router.put(
+    '/me/avatar',
+    requireAuth(repository),
+    raw({ type: () => true, limit: AVATAR_MAX_BYTES }),
+    async (req, res) => {
+      const auth = getAuth(res);
+      if (!auth) return;
+
+      const body: unknown = req.body;
+      const bytes = Buffer.isBuffer(body) ? body : Buffer.alloc(0);
+
+      const contentType = sniffImageType(bytes);
+      if (!contentType) {
+        /* Everything that is not one of three known image formats lands here,
+           SVG included — it is a document that can carry script, and this is
+           the endpoint where that would become stored XSS on our own origin
+           (§12). */
+        res
+          .status(415)
+          .json(
+            apiError(
+              'UNSUPPORTED_IMAGE',
+              'That file is not a JPEG, PNG or WebP image.',
+              'image',
+            ),
+          );
+        return;
+      }
+
+      await repository.saveAvatar(auth.userId, bytes, contentType);
+      res.status(204).end();
+    },
+  );
+
+  /** DELETE /api/me/avatar — take it down again. */
+  router.delete('/me/avatar', requireAuth(repository), async (_req, res) => {
+    const auth = getAuth(res);
+    if (!auth) return;
+    await repository.deleteAvatar(auth.userId);
+    // 204 either way: asking for it to be gone when it already is has
+    // succeeded, and saying otherwise only invites a retry.
+    res.status(204).end();
+  });
+
   router.get('/me/notifications', requireAuth(repository), async (_req, res) => {
     const auth = getAuth(res);
     if (!auth) return;

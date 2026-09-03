@@ -1,0 +1,99 @@
+/* ============================================================================
+   The profile picture and its two controls (§9.5).
+
+   The disc composes the dashboard's own avatar rule, so a picture and an
+   initial are the same circle at the same size — the shape does not change
+   depending on whether somebody has uploaded anything.
+   ========================================================================= */
+
+.picker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.avatar {
+  composes: identityAvatar from '../../routes/Dashboard.module.css';
+  overflow: hidden;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+/* While a picture is uploading or being removed. Faded rather than replaced
+   by a spinner: the disc keeps its place and its shape, and the controls
+   below are already disabled. */
+.avatar[data-busy] {
+  opacity: 0.55;
+}
+
+.image {
+  inline-size: 100%;
+  block-size: 100%;
+  /* The crop is decided when the file is chosen, but a picture stored before
+     that rule existed must still fill the circle rather than stretch into it. */
+  object-fit: cover;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* The label and the button are the same control to look at, because they are
+   the same kind of thing to use. */
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: var(--hit-min);
+  padding-inline: var(--space-3);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--fg-primary);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .action:hover {
+    border-color: var(--border-strong);
+  }
+}
+
+.action:has(:disabled),
+.action:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* The input is the control — hidden from sight, not from the keyboard or the
+   accessibility tree, so the label still opens the picker on Enter and the
+   focus ring still lands on something real. */
+.file {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The ring that follows the file input's own focus, since the input itself is
+   the size of a pixel. */
+.action:has(:focus-visible) {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.error {
+  flex-basis: 100%;
+  font-size: var(--text-sm);
+  color: var(--danger-ink);
+}

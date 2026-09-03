@@ -23,6 +23,8 @@ export const ERROR_CODES = [
   'ALREADY_MODERATED',
   'REQUEST_EXPIRED',
   'EMAIL_BUDGET_EXHAUSTED',
+  /** The bytes offered as a profile picture are not a JPEG, PNG or WebP. */
+  'UNSUPPORTED_IMAGE',
   'NOT_IMPLEMENTED',
   'INTERNAL',
 ] as const;

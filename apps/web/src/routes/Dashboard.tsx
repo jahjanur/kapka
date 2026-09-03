@@ -11,6 +11,7 @@ import {
 } from '@kapka/shared';
 import {
   AppHeader,
+  AvatarPicker,
   BloodTypeBadge,
   BloodTypeLabel,
   Button,
@@ -255,14 +256,20 @@ export default function Dashboard() {
               <p className={styles.eyebrow}>Your profile</p>
 
               <div className={styles.identityTop}>
-                <span className={styles.identityAvatar} aria-hidden="true">
-                  {me.fullName.slice(0, 1).toUpperCase()}
-                </span>
                 <div className={styles.identityWho}>
                   <h1 className={styles.title}>{me.fullName}</h1>
                   <p className={styles.identityEmail}>{me.email}</p>
                 </div>
               </div>
+
+              {/* The picture, and the two controls for it. Below the name
+                  rather than beside it: the controls need a line of their
+                  own, and squeezing them next to a heading is what turns a
+                  profile header into a toolbar. */}
+              <AvatarPicker
+                initial={me.fullName.slice(0, 1).toUpperCase()}
+                accessToken={session.accessToken}
+              />
 
               {/* Never the colour alone: each chip carries its own words, and
                   the pending one carries an icon as well. */}

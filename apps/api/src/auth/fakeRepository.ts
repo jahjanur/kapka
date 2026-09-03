@@ -1,6 +1,7 @@
 import type { DonorNotification } from '@kapka/shared';
 import type {
   AuthRepository,
+  AvatarRecord,
   DonorProfileRecord,
   IdentityProvider,
   IdentityUserInput,
@@ -32,6 +33,7 @@ export function createFakeAuthRepository(): AuthRepository & {
   verifications: Map<string, VerificationRecord & { tokenHash: string; createdAt: Date }>;
   notifications: (DonorNotification & { donorId: string })[];
   identities: FakeIdentity[];
+  avatars: Map<string, AvatarRecord>;
   addUser(
     user: Partial<UserRecord> & Pick<UserRecord, 'email' | 'passwordHash'>,
   ): UserRecord;
@@ -48,6 +50,7 @@ export function createFakeAuthRepository(): AuthRepository & {
   >();
   const notifications: (DonorNotification & { donorId: string })[] = [];
   const identities: FakeIdentity[] = [];
+  const avatars = new Map<string, AvatarRecord>();
   let sequence = 0;
   const nextId = () => `id-${String(++sequence)}`;
 
@@ -74,6 +77,7 @@ export function createFakeAuthRepository(): AuthRepository & {
     verifications,
     notifications,
     identities,
+    avatars,
     addUser,
 
     findDonorProfile(userId) {
@@ -110,6 +114,19 @@ export function createFakeAuthRepository(): AuthRepository & {
 
     findUserById(id) {
       return Promise.resolve(users.get(id) ?? null);
+    },
+
+    findAvatar(userId: string) {
+      return Promise.resolve(avatars.get(userId) ?? null);
+    },
+
+    saveAvatar(userId: string, image: Buffer, contentType: string) {
+      avatars.set(userId, { image, contentType });
+      return Promise.resolve();
+    },
+
+    deleteAvatar(userId: string) {
+      return Promise.resolve(avatars.delete(userId));
     },
 
     findUserByIdentity(provider: IdentityProvider, subject: string) {
