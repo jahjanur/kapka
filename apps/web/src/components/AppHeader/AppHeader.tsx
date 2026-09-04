@@ -3,7 +3,7 @@ import { NavLink, Link, useLocation } from 'react-router-dom';
 import { Button } from '../Button/Button';
 import { Container } from '../layout/Container';
 import { Icon, type IconName } from '../Icon/Icon';
-import { Sheet } from '../Modal/Modal';
+import { Drawer } from '../Modal/Modal';
 import { useSession } from '../../lib/session';
 import { PATHS } from '../../routes/paths';
 import styles from './AppHeader.module.css';
@@ -117,12 +117,13 @@ export function AppHeader() {
         every destination sitting in the accessibility tree behind a closed
         dialog.
 
-        A Sheet rather than a drawer of its own: <dialog> brings the focus
-        trap, the inertness and the top layer with it, and a second overlay
-        would be a second chance to get all three wrong (see Modal).
+        A shape of the one dialog rather than a panel of its own: <dialog>
+        brings the focus trap, the inertness and the top layer with it, and a
+        second overlay would be a second chance to get all three wrong (see
+        Modal).
       */}
       {menuOpen && (
-        <Sheet open title="Menu" onClose={() => setMenuOpen(false)}>
+        <Drawer open title="Menu" onClose={() => setMenuOpen(false)}>
           <nav className={styles.menuNav} aria-label="Main">
             {NAV.map((item) => (
               <NavLink
@@ -156,7 +157,7 @@ export function AppHeader() {
               </NavLink>
             )}
           </nav>
-        </Sheet>
+        </Drawer>
       )}
     </header>
   );

@@ -1,9 +1,11 @@
 /* ============================================================================
    Modal and sheet (§8).
 
-   One dialog, two shapes: a bottom sheet on a phone, a centred dialog from
-   48rem. Which shape is a question about the width of the screen rather than
-   of the component, so it is a media query (§7.2).
+   One dialog, several shapes: a bottom sheet on a phone, a centred dialog
+   from 48rem, and a drawer down the side for navigation. Sheet or centre is a
+   question about the width of the screen rather than of the component, so it
+   is a media query (§7.2); drawer is a question about the content, so it is
+   asked for by name.
 
    The base is the sheet. `centre` takes the other shape at every width and
    `auto` takes it from 48rem — the two blocks are written out rather than
@@ -169,6 +171,43 @@
    so, and so the stylesheet has a hook if that ever needs its own rule. */
 .sheet {
   margin-block-start: auto;
+}
+
+/* ── A drawer down the inline-end edge ───────────────────────────────────
+   Full height, so a list of destinations has the room to be a list. The
+   margin does the positioning and it is logical, so the panel would sit on
+   the other edge under dir="rtl"; the entry animation below is the one part
+   that has to name a direction.
+   ---------------------------------------------------------------------- */
+.drawer {
+  inline-size: min(20rem, calc(100vw - var(--space-12)));
+  block-size: 100%;
+  max-block-size: 100%;
+  margin-block: 0;
+  margin-inline: auto 0;
+}
+
+.drawer .panel {
+  block-size: 100%;
+  max-block-size: 100%;
+  border-radius: 0;
+  border-start-start-radius: var(--radius-xl);
+  border-end-start-radius: var(--radius-xl);
+}
+
+/* A grabber says "drag me down". This one does not move that way. */
+.drawer .grabber {
+  display: none;
+}
+
+.drawer[open] {
+  animation-name: drawerIn;
+}
+
+@keyframes drawerIn {
+  from {
+    translate: 100% 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

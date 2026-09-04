@@ -3,7 +3,7 @@ import { cx } from '../../lib/cx';
 import { Icon } from '../Icon/Icon';
 import styles from './Modal.module.css';
 
-export type ModalShape = 'auto' | 'centre' | 'sheet';
+export type ModalShape = 'auto' | 'centre' | 'sheet' | 'drawer';
 
 interface ModalProps {
   open: boolean;
@@ -16,8 +16,8 @@ interface ModalProps {
   footer?: ReactNode;
   /**
    * 'auto' is a centre dialog from 48rem and a bottom sheet below it — the
-   * same dialog, two shapes, decided in CSS. Force one with 'centre' or
-   * 'sheet' when the content only makes sense that way.
+   * same dialog, two shapes, decided in CSS. Force one with 'centre',
+   * 'sheet' or 'drawer' when the content only makes sense that way.
    */
   shape?: ModalShape;
   /**
@@ -144,4 +144,18 @@ export function Modal({
  */
 export function Sheet(props: Omit<ModalProps, 'shape'>) {
   return <Modal {...props} shape="sheet" />;
+}
+
+/**
+ * The same dialog again, pinned to the inline-end edge and the full height of
+ * the screen.
+ *
+ * For navigation rather than a decision: a menu is a list you scan down, and
+ * a panel down the side of the screen is the shape that gives it room to be
+ * one. A sheet has to stop at 85vh so the page behind it says it is a sheet,
+ * which is the right trade for "email 23 donors?" and the wrong one for a
+ * list that wants the height.
+ */
+export function Drawer(props: Omit<ModalProps, 'shape'>) {
+  return <Modal {...props} shape="drawer" />;
 }

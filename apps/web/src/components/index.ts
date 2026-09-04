@@ -14,7 +14,7 @@ export { Textarea } from './Input/Textarea';
 export { Picker } from './Picker/Picker';
 export { Select } from './Select/Select';
 export { Icon, IconSprite, ICON_NAMES, type IconName } from './Icon/Icon';
-export { Modal, Sheet, type ModalShape } from './Modal/Modal';
+export { Modal, Sheet, Drawer, type ModalShape } from './Modal/Modal';
 export { OfflineBanner } from './OfflineBanner/OfflineBanner';
 export { ToastProvider } from './Toast/ToastProvider';
 export { useToast, type ToastTone, type ToastOptions } from './Toast/toastContext';
