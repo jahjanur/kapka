@@ -55,6 +55,17 @@
   --info:            oklch(0.60 0.130 250);
   --info-surface:    oklch(0.96 0.028 250);
 
+  /* Calm: the one hue in the system that is not the blood.
+
+     A product about blood that says everything in red says nothing in red —
+     by the ninth crimson row the colour has stopped meaning urgent. This is
+     for the items that are neither: how the thing works, what happens to
+     your data. Teal because it is far enough round the wheel to separate at
+     a glance and desaturated enough not to become a second brand. */
+  --calm:            oklch(0.55 0.075 195);
+  --calm-surface:    oklch(0.96 0.022 195);
+  --calm-ink:        oklch(0.42 0.070 195);
+
   /* Status text that sits ON its own surface — the raw hues above are tuned
      for fills and borders, not for small text on a tinted background.       */
   --success-ink: oklch(0.43 0.115 155);
@@ -252,6 +263,10 @@
     --danger-ink:  oklch(0.80 0.115 27);
     --info-ink:    oklch(0.82 0.095 250);
 
+    --calm:         oklch(0.72 0.090 195);
+    --calm-surface: oklch(0.28 0.045 195);
+    --calm-ink:     oklch(0.85 0.070 195);
+
     --bt-o-solid-bg:  oklch(0.72 0.155 25);
     --bt-o-solid-fg:  oklch(0.18 0.030 25);
     --bt-o-ink:       oklch(0.80 0.120 25);
@@ -331,6 +346,10 @@
   --warning-ink: oklch(0.86 0.110 85);
   --danger-ink:  oklch(0.80 0.115 27);
   --info-ink:    oklch(0.82 0.095 250);
+
+  --calm:         oklch(0.72 0.090 195);
+  --calm-surface: oklch(0.28 0.045 195);
+  --calm-ink:     oklch(0.85 0.070 195);
 
   --bt-o-solid-bg:  oklch(0.72 0.155 25);
   --bt-o-solid-fg:  oklch(0.18 0.030 25);

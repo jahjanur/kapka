@@ -153,6 +153,27 @@ describe('the product header', () => {
     );
   });
 
+  it('carries the open count when a screen has one, and nothing when it does not', async () => {
+    /* A prop, not a fetch: the badge is not worth asking the API for the whole
+       feed on Privacy and Login. Absent beats a zero nobody counted. */
+    const user = userEvent.setup();
+    const { unmount } = render(
+      <MemoryRouter>
+        <SessionProvider>
+          <AppHeader openRequests={7} />
+        </SessionProvider>
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Menu' }));
+    expect(within(screen.getByRole('dialog')).getByText(/7/)).toBeInTheDocument();
+    unmount();
+
+    renderHeader();
+    await user.click(screen.getByRole('button', { name: 'Menu' }));
+    expect(within(screen.getByRole('dialog')).queryByText(/open$/)).toBeNull();
+  });
+
   it('keeps the menu out of the page until it is asked for', () => {
     /* Mounted only while open. Left standing behind a closed dialog, every
        destination would be in the accessibility tree twice. */

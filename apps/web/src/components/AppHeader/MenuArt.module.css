@@ -1,33 +1,65 @@
-/* The menu's closing wave. Every colour is a token, so the drawing follows
-   the palette rather than holding a second copy of it. */
+/* The menu's closing drawing. Monochrome plus one tint, every value a token,
+   so it follows the palette rather than holding a second copy of it. */
 
 .art {
   display: block;
   inline-size: 100%;
-  block-size: 8.25rem;
+  block-size: auto;
 }
 
-/* Back to front, palest to strongest — the depth is entirely in these three
-   fills, so a change here is a change to the whole drawing. */
-.waveFar {
-  fill: color-mix(in oklab, var(--accent-surface) 70%, transparent);
+/* One weight across the whole drawing — the thing that makes a set of paths
+   read as drawn by one hand rather than assembled. */
+.art path {
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
 }
 
-.waveMid {
+.trace {
+  stroke: var(--accent);
+}
+
+.drop {
+  stroke: var(--accent);
   fill: var(--accent-surface);
 }
 
-.waveNear {
-  fill: color-mix(in oklab, var(--accent) 30%, var(--accent-surface));
+/* The quiet part of the drawing, and the only line not at full strength. */
+.fall {
+  stroke: var(--accent);
+  stroke-dasharray: 1 5;
+  opacity: 0.45;
 }
 
-/* Drawn, not filled: it is a trace across the water rather than another
-   layer of it. */
-.pulse {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  opacity: 0.45;
+/* ── The ambient beat ────────────────────────────────────────────────────
+   The trace draws itself once as the menu opens, then holds. Not a loop: a
+   heartbeat pulsing forever in the corner of a menu is a thing to watch
+   rather than a thing that was there, and this panel gets opened by someone
+   whose relative may need blood today.
+   ---------------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  .trace {
+    stroke-dasharray: 340;
+    stroke-dashoffset: 340;
+    animation: draw var(--dur-sweep) var(--ease-out) 120ms forwards;
+  }
+
+  .drop {
+    /* Lands just ahead of the trace reaching the spike. */
+    animation: land var(--dur-slow) var(--ease-spring) both;
+  }
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes land {
+  from {
+    translate: 0 -10px;
+    opacity: 0;
+  }
 }

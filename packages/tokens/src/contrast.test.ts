@@ -78,6 +78,8 @@ const PAIRINGS: Pairing[] = [
   ['--warning-ink', '--warning-surface', 4.5, 'warning message'],
   ['--danger-ink', '--danger-surface', 4.5, 'field error message'],
   ['--info-ink', '--info-surface', 4.5, 'info message'],
+  ['--calm-ink', '--calm-surface', 4.5, 'a calm item on its own tint'],
+  ['--calm-ink', '--bg-surface', 4.5, 'a calm item on a card'],
 
   // 3:1 — non-text contrast (WCAG 1.4.11).
   ['--danger', '--danger-surface', 3, 'input border in its error state'],
@@ -86,6 +88,7 @@ const PAIRINGS: Pairing[] = [
   ['--focus-ring', '--bg-canvas', 3, 'focus ring on the page'],
   ['--focus-ring', '--bg-surface', 3, 'focus ring on a card'],
   ['--accent', '--bg-surface', 3, 'accent used as a boundary'],
+  ['--calm', '--bg-surface', 3, 'a calm icon on a card'],
 ];
 
 for (const group of ['o', 'a', 'b', 'ab']) {

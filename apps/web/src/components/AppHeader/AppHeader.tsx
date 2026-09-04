@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
+import { BLOOD_TYPES } from '@kapka/shared';
 import { Button } from '../Button/Button';
 import { Container } from '../layout/Container';
 import { Icon, type IconName } from '../Icon/Icon';
 import { Drawer } from '../Modal/Modal';
+import { KapkaMark } from './KapkaMark';
 import { MenuArt } from './MenuArt';
 import { useSession } from '../../lib/session';
 import { PATHS } from '../../routes/paths';
@@ -18,61 +20,90 @@ interface NavItem {
   note: string;
 }
 
-const NAV: NavItem[] = [
+/**
+ * The two things people opened the menu for. Raised, in their own block.
+ *
+ * A menu where every row is the same size says every destination matters the
+ * same, and these two do not: one is the list of people who need blood and
+ * the other is how you ask. The rest is reference.
+ */
+const PRIMARY: NavItem[] = [
   {
     to: PATHS.feed,
     label: 'Requests',
     end: true,
     icon: 'droplet',
-    note: 'Browse blood requests',
+    note: 'Browse who needs blood now',
   },
   {
     to: PATHS.postRequest,
     label: 'Post a request',
     end: false,
-    icon: 'clipboard',
+    icon: 'dropletPlus',
     note: 'Ask for blood donation',
   },
+];
+
+/** Reference, not action — quieter, and in the one hue that is not blood. */
+const SECONDARY: NavItem[] = [
   {
     to: PATHS.howItWorks,
     label: 'How it works',
     end: false,
     icon: 'info',
-    note: 'Learn more about Kapka',
+    note: 'Matching, eligibility, timing',
+  },
+  {
+    to: PATHS.privacy,
+    label: 'Privacy',
+    end: false,
+    icon: 'shieldCheck',
+    note: 'What we store, and what we never show',
   },
 ];
 
 /**
- * One destination in the menu: an icon, what it is, and what you would go
- * there for.
+ * The inline nav on a wide screen: labels only, and only the destinations
+ * that fit a bar. The notes and the rest belong to the menu.
+ */
+const NAV: NavItem[] = [...PRIMARY, ...SECONDARY.slice(0, 1)];
+
+/**
+ * A destination in the menu, at whichever of the two weights it carries.
  *
- * The note is not decoration — "Post a request" and "Requests" are two words
- * apart and mean opposite things, and the line under each is what tells them
- * apart at a glance.
+ * `--menu-step` is the stagger: rows arrive in sequence rather than as one
+ * slab, which is what makes a panel feel opened rather than switched on.
  */
 function MenuRow({
-  to,
-  end,
-  icon,
-  label,
-  note,
-}: Omit<NavItem, 'note'> & { note: string }) {
+  item,
+  step,
+  tone = 'accent',
+  badge,
+}: {
+  item: NavItem;
+  step: number;
+  tone?: 'accent' | 'calm';
+  badge?: ReactNode;
+}) {
   return (
     <NavLink
-      to={to}
-      end={end}
+      to={item.to}
+      end={item.end}
+      data-tone={tone}
+      style={{ '--menu-step': step } as React.CSSProperties}
       className={({ isActive }) =>
-        isActive ? `${styles.menuRow} ${styles.menuRowActive}` : styles.menuRow
+        isActive ? `${styles.row} ${styles.rowActive}` : styles.row
       }
     >
-      <span className={styles.menuRowMark} aria-hidden="true">
-        <Icon name={icon} />
+      <span className={styles.rowMark} aria-hidden="true">
+        <Icon name={item.icon} />
       </span>
-      <span className={styles.menuRowText}>
-        <span className={styles.menuRowTitle}>{label}</span>
-        <span className={styles.menuRowNote}>{note}</span>
+      <span className={styles.rowText}>
+        <span className={styles.rowTitle}>{item.label}</span>
+        <span className={styles.rowNote}>{item.note}</span>
       </span>
-      <Icon name="chevronRight" className={styles.menuChevron} />
+      {badge}
+      <Icon name="chevronRight" className={styles.rowChevron} />
     </NavLink>
   );
 }
@@ -83,10 +114,22 @@ function MenuRow({
  *
  * The row itself only ever holds the wordmark and one action. What changes at
  * 48rem is where the rest lives: inline as a nav on a wide screen, behind a
- * menu button on a phone. It used to live nowhere at all below 48rem, which
- * left a phone with a header of two things and no way to reach a third screen.
+ * menu button on a phone.
  */
-export function AppHeader() {
+export function AppHeader({
+  /**
+   * How many requests are open, for the badge on Requests.
+   *
+   * A prop rather than a fetch of its own: this header is on nineteen
+   * screens, useRequests has no shared cache, and a badge is not worth asking
+   * the API for the whole feed on Privacy and Login. The feed already holds
+   * this number and hands it over; everywhere else the badge is simply absent,
+   * which is honest rather than a zero nobody counted.
+   */
+  openRequests,
+}: {
+  openRequests?: number | undefined;
+} = {}) {
   const { session } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const { pathname } = useLocation();
@@ -121,7 +164,7 @@ export function AppHeader() {
       <Container>
         <div className={styles.inner}>
           <Link to={PATHS.feed} className={styles.brand}>
-            <Icon name="droplet" className={styles.mark} />
+            <KapkaMark className={styles.mark} />
             Kapka
           </Link>
 
@@ -181,9 +224,9 @@ export function AppHeader() {
         dialog.
 
         A shape of the one dialog rather than a panel of its own: <dialog>
-        brings the focus trap, the inertness and the top layer with it, and a
-        second overlay would be a second chance to get all three wrong (see
-        Modal).
+        brings role="dialog", aria-modal, the focus trap, Escape, focus
+        restoration and the top layer with it. A second overlay would be a
+        second chance to get all six wrong (see Modal).
       */}
       {menuOpen && (
         <Drawer
@@ -191,114 +234,127 @@ export function AppHeader() {
           title="Menu"
           onClose={() => setMenuOpen(false)}
           head={
-            <span className={styles.menuBrand}>
-              <span className={styles.menuBrandMark} aria-hidden="true">
-                <Icon name="droplet" />
+            <span className={styles.lockup}>
+              <span className={styles.lockupMark} aria-hidden="true">
+                <KapkaMark />
               </span>
-              <span>
-                <span className={styles.menuBrandName}>Kapka</span>
-                <span className={styles.menuBrandLine}>
+              <span className={styles.lockupText}>
+                <span className={styles.lockupName}>Kapka</span>
+                <span className={styles.lockupLine}>
                   Together for a healthier tomorrow
                 </span>
               </span>
             </span>
           }
         >
-          {/* A column that fills the panel, so the drawing below sits on the
-              bottom edge whether the list above it is three rows or ten. */}
-          <div className={styles.menuBody}>
-            {/* Who you are, before where you can go: signed out, the way in is
-              the first thing the menu offers rather than an afterthought
-              under the destinations. */}
+          <div className={styles.menu}>
+            {/* ── 2. Identity ─────────────────────────────────────────────
+                Signed out this is a door, not a fault: no warning colour, no
+                alert icon, and the sentence says what is on the other side
+                rather than what is missing. */}
             <Link
               to={session ? PATHS.dashboard : PATHS.login}
-              className={styles.menuAccount}
+              className={styles.identity}
+              style={{ '--menu-step': 0 } as React.CSSProperties}
             >
-              <span className={styles.menuAccountAvatar} aria-hidden="true">
+              <span className={styles.identityAvatar} aria-hidden="true">
                 {session ? (
                   session.user.fullName.slice(0, 1).toUpperCase()
                 ) : (
                   <Icon name="user" />
                 )}
               </span>
-              <span className={styles.menuRowText}>
-                <span className={styles.menuRowTitle}>
+              <span className={styles.rowText}>
+                <span className={styles.rowTitle}>
                   {session ? session.user.fullName : 'Not signed in'}
                 </span>
                 <span
                   className={
-                    session
-                      ? `${styles.menuRowNote} ${styles.menuRowNoteClamp}`
-                      : styles.menuRowNote
+                    session ? `${styles.rowNote} ${styles.rowNoteClamp}` : styles.rowNote
                   }
                 >
-                  {session ? session.user.email : 'Sign in to access more features'}
+                  {session ? session.user.email : 'Sign in to see your matches'}
                 </span>
               </span>
-              <Icon name="chevronRight" className={styles.menuChevron} />
+              <Icon name="chevronRight" className={styles.rowChevron} />
             </Link>
 
-            <nav className={styles.menuGroup} aria-label="Main">
-              {NAV.map((item) => (
-                <MenuRow key={item.to} {...item} />
+            {/* ── 3. Primary ─────────────────────────────────────────────── */}
+            <nav className={styles.primary} aria-label="Main">
+              {PRIMARY.map((item, index) => (
+                <MenuRow
+                  key={item.to}
+                  item={item}
+                  step={index + 1}
+                  {...(item.to === PATHS.feed && openRequests !== undefined
+                    ? {
+                        badge: (
+                          <span className={styles.count}>
+                            <span data-numeric>{openRequests}</span> open
+                          </span>
+                        ),
+                      }
+                    : {})}
+                />
               ))}
             </nav>
 
-            {/* No "Profile" row: signed in, the card above already goes there,
-              and two links to one screen in a panel this size is noise. */}
-            <div className={styles.menuGroup}>
-              <MenuRow
-                to={PATHS.privacy}
-                end={false}
-                icon="shieldCheck"
-                label="Privacy"
-                note="What we store, and what we never show"
-              />
-            </div>
+            {/* ── 4. Secondary ───────────────────────────────────────────── */}
+            <nav className={styles.secondary} aria-label="About Kapka">
+              {SECONDARY.map((item, index) => (
+                <MenuRow key={item.to} item={item} step={index + 3} tone="calm" />
+              ))}
+            </nav>
 
-            {/* Signed out this is the ask, so it is a link; signed in the ask has
-              been answered and a chevron would point at nothing. */}
+            {/* ── 5. The ask ─────────────────────────────────────────────── */}
             {session ? (
-              <p className={styles.menuPitch}>
-                <span className={styles.menuPitchMark} aria-hidden="true">
+              <p
+                className={styles.pledge}
+                style={{ '--menu-step': 5 } as React.CSSProperties}
+              >
+                <span className={styles.pledgeMark} aria-hidden="true">
                   <Icon name="heart" />
                 </span>
-                <span className={styles.menuRowText}>
-                  <span className={styles.menuPitchTitle}>Small actions save lives.</span>
-                  <span className={styles.menuRowNote}>
-                    Thank you for being part of the change.
+                <span className={styles.rowText}>
+                  <span className={styles.pledgeTitle}>You are on the list.</span>
+                  <span className={styles.rowNote}>
+                    We email you when someone nearby matches your type.
                   </span>
                 </span>
               </p>
             ) : (
-              <Link to={PATHS.register} className={styles.menuPitch}>
-                <span className={styles.menuPitchMark} aria-hidden="true">
+              <Link
+                to={PATHS.register}
+                className={styles.pledge}
+                style={{ '--menu-step': 5 } as React.CSSProperties}
+              >
+                <span className={styles.pledgeMark} aria-hidden="true">
                   <Icon name="heart" />
                 </span>
-                <span className={styles.menuRowText}>
-                  <span className={styles.menuPitchTitle}>Small actions save lives.</span>
-                  <span className={styles.menuRowNote}>
-                    Register as a donor and we will email you when you match.
+                <span className={styles.rowText}>
+                  <span className={styles.pledgeTitle}>Register as a donor</span>
+                  <span className={styles.rowNote}>
+                    One minute, and we only write when you can help.
                   </span>
                 </span>
-                <Icon name="chevronRight" className={styles.menuChevron} />
+                <Icon name="chevronRight" className={styles.rowChevron} />
               </Link>
             )}
 
-            {/* Decorative, and the only thing in the menu that is. It signs the
-              panel off rather than saying anything a reader has to act on —
-              and it is what gives the foot of a list of links somewhere to
-              end. */}
-            <span className={styles.menuFlourish} aria-hidden="true">
-              <span className={styles.menuFlourishText}>Donate. Save lives.</span>
-              <Icon name="heart" className={styles.menuFlourishHeart} />
-            </span>
-
-            {/* Pulled out to the panel's edges: a wave that stops short of
-                them is a picture of a wave, not the foot of the panel. */}
-            <span className={styles.menuArt}>
+            {/* ── 6. Footer ──────────────────────────────────────────────── */}
+            <div className={styles.foot}>
+              {/* The eight types as a quiet pattern. Not controls and not a
+                  legend — they are the vocabulary of the product, and a menu
+                  that ends on them ends on what this is about. */}
+              <span className={styles.types} aria-hidden="true">
+                {BLOOD_TYPES.map((type) => (
+                  <span key={type} className={styles.type}>
+                    {type.replace('-', '−')}
+                  </span>
+                ))}
+              </span>
               <MenuArt />
-            </span>
+            </div>
           </div>
         </Drawer>
       )}

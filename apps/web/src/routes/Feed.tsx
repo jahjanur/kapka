@@ -176,7 +176,9 @@ export default function Feed() {
 
   return (
     <>
-      <AppHeader />
+      {/* The count the numbers band is already showing, handed to the menu so
+          it does not fetch the feed a second time to say the same thing. */}
+      <AppHeader openRequests={data?.length} />
 
       {/* ── The landing view ───────────────────────────────────────────────
           Hero, numbers and nearby are one block on purpose: it is held to at

@@ -105,6 +105,10 @@
   --dur-fast:    140ms;   /* exits */
   --dur-normal:  220ms;   /* entrances */
   --dur-slow:    340ms;
+  /* The gap between one item's entrance and the next one's, where a list
+     arrives in sequence rather than as a slab. Short on purpose: long enough
+     to read as an order, short enough that nobody waits for the last row. */
+  --dur-stagger: 30ms;
 
   --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);      /* entrances, most UI */
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);     /* moves, reorders */

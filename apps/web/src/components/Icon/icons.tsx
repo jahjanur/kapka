@@ -160,6 +160,15 @@ export const ICONS = {
     </>
   ),
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+  /* The droplet again, carrying the plus that means "add one". Same outline
+     as `droplet` rather than a second drawing of one, so the pair reads as
+     one idea in two states — browse the drops, add a drop. */
+  dropletPlus: (
+    <>
+      <path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5S12.5 5.5 12 3c-.5 2.5-2 4.9-4 6.5S5 13 5 15a7 7 0 0 0 7 7Z" />
+      <path d="M12 12.2v5.6M9.2 15h5.6" />
+    </>
+  ),
 } as const;
 
 export type IconName = keyof typeof ICONS;

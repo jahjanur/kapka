@@ -1,0 +1,20 @@
+/* The brand mark. Filled, with the trace knocked out of it — see the note in
+   KapkaMark.tsx for why the cut is a masked stroke rather than an outline. */
+
+.mark {
+  display: block;
+  inline-size: 1em;
+  block-size: 1em;
+}
+
+.drop {
+  fill: currentColor;
+}
+
+/* The one number that decides whether this survives at 24px. At 2 the trace
+   closed up; at 2.6 the drop started to look cut in half. */
+.trace {
+  stroke-width: 2.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

@@ -94,6 +94,23 @@ export function Modal({
     return () => dialog.removeEventListener('close', handleClose);
   }, []);
 
+  /* showModal makes the page inert but does NOT stop it scrolling: a wheel or
+     a touch drag over the backdrop still moves the document underneath, and on
+     a phone that means the feed slides about behind an open menu. The top
+     layer is the browser's; the scroll lock has to be ours.
+
+     Restored to whatever was there rather than to '', so a second overlay
+     opening over this one cannot clear the lock when it closes first. */
+  useEffect(() => {
+    if (!open) return;
+    const root = document.documentElement;
+    const previous = root.style.overflow;
+    root.style.overflow = 'hidden';
+    return () => {
+      root.style.overflow = previous;
+    };
+  }, [open]);
+
   return (
     /* The click handler below is the backdrop dismissal. Its keyboard
        equivalent is Escape, which <dialog> handles natively and onCancel
@@ -103,6 +120,15 @@ export function Modal({
     <dialog
       ref={ref}
       className={cx(styles.dialog, styles[shape], className)}
+      /* role="dialog" is NOT here on purpose: <dialog> already has that role,
+         and stating it again is the redundancy jsx-a11y/no-redundant-roles
+         exists to catch. The role is real — it is in the accessibility tree,
+         which is where it counts, not in the markup.
+
+         aria-modal is spelled out because it is implied only while showModal
+         has the dialog in the top layer, and it is cheap insurance for the
+         browser-and-screen-reader pairs that were slow to that. */
+      aria-modal="true"
       aria-labelledby="modal-title"
       onCancel={(event) => {
         // Escape reaches the dialog as `cancel` before it closes. Refusing it

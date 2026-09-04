@@ -32,6 +32,24 @@
   background-color: var(--backdrop);
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .dialog[open]::backdrop {
+    animation: backdropIn var(--dur-normal) var(--ease-out);
+  }
+}
+
+/* The page does not merely darken, it goes out of focus — which is what says
+   it is still there and not to be read, rather than simply dimmed. */
+@keyframes backdropIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+  to {
+    backdrop-filter: blur(2px);
+  }
+}
+
 .panel {
   display: flex;
   flex-direction: column;
@@ -198,6 +216,7 @@
 .drawer .panel {
   block-size: 100%;
   max-block-size: 100%;
+  padding-inline-end: env(safe-area-inset-right);
   border-radius: 0;
   border-start-start-radius: var(--radius-xl);
   border-end-start-radius: var(--radius-xl);
@@ -208,8 +227,10 @@
   display: none;
 }
 
+/* A spring, not an ease: a panel this size arriving on a flat curve reads as
+   a slide show. It overshoots by a hair and settles. */
 .drawer[open] {
-  animation-name: drawerIn;
+  animation: drawerIn var(--dur-slow) var(--ease-spring);
 }
 
 @keyframes drawerIn {

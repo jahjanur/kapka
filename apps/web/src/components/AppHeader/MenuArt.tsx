@@ -1,46 +1,45 @@
 import styles from './MenuArt.module.css';
 
 /**
- * The wave that closes the menu panel.
+ * The drawing that closes the menu: a drop falling into a heartbeat, where
+ * the impact is the R-wave.
  *
- * Decoration, and marked as such — it says nothing the rows above it have not
- * already said. Drawn rather than shipped as an image for the reason BloodBag
- * is: it is three paths, a PNG of it would cost more than the icon sprite,
- * and every colour here is an accent token, so it stays in step with the
- * palette instead of being a picture of one.
+ * One idea, drawn once. The trace runs flat across the panel, spikes exactly
+ * where the drop lands, and settles — so the drop is not an ornament beside a
+ * line, it is the reason the line moves. That is the whole product in a
+ * gesture: one person gives, and somewhere a pulse holds.
  *
- * Sliced rather than fitted, so the crests reach both edges at any panel
- * width instead of leaving a margin of nothing at the sides.
+ * Line art rather than fills: the panel above it is already carrying two
+ * tinted surfaces, and a third block of colour down there flattened the whole
+ * thing into stripes. At 1.5px it reads as drawn.
+ *
+ * Decorative, and marked so — it says nothing the rows above have not.
  */
 export function MenuArt() {
   return (
     <svg
       className={styles.art}
-      viewBox="0 0 320 132"
-      preserveAspectRatio="xMidYMax slice"
+      viewBox="0 0 296 96"
+      fill="none"
       aria-hidden="true"
       focusable="false"
     >
-      {/* Three crests, palest at the back. Each starts and ends off-canvas so
-          a slice at any panel width still meets both edges. */}
+      {/* The fall: a dotted descent, so the drop reads as having travelled
+          rather than as hanging there. */}
+      <path className={styles.fall} d="M120 6v14" />
+
+      {/* The drop itself, at the top of its fall and directly above the
+          spike — the two are one event, so they share a vertical. */}
       <path
-        className={styles.waveFar}
-        d="M-20 78c40-18 70-18 110 0s70 18 110 0 70-18 140 0v74h-360Z"
-      />
-      <path
-        className={styles.waveMid}
-        d="M-20 96c46-16 74-16 120 0s74 16 120 0 74-16 120 0v56h-360Z"
-      />
-      <path
-        className={styles.waveNear}
-        d="M-20 112c50-14 80-14 130 0s80 14 130 0 70-12 120 0v40h-360Z"
+        className={styles.drop}
+        d="M120 24c-3.1 3.4-4.9 6-4.9 8.2a4.9 4.9 0 0 0 9.8 0c0-2.2-1.8-4.8-4.9-8.2Z"
       />
 
-      {/* The same beat the wordmark keeps and the hero's trace runs on, riding
-          the crest — the product has one pulse rather than several. */}
+      {/* The trace. Flat, then the drop lands: a small dip, the R-wave up
+          through where the drop was, the S below the line, and away. */}
       <path
-        className={styles.pulse}
-        d="M-10 104h58l7-13 9 26 10-34 8 21h62l7-11 8 20 9-26 7 17h125"
+        className={styles.trace}
+        d="M0 62h96l8 .2 6 6.5 4-38.5 6 52 5-20.2 5 8h18l6-9 5 9h132"
       />
     </svg>
   );
