@@ -1,0 +1,76 @@
+/* ============================================================================
+   The live figures at the foot of the menu.
+
+   Editorial rather than decorative: the numerals are the largest type in the
+   panel and their labels are the quietest, because the number is the news and
+   the label is only what it is called.
+   ========================================================================= */
+
+.activity {
+  margin-block-start: var(--space-6);
+  padding-block-start: var(--space-5);
+  /* A rule, not a card. The figures belong to the menu rather than sitting in
+     a box at the end of it. */
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.heading {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--fg-primary);
+}
+
+.figures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-block-start: var(--space-3);
+}
+
+/* Reversed, so the numeral reads above the label while the DOM keeps
+   term-then-value — which is the order that makes sense when it is heard
+   rather than seen. */
+.figure {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.value {
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  /* Tabular: the figure counts up on open, and proportional digits would
+     shuffle the label under it on every frame. */
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: var(--leading-none);
+  color: var(--accent);
+}
+
+.label {
+  font-size: var(--text-xs);
+  line-height: var(--leading-snug);
+  color: var(--fg-secondary);
+}
+
+/* ── Arrival ─────────────────────────────────────────────────────────────
+   Last in the drawer's stagger, on the same cadence as the rows above it, so
+   the panel opens as one sequence rather than a list plus an afterthought.
+   The numerals count themselves up separately — see useCountUp, which stops
+   for prefers-reduced-motion in JavaScript because CSS cannot stop a
+   changing number.
+   ---------------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  .activity {
+    animation: activityIn var(--dur-normal) var(--ease-out) both;
+    animation-delay: calc(var(--dur-stagger) * 6 + var(--dur-instant));
+  }
+}
+
+@keyframes activityIn {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}

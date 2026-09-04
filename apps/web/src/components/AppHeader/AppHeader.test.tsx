@@ -2,12 +2,24 @@ import { useEffect, type ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SessionProvider } from '../../lib/SessionProvider';
 import { STATIC_PATHS } from '../../routes/paths';
 import { useSession } from '../../lib/session';
 import type { Session } from '../../lib/api';
 import { AppHeader } from './AppHeader';
+
+/* The menu's figures read the request list. Mocked so the test can watch
+   WHEN it is asked for, which is the whole point of mounting the panel
+   lazily. */
+const listRequests = vi.fn(() => Promise.resolve([]));
+vi.mock('../../lib/api', async () => {
+  const actual = await vi.importActual<typeof import('../../lib/api')>('../../lib/api');
+  return {
+    ...actual,
+    api: { ...actual.api, listRequests: () => listRequests() },
+  };
+});
 
 const SESSION: Session = {
   user: {
@@ -56,6 +68,12 @@ function renderHeader() {
     </MemoryRouter>,
   );
 }
+
+/* Cleared per test: several tests in this file open the menu, and without
+   this the "not yet asked" assertion below would be counting their calls. */
+beforeEach(() => {
+  listRequests.mockClear();
+});
 
 const hrefsIn = (container: HTMLElement) =>
   [...container.querySelectorAll('a')].map((a) => a.getAttribute('href') ?? '');
@@ -224,6 +242,22 @@ describe('the product header', () => {
       'href',
       '/register/new',
     );
+  });
+
+  it('does not ask the API for anything until the menu is opened', async () => {
+    /* The figures at the foot of the menu read the request list, and this
+       header is on thirteen screens. It costs nothing on any of them because
+       the panel — and so the fetch inside it — is mounted only when somebody
+       opens it. */
+    const user = userEvent.setup();
+    renderHeader();
+    await screen.findByRole('link', { name: /Register/ });
+    expect(listRequests).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Menu' }));
+    await vi.waitFor(() => {
+      expect(listRequests).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('keeps the menu out of the page until it is asked for', () => {

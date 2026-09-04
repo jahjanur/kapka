@@ -1,12 +1,11 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
-import { BLOOD_TYPES } from '@kapka/shared';
 import { Button } from '../Button/Button';
 import { Container } from '../layout/Container';
 import { Icon, type IconName } from '../Icon/Icon';
 import { Drawer } from '../Modal/Modal';
 import { KapkaMark } from './KapkaMark';
-import { MenuArt } from './MenuArt';
+import { MenuActivity } from './MenuActivity';
 import { useSession } from '../../lib/session';
 import { useDonorStatus } from '../../lib/useDonorStatus';
 import { PATHS } from '../../routes/paths';
@@ -363,20 +362,13 @@ export function AppHeader({
               </Link>
             )}
 
-            {/* ── 6. Footer ──────────────────────────────────────────────── */}
-            <div className={styles.foot}>
-              {/* The eight types as a quiet pattern. Not controls and not a
-                  legend — they are the vocabulary of the product, and a menu
-                  that ends on them ends on what this is about. */}
-              <span className={styles.types} aria-hidden="true">
-                {BLOOD_TYPES.map((type) => (
-                  <span key={type} className={styles.type}>
-                    {type.replace('-', '−')}
-                  </span>
-                ))}
-              </span>
-              <MenuArt />
-            </div>
+            {/* ── 6. What is happening ────────────────────────────────────
+                A chip row and an illustration used to close the menu, and
+                both were there because the space was: a legend of categories
+                nobody could act on, over a drawing that would have suited any
+                app about water. The foot of this panel now says something
+                true or is not there at all. */}
+            <MenuActivity />
           </div>
         </Drawer>
       )}

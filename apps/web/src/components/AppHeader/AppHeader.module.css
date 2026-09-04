@@ -573,45 +573,6 @@
   color: var(--accent-ink);
 }
 
-/* ── 6. Footer ─────────────────────────────────────────────────────────── */
-.foot {
-  /* Takes the slack, so the drawing lands on the bottom edge on a tall phone
-     and simply follows the content on a short one. */
-  margin-block-start: auto;
-  padding-block-start: var(--space-6);
-  /* Out to the panel's edges: a drawing that stops short of them is a picture
-     of one rather than the foot of the panel. */
-  margin-inline: calc(var(--space-5) * -1);
-  margin-block-end: calc(max(var(--space-5), env(safe-area-inset-bottom)) * -1);
-  padding-inline: var(--space-5);
-}
-
-/* Four across, twice — not wrapped. Eight chips flowing freely came out
-   seven-and-an-orphan at 390px, which is the ragged shape a composed footer
-   cannot have. A grid divides evenly at every width the drawer has. */
-.types {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-1);
-  justify-items: center;
-  margin-block-end: var(--space-5);
-}
-
-/* In the drawing's own colour, not the page's grey. They were slate on
-   slate — a blue-grey band sitting directly above a crimson drawing, reading
-   as two unrelated things stacked rather than one footer. */
-.type {
-  padding-inline: var(--space-2);
-  padding-block: 2px;
-  font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
-  font-variant-numeric: tabular-nums;
-  color: var(--accent-ink);
-  background-color: var(--accent-surface);
-  border: 1px solid var(--accent-border);
-  border-radius: var(--radius-full);
-}
-
 /* ── Motion ────────────────────────────────────────────────────────────
    The stagger. Rows arrive in sequence rather than as one slab, which is
    what makes the panel feel opened rather than switched on. --menu-step is
@@ -621,8 +582,7 @@
   .identity,
   .primary,
   .secondary,
-  .pledge,
-  .foot {
+  .pledge {
     animation: rowIn var(--dur-normal) var(--ease-out) both;
     animation-delay: calc(var(--menu-step, 0) * var(--dur-stagger) + var(--dur-instant));
   }
@@ -632,9 +592,6 @@
   }
   .secondary {
     --menu-step: 3;
-  }
-  .foot {
-    --menu-step: 6;
   }
 }
 
