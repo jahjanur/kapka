@@ -533,6 +533,35 @@
   color: var(--accent);
 }
 
+/* Blood type has nine chips — "All" plus eight types — and flex-wrap left
+   them ragged: six to a row, three on the next with empty space trailing
+   them. A 3-column grid divides evenly instead, so every row is full and
+   every chip lines up under the one above it. */
+.bloodTypeGroup {
+  display: grid;
+  flex: none;
+  flex-basis: 100%;
+  grid-template-columns: repeat(3, 1fr);
+  justify-items: stretch;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* Nine of these read as a keypad, not a sentence — a narrower chip and a
+   smaller label keep the block compact without shrinking the tap target
+   below --hit-min (§ hit-min is a block-size floor, so it's untouched). */
+.bloodTypeGroup button {
+  inline-size: 100%;
+  justify-content: center;
+  padding-inline: var(--space-2);
+  font-size: var(--text-xs);
+}
+
+.bloodTypeGroup > .groupLabel {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
 /* A rule across the panel between blood type and urgency. Not between
    location and blood type: one rule marks where the control types change,
    two would just be stripes. */

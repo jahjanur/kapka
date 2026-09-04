@@ -402,7 +402,7 @@ export default function Feed() {
 
                 <FilterBar label="Blood type and urgency">
                   <div
-                    className={styles.group}
+                    className={styles.bloodTypeGroup}
                     role="group"
                     aria-label="Filter by blood type"
                   >
