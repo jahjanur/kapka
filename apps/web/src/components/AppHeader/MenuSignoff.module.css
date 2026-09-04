@@ -16,14 +16,22 @@
   margin-block-start: auto;
   padding-block-start: var(--space-6);
   margin-inline: calc(var(--space-5) * -1);
-  /* Two paddings sit between this and the panel's bottom edge — the scrolling
-     body's, and the panel's own — so both are cancelled or the artwork stops
-     20px short with a white strip under it. It reaches the true edge: what
-     bleeds down there is the soft end of the wave, and the words sit well
-     above the home indicator. */
-  margin-block-end: calc(
-    (var(--space-5) + max(var(--space-5), env(safe-area-inset-bottom))) * -1
-  );
+  /* Cancels the scrolling body's bottom padding, which is as far as anything
+     inside it can reach — the panel's own inset is gone for drawers, since a
+     scroll container clips at its padding box and no negative margin can
+     cross that. Together they put the artwork on the true bottom edge.
+
+     The safe area rides on the artwork itself below: what bleeds under the
+     home indicator is the soft tail of the wave, with the words well clear. */
+  margin-block-end: calc(var(--space-5) * -1);
+  padding-block-end: env(safe-area-inset-bottom);
+  /* Clipped here rather than on the panel. Hiding the panel's overflow also
+     stops this bleed — the artwork ended 20px short, back at the padding it
+     was supposed to cross — so the corner is rounded on the artwork itself
+     and the panel keeps its overflow visible. */
+  overflow: hidden;
+  border-end-start-radius: var(--radius-xl);
+
   /* Decoration's placement, even though its words are content: it must never
      take a tap meant for a menu row. */
   pointer-events: none;

@@ -217,14 +217,16 @@
   block-size: 100%;
   max-block-size: 100%;
   padding-inline-end: env(safe-area-inset-right);
+  /* No bottom inset on a drawer. The body is the scroll container, so its
+     padding box is where anything inside it gets clipped — meaning content
+     can bleed into the body's own padding but never past it into the panel's.
+     That inset was the last 20px of white under the artwork at the foot, and
+     nothing else in a full-height drawer needs it: the safe area matters to
+     whatever sits on the bottom edge, and what sits there provides its own. */
+  padding-block-end: 0;
   border-radius: 0;
   border-start-start-radius: var(--radius-xl);
   border-end-start-radius: var(--radius-xl);
-  /* Anything bled to the panel's edges is clipped to its corners. Without
-     this a full-width artwork at the foot squares off the rounded corner it
-     runs into, which reads as the radius having failed rather than as a
-     bleed. The body does its own scrolling, so nothing is lost. */
-  overflow: hidden;
 }
 
 /* A grabber says "drag me down". This one does not move that way. */
