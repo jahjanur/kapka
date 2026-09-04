@@ -122,7 +122,9 @@
    ---------------------------------------------------------------------- */
 .picker[data-compact] {
   position: relative;
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
   flex: none;
 }
 
@@ -138,9 +140,12 @@
   outline-offset: 2px;
 }
 
-.badge,
-.removeBadge {
+/* The change affordance, on the picture. Ringed in the surface colour so it
+   reads as sitting on the disc rather than being part of the photograph. */
+.badge {
   position: absolute;
+  inset-block-end: 0;
+  inset-inline-end: 0;
   display: grid;
   place-items: center;
   inline-size: 1.75rem;
@@ -153,36 +158,41 @@
   cursor: pointer;
 }
 
-/* The visible badge is 28px; the target is 44. Everything a thumb needs,
+/* Removing steps off the picture: it is the destructive one, it is rare, and
+   a second badge on a 56px disc covered the face it was meant to show. */
+.removeButton {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  padding: 0;
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  position: relative;
+}
+
+@media (hover: hover) {
+  .removeButton:hover {
+    color: var(--danger-ink);
+    background-color: var(--danger-surface);
+  }
+}
+
+/* The visible control is 28px; the target is 44. Everything a thumb needs,
    nothing a layout has to make room for. */
 .badge::after,
-.removeBadge::after {
+.removeButton::after {
   content: '';
   position: absolute;
   inset: 50% auto auto 50%;
   inline-size: var(--hit-min);
   block-size: var(--hit-min);
   translate: -50% -50%;
-}
-
-.badge {
-  inset-block-end: 0;
-  inset-inline-end: 0;
-}
-
-.removeBadge {
-  inset-block-start: 0;
-  inset-inline-end: 0;
-  color: var(--fg-secondary);
-  background-color: var(--bg-surface-alt);
-  padding: 0;
-}
-
-@media (hover: hover) {
-  .removeBadge:hover {
-    color: var(--danger-ink);
-    background-color: var(--danger-surface);
-  }
 }
 
 .picker[data-compact] .error {

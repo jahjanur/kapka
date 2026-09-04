@@ -40,21 +40,27 @@ export function AvatarPicker({
   const [error, setError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
-  /* One object URL at a time, revoked when it is replaced or the screen goes.
-     Left un-revoked, every change leaks the decoded image for the life of the
-     document. */
-  useEffect(() => {
-    return () => {
-      if (url) URL.revokeObjectURL(url);
-    };
-  }, [url]);
+  /* The live object URL, held in a ref as well as in state.
+     
+     It used to be minted inside the setState updater, which React is allowed
+     to call more than once — and does, under StrictMode. Every upload created
+     two URLs for one blob and kept one, leaking the other for the life of the
+     document. A ref is the honest home for a handle that has to be released:
+     the updater stays pure, and the cleanup below reads the current value
+     rather than whatever a closure captured. */
+  const objectUrl = useRef<string | null>(null);
 
   const show = (blob: Blob | null) => {
-    setUrl((previous) => {
-      if (previous) URL.revokeObjectURL(previous);
-      return blob ? URL.createObjectURL(blob) : null;
-    });
+    if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
+    objectUrl.current = blob ? URL.createObjectURL(blob) : null;
+    setUrl(objectUrl.current);
   };
+
+  useEffect(() => {
+    return () => {
+      if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
+    };
+  }, []);
 
   useEffect(() => {
     let live = true;
@@ -111,10 +117,15 @@ export function AvatarPicker({
   }
 
   if (compact) {
-    /* The affordance is on the picture, not beside it: a label wrapping the
-       avatar, with a badge saying so. The separate outlined button it
-       replaces was as wide as the name next to it and pushed it to an
-       ellipsis at 320px. */
+    /* One control on the picture, one beside it.
+     *
+     * Both used to sit on the disc — a change badge bottom-right and a remove
+     * badge top-right — and on a 56px avatar the pair covered about as much
+     * of the photograph as they left showing. The change affordance stays on
+     * the picture, where it belongs and where every product puts it. Removing
+     * is rarer and destructive, so it steps off the picture entirely and only
+     * exists once there is something to remove.
+     */
     return (
       <div className={styles.picker} data-compact="">
         <label className={styles.avatarLabel}>
@@ -129,7 +140,7 @@ export function AvatarPicker({
             <Icon name="user" />
           </span>
           <span className="visually-hidden">
-            {url ? 'Change your picture' : 'Add a picture'}
+            {url ? 'Change profile picture' : 'Add a profile picture'}
           </span>
           <input
             ref={fileInput}
@@ -144,12 +155,12 @@ export function AvatarPicker({
         {url && (
           <button
             type="button"
-            className={styles.removeBadge}
+            className={styles.removeButton}
             onClick={() => void remove()}
             disabled={busy}
           >
             <Icon name="close" />
-            <span className="visually-hidden">Remove your picture</span>
+            <span className="visually-hidden">Remove profile picture</span>
           </button>
         )}
 

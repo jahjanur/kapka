@@ -92,6 +92,17 @@ describe('the Content Security Policy', () => {
     expect(headers).toContain('Referrer-Policy:');
   });
 
+  it('lets the avatar render, which means allowing blob: images', () => {
+    /* The avatar endpoint takes a bearer token and an <img src> cannot send
+       one, so the client fetches the bytes and renders an object URL. Without
+       blob: here the browser refuses to load it and the picture shows as a
+       broken image inside the crimson disc — an upload that looks half done.
+       This is the guard, because the directive reads like something tidy to
+       remove. */
+    const imgSrc = /img-src ([^;]+)/.exec(csp)?.[1] ?? '';
+    expect(imgSrc).toContain('blob:');
+  });
+
   it('allows exactly the outside world the app actually uses', () => {
     // Map tiles, and nothing else. A new third party has to be added here,
     // which is the point.
