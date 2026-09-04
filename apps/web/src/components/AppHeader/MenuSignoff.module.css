@@ -9,9 +9,21 @@
 .band {
   /* Out to the sides and past the panel's bottom inset, so the artwork's own
      soft edges meet the corners rather than stopping short of them. */
-  margin-block-start: var(--space-6);
+  /* Pushed to the foot of the panel rather than sitting wherever the content
+     above happens to end — .menu is a full-height column, so auto here takes
+     all the slack. The padding is the floor: on a short screen, where there is
+     no slack to take, it still cannot touch the panel above it. */
+  margin-block-start: auto;
+  padding-block-start: var(--space-6);
   margin-inline: calc(var(--space-5) * -1);
-  margin-block-end: calc(max(var(--space-5), env(safe-area-inset-bottom)) * -1);
+  /* Two paddings sit between this and the panel's bottom edge — the scrolling
+     body's, and the panel's own — so both are cancelled or the artwork stops
+     20px short with a white strip under it. It reaches the true edge: what
+     bleeds down there is the soft end of the wave, and the words sit well
+     above the home indicator. */
+  margin-block-end: calc(
+    (var(--space-5) + max(var(--space-5), env(safe-area-inset-bottom))) * -1
+  );
   /* Decoration's placement, even though its words are content: it must never
      take a tap meant for a menu row. */
   pointer-events: none;

@@ -220,6 +220,11 @@
   border-radius: 0;
   border-start-start-radius: var(--radius-xl);
   border-end-start-radius: var(--radius-xl);
+  /* Anything bled to the panel's edges is clipped to its corners. Without
+     this a full-width artwork at the foot squares off the rounded corner it
+     runs into, which reads as the radius having failed rather than as a
+     bleed. The body does its own scrolling, so nothing is lost. */
+  overflow: hidden;
 }
 
 /* A grabber says "drag me down". This one does not move that way. */
