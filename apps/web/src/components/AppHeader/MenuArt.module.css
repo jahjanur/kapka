@@ -1,0 +1,33 @@
+/* The menu's closing wave. Every colour is a token, so the drawing follows
+   the palette rather than holding a second copy of it. */
+
+.art {
+  display: block;
+  inline-size: 100%;
+  block-size: 8.25rem;
+}
+
+/* Back to front, palest to strongest — the depth is entirely in these three
+   fills, so a change here is a change to the whole drawing. */
+.waveFar {
+  fill: color-mix(in oklab, var(--accent-surface) 70%, transparent);
+}
+
+.waveMid {
+  fill: var(--accent-surface);
+}
+
+.waveNear {
+  fill: color-mix(in oklab, var(--accent) 30%, var(--accent-surface));
+}
+
+/* Drawn, not filled: it is a trace across the water rather than another
+   layer of it. */
+.pulse {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.45;
+}

@@ -4,6 +4,7 @@ import { Button } from '../Button/Button';
 import { Container } from '../layout/Container';
 import { Icon, type IconName } from '../Icon/Icon';
 import { Drawer } from '../Modal/Modal';
+import { MenuArt } from './MenuArt';
 import { useSession } from '../../lib/session';
 import { PATHS } from '../../routes/paths';
 import styles from './AppHeader.module.css';
@@ -191,7 +192,9 @@ export function AppHeader() {
           onClose={() => setMenuOpen(false)}
           head={
             <span className={styles.menuBrand}>
-              <Icon name="droplet" className={styles.menuBrandMark} />
+              <span className={styles.menuBrandMark} aria-hidden="true">
+                <Icon name="droplet" />
+              </span>
               <span>
                 <span className={styles.menuBrandName}>Kapka</span>
                 <span className={styles.menuBrandLine}>
@@ -201,90 +204,102 @@ export function AppHeader() {
             </span>
           }
         >
-          {/* Who you are, before where you can go: signed out, the way in is
+          {/* A column that fills the panel, so the drawing below sits on the
+              bottom edge whether the list above it is three rows or ten. */}
+          <div className={styles.menuBody}>
+            {/* Who you are, before where you can go: signed out, the way in is
               the first thing the menu offers rather than an afterthought
               under the destinations. */}
-          <Link
-            to={session ? PATHS.dashboard : PATHS.login}
-            className={styles.menuAccount}
-          >
-            <span className={styles.menuAccountAvatar} aria-hidden="true">
-              {session ? (
-                session.user.fullName.slice(0, 1).toUpperCase()
-              ) : (
-                <Icon name="user" />
-              )}
-            </span>
-            <span className={styles.menuRowText}>
-              <span className={styles.menuRowTitle}>
-                {session ? session.user.fullName : 'Not signed in'}
-              </span>
-              <span
-                className={
-                  session
-                    ? `${styles.menuRowNote} ${styles.menuRowNoteClamp}`
-                    : styles.menuRowNote
-                }
-              >
-                {session ? session.user.email : 'Sign in to access more features'}
-              </span>
-            </span>
-            <Icon name="chevronRight" className={styles.menuChevron} />
-          </Link>
-
-          <nav className={styles.menuGroup} aria-label="Main">
-            {NAV.map((item) => (
-              <MenuRow key={item.to} {...item} />
-            ))}
-          </nav>
-
-          {/* No "Profile" row: signed in, the card above already goes there,
-              and two links to one screen in a panel this size is noise. */}
-          <div className={styles.menuGroup}>
-            <MenuRow
-              to={PATHS.privacy}
-              end={false}
-              icon="shieldCheck"
-              label="Privacy"
-              note="What we store, and what we never show"
-            />
-          </div>
-
-          {/* Signed out this is the ask, so it is a link; signed in the ask has
-              been answered and a chevron would point at nothing. */}
-          {session ? (
-            <p className={styles.menuPitch}>
-              <span className={styles.menuPitchMark} aria-hidden="true">
-                <Icon name="heart" />
+            <Link
+              to={session ? PATHS.dashboard : PATHS.login}
+              className={styles.menuAccount}
+            >
+              <span className={styles.menuAccountAvatar} aria-hidden="true">
+                {session ? (
+                  session.user.fullName.slice(0, 1).toUpperCase()
+                ) : (
+                  <Icon name="user" />
+                )}
               </span>
               <span className={styles.menuRowText}>
-                <span className={styles.menuPitchTitle}>Small actions save lives.</span>
-                <span className={styles.menuRowNote}>
-                  Thank you for being part of the change.
+                <span className={styles.menuRowTitle}>
+                  {session ? session.user.fullName : 'Not signed in'}
                 </span>
-              </span>
-            </p>
-          ) : (
-            <Link to={PATHS.register} className={styles.menuPitch}>
-              <span className={styles.menuPitchMark} aria-hidden="true">
-                <Icon name="heart" />
-              </span>
-              <span className={styles.menuRowText}>
-                <span className={styles.menuPitchTitle}>Small actions save lives.</span>
-                <span className={styles.menuRowNote}>
-                  Register as a donor and we will email you when you match.
+                <span
+                  className={
+                    session
+                      ? `${styles.menuRowNote} ${styles.menuRowNoteClamp}`
+                      : styles.menuRowNote
+                  }
+                >
+                  {session ? session.user.email : 'Sign in to access more features'}
                 </span>
               </span>
               <Icon name="chevronRight" className={styles.menuChevron} />
             </Link>
-          )}
 
-          {/* Decorative, and the only thing in the menu that is. It signs the
-              panel off rather than saying anything a reader has to act on. */}
-          <span className={styles.menuFlourish} aria-hidden="true">
-            <span className={styles.menuFlourishText}>Donate. Save lives.</span>
-            <Icon name="heart" />
-          </span>
+            <nav className={styles.menuGroup} aria-label="Main">
+              {NAV.map((item) => (
+                <MenuRow key={item.to} {...item} />
+              ))}
+            </nav>
+
+            {/* No "Profile" row: signed in, the card above already goes there,
+              and two links to one screen in a panel this size is noise. */}
+            <div className={styles.menuGroup}>
+              <MenuRow
+                to={PATHS.privacy}
+                end={false}
+                icon="shieldCheck"
+                label="Privacy"
+                note="What we store, and what we never show"
+              />
+            </div>
+
+            {/* Signed out this is the ask, so it is a link; signed in the ask has
+              been answered and a chevron would point at nothing. */}
+            {session ? (
+              <p className={styles.menuPitch}>
+                <span className={styles.menuPitchMark} aria-hidden="true">
+                  <Icon name="heart" />
+                </span>
+                <span className={styles.menuRowText}>
+                  <span className={styles.menuPitchTitle}>Small actions save lives.</span>
+                  <span className={styles.menuRowNote}>
+                    Thank you for being part of the change.
+                  </span>
+                </span>
+              </p>
+            ) : (
+              <Link to={PATHS.register} className={styles.menuPitch}>
+                <span className={styles.menuPitchMark} aria-hidden="true">
+                  <Icon name="heart" />
+                </span>
+                <span className={styles.menuRowText}>
+                  <span className={styles.menuPitchTitle}>Small actions save lives.</span>
+                  <span className={styles.menuRowNote}>
+                    Register as a donor and we will email you when you match.
+                  </span>
+                </span>
+                <Icon name="chevronRight" className={styles.menuChevron} />
+              </Link>
+            )}
+
+            {/* Decorative, and the only thing in the menu that is. It signs the
+              panel off rather than saying anything a reader has to act on —
+              and it is what gives the foot of a list of links somewhere to
+              end. */}
+            <span className={styles.menuFlourish} aria-hidden="true">
+              <span className={styles.menuFlourishText}>Donate. Save lives.</span>
+              <Icon name="heart" className={styles.menuFlourishHeart} />
+            </span>
+
+            {/* Pulled out to the panel's edges: a wave that stops short of
+                them is a picture of a wave, not the foot of the panel. */}
+            <span className={styles.menuArt}>
+              <MenuArt />
+            </span>
+          </div>
         </Drawer>
       )}
     </header>

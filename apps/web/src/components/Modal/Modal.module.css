@@ -187,6 +187,14 @@
   margin-inline: auto 0;
 }
 
+/* The body fills what the head leaves, so a drawer's content can put
+   something on the bottom edge. A sheet's body is only as tall as it needs to
+   be, which is right for a sheet and wrong for a panel the height of the
+   screen. */
+.drawer .body {
+  flex: 1;
+}
+
 .drawer .panel {
   block-size: 100%;
   max-block-size: 100%;
