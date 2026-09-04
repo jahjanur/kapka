@@ -149,7 +149,14 @@ describe('the public feed', () => {
     const empty = await screen.findByText(/No requests match these filters/);
     expect(empty).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Clear filters/ }));
-    expect(await screen.findByText('3 open requests')).toBeInTheDocument();
+    /* A longer window than the default second. What is being asserted is that
+       the screen recovers at all, not how fast — and the recovery is a second
+       fetch plus a re-render, which on a loaded runner running seventy-odd
+       test files is not always inside 1000ms. This test failed CI twice that
+       way while passing every time on its own. */
+    expect(
+      await screen.findByText('3 open requests', undefined, { timeout: 5000 }),
+    ).toBeInTheDocument();
   });
 
   it('counts the whole feed in the stat strip, not the filtered view', async () => {
@@ -280,7 +287,14 @@ describe('the public feed', () => {
     listRequests.mockResolvedValue(REQUESTS);
     window.dispatchEvent(new Event('online'));
 
-    expect(await screen.findByText('3 open requests')).toBeInTheDocument();
+    /* A longer window than the default second. What is being asserted is that
+       the screen recovers at all, not how fast — and the recovery is a second
+       fetch plus a re-render, which on a loaded runner running seventy-odd
+       test files is not always inside 1000ms. This test failed CI twice that
+       way while passing every time on its own. */
+    expect(
+      await screen.findByText('3 open requests', undefined, { timeout: 5000 }),
+    ).toBeInTheDocument();
   });
 
   it('says something useful when nothing is open', async () => {

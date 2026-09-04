@@ -103,6 +103,13 @@ test('a duplicate email is refused on the field it belongs to', async ({
   const isPhone = (viewport?.width ?? 0) < 768;
 
   const fill = async () => {
+    /* Arrive as somebody with no account, both times. Registering signs you
+       in, and a signed-in visitor to this route is now shown "Become a donor"
+       rather than a form that could only tell them their own email is taken —
+       so without this the second pass finds no form at all. Clearing the
+       cookie is what a second person, or the same one on another device,
+       actually looks like to the server. */
+    await page.context().clearCookies();
     await page.goto('/register/new');
     await page.getByLabel(/Full name/).fill('Ana Petrovska');
     await page.getByLabel(/^Email/).fill(email);
