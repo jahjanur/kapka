@@ -91,18 +91,10 @@ const PAIRINGS: Pairing[] = [
   ['--calm', '--bg-surface', 3, 'a calm icon on a card'],
 ];
 
-for (const group of ['o', 'a', 'b', 'ab']) {
-  const upper = group.toUpperCase();
-  PAIRINGS.push(
-    [
-      `--bt-${group}-solid-fg`,
-      `--bt-${group}-solid-bg`,
-      4.5,
-      `${upper}+ badge, solid fill`,
-    ],
-    [`--bt-${group}-ink`, `--bt-${group}-surface`, 4.5, `${upper}− badge, outlined`],
-  );
-}
+/* The per-group blood-type pairs used to be checked here. They are gone with
+   the coding itself: one neutral chip carries every type now, and its ink on
+   its surface is --fg-primary on --bg-surface-alt, which is already asserted
+   above as body text on a muted surface. */
 
 const THEMES: [string, Record<string, string>][] = [
   ['light', {}],

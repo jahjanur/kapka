@@ -3,9 +3,9 @@
 
    Three tiers, and the whole design is which surface each one sits on:
 
-     1  identity and status — the only raised, tinted surface on the page
-     2  details and matching — the page's own ground, separated by rules
-     3  data and account    — a recessed band, quieter than the page
+     1  identity and status — raised, and the only elevated thing here
+     2  details and matching — one bounded panel, divided by a hairline
+     3  data and account    — recessed, quieter than the page
 
    It used to be six identical white boxes on grey, which said every section
    mattered equally and left the eye nowhere to land. There is no `.card` in
@@ -152,22 +152,37 @@
   color: var(--fg-secondary);
 }
 
+/* The action belongs to the surface it sits on. A primary crimson button
+   inside an amber card reads as two components welded together, so this one
+   takes the status's own ink and a hairline of it instead. */
 .statusAction {
   flex: none;
+  color: var(--status-ink);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--status-line);
 }
 
 /* ── 2. The working content ──────────────────────────────────────────────
-   On the page's own ground, with a rule between sections rather than a box
-   around each.
+   One bounded surface holding both sections, divided by a hairline rather
+   than boxed separately.
+
+   They used to sit flush on the page ground. The gutters were right — every
+   block measured the same 16px — but only the identity block had an edge, so
+   the page read as losing its structure after the first card. A shared panel
+   gives the flush tier a boundary without giving each section its own.
    ---------------------------------------------------------------------- */
 .sections {
   display: grid;
-  gap: var(--space-8);
-  margin-block-start: var(--space-8);
+  margin-block-start: var(--space-6);
+  padding: var(--space-5);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
 }
 
 .section + .section {
-  padding-block-start: var(--space-8);
+  margin-block-start: var(--space-6);
+  padding-block-start: var(--space-6);
   border-block-start: 1px solid var(--border-subtle);
 }
 
@@ -180,8 +195,10 @@
   margin-block-end: var(--space-4);
 }
 
+/* Below the name (text-2xl bold), above the row labels (text-sm secondary).
+   The step is the hierarchy — there is no other signal doing that job. */
 .sectionTitle {
-  font-size: var(--text-lg);
+  font-size: var(--text-base);
   font-weight: var(--weight-semibold);
   letter-spacing: -0.01em;
   color: var(--fg-primary);
@@ -391,13 +408,16 @@
 
 /* An empty history gets a drawing and one sentence, not a paragraph of
    apology explaining the matching rules over again. */
+/* Given room rather than squeezed: a mark and a sentence with nothing else
+   competing, which is what makes an empty state read as designed instead of
+   as a gap something failed to fill. */
 .empty {
-  padding-block: var(--space-6);
+  padding-block: var(--space-10);
   text-align: center;
 }
 
 .emptyLine {
-  margin-block-start: var(--space-3);
+  margin-block-start: var(--space-4);
   font-size: var(--text-sm);
   color: var(--fg-secondary);
 }
@@ -407,7 +427,7 @@
    are rights rather than tasks, and one cannot be undone.
    ---------------------------------------------------------------------- */
 .footer {
-  margin-block-start: var(--space-10);
+  margin-block-start: var(--space-6);
   padding: var(--space-5);
   background-color: var(--bg-surface-alt);
   border: 1px solid var(--border-subtle);
@@ -448,6 +468,88 @@
 
 .modalBody + .modalBody {
   margin-block-start: var(--space-3);
+}
+
+/* ── The matching switch ─────────────────────────────────────────────────
+   It reports rather than instructs: the track says what is true now, and the
+   word beside it says the same thing again in case colour is not available.
+   ---------------------------------------------------------------------- */
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: var(--hit-min);
+  padding: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--fg-secondary);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.switch:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.switchTrack {
+  display: block;
+  flex: none;
+  inline-size: 2.5rem;
+  block-size: 1.5rem;
+  padding: 2px;
+  background-color: var(--border-control);
+  border-radius: var(--radius-full);
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.switch[aria-checked='true'] .switchTrack {
+  background-color: var(--accent);
+}
+
+.switchThumb {
+  display: block;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-full);
+  box-shadow: var(--elevation-1);
+  transition: translate var(--dur-fast) var(--ease-spring);
+}
+
+.switch[aria-checked='true'] .switchThumb {
+  translate: 1rem 0;
+}
+
+.switch:active .switchThumb {
+  scale: var(--press-scale);
+}
+
+.switchLabel {
+  font-variant-numeric: tabular-nums;
+}
+
+.switch[aria-checked='true'] .switchLabel {
+  color: var(--fg-primary);
+}
+
+/* Outlined, never filled. It was the same solid treatment as the primary
+   action elsewhere in the product, which made deleting your account the
+   loudest element on your own profile — an invitation, in the visual grammar
+   of the thing you are most likely to want. It is still unmistakably
+   destructive, and still behind the password. */
+.deleteButton {
+  color: var(--danger-ink);
+  background: none;
+  border: 1px solid color-mix(in oklab, var(--danger) 40%, transparent);
+}
+
+@media (hover: hover) {
+  .deleteButton:hover {
+    background-color: var(--danger-surface);
+    border-color: var(--danger);
+  }
 }
 
 .note {

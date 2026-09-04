@@ -184,34 +184,9 @@
 
   --focus-ring: var(--crimson-500);
 
-  /* ── Blood-type coding (§6.3) ────────────────────────────────────────── */
-  /* Hue carries the ABO group; fill vs outline carries the Rh sign.
-     Colour is ALWAYS secondary — the badge shows the literal text too.
-     `solid-fg` differs per group on purpose: amber cannot carry white text
-     at AA, so AB uses dark ink on a light amber fill.                      */
-  --bt-o-solid-bg:  oklch(0.53 0.185 25);
-  --bt-o-solid-fg:  var(--slate-0);
-  --bt-o-ink:       oklch(0.45 0.160 25);
-  --bt-o-border:    oklch(0.82 0.090 25);
-  --bt-o-surface:   oklch(0.97 0.018 25);
 
-  --bt-a-solid-bg:  oklch(0.50 0.180 290);
-  --bt-a-solid-fg:  var(--slate-0);
-  --bt-a-ink:       oklch(0.45 0.170 290);
-  --bt-a-border:    oklch(0.82 0.085 290);
-  --bt-a-surface:   oklch(0.97 0.018 290);
 
-  --bt-b-solid-bg:  oklch(0.50 0.095 195);
-  --bt-b-solid-fg:  var(--slate-0);
-  --bt-b-ink:       oklch(0.44 0.085 195);
-  --bt-b-border:    oklch(0.80 0.060 195);
-  --bt-b-surface:   oklch(0.96 0.022 195);
 
-  --bt-ab-solid-bg: oklch(0.78 0.150 70);
-  --bt-ab-solid-fg: oklch(0.25 0.050 70);
-  --bt-ab-ink:      oklch(0.44 0.095 70);
-  --bt-ab-border:   oklch(0.82 0.080 70);
-  --bt-ab-surface:  oklch(0.96 0.035 70);
 }
 
 /* ============================================================================
@@ -267,29 +242,9 @@
     --calm-surface: oklch(0.28 0.045 195);
     --calm-ink:     oklch(0.85 0.070 195);
 
-    --bt-o-solid-bg:  oklch(0.72 0.155 25);
-    --bt-o-solid-fg:  oklch(0.18 0.030 25);
-    --bt-o-ink:       oklch(0.80 0.120 25);
-    --bt-o-border:    oklch(0.45 0.110 25);
-    --bt-o-surface:   oklch(0.26 0.055 25);
 
-    --bt-a-solid-bg:  oklch(0.72 0.140 290);
-    --bt-a-solid-fg:  oklch(0.18 0.030 290);
-    --bt-a-ink:       oklch(0.81 0.110 290);
-    --bt-a-border:    oklch(0.45 0.105 290);
-    --bt-a-surface:   oklch(0.26 0.055 290);
 
-    --bt-b-solid-bg:  oklch(0.75 0.090 195);
-    --bt-b-solid-fg:  oklch(0.18 0.025 195);
-    --bt-b-ink:       oklch(0.83 0.075 195);
-    --bt-b-border:    oklch(0.45 0.065 195);
-    --bt-b-surface:   oklch(0.26 0.040 195);
 
-    --bt-ab-solid-bg: oklch(0.80 0.145 70);
-    --bt-ab-solid-fg: oklch(0.20 0.045 70);
-    --bt-ab-ink:      oklch(0.85 0.110 70);
-    --bt-ab-border:   oklch(0.47 0.085 70);
-    --bt-ab-surface:  oklch(0.27 0.050 70);
 
     /* The wash and the grid, for a dark canvas: the same three positions,
        lit from under the surface instead of tinted on top of it. */
@@ -351,29 +306,9 @@
   --calm-surface: oklch(0.28 0.045 195);
   --calm-ink:     oklch(0.85 0.070 195);
 
-  --bt-o-solid-bg:  oklch(0.72 0.155 25);
-  --bt-o-solid-fg:  oklch(0.18 0.030 25);
-  --bt-o-ink:       oklch(0.80 0.120 25);
-  --bt-o-border:    oklch(0.45 0.110 25);
-  --bt-o-surface:   oklch(0.26 0.055 25);
 
-  --bt-a-solid-bg:  oklch(0.72 0.140 290);
-  --bt-a-solid-fg:  oklch(0.18 0.030 290);
-  --bt-a-ink:       oklch(0.81 0.110 290);
-  --bt-a-border:    oklch(0.45 0.105 290);
-  --bt-a-surface:   oklch(0.26 0.055 290);
 
-  --bt-b-solid-bg:  oklch(0.75 0.090 195);
-  --bt-b-solid-fg:  oklch(0.18 0.025 195);
-  --bt-b-ink:       oklch(0.83 0.075 195);
-  --bt-b-border:    oklch(0.45 0.065 195);
-  --bt-b-surface:   oklch(0.26 0.040 195);
 
-  --bt-ab-solid-bg: oklch(0.80 0.145 70);
-  --bt-ab-solid-fg: oklch(0.20 0.045 70);
-  --bt-ab-ink:      oklch(0.85 0.110 70);
-  --bt-ab-border:   oklch(0.47 0.085 70);
-  --bt-ab-surface:  oklch(0.27 0.050 70);
 
   /* The wash and the grid, for a dark canvas: the same three positions,
      lit from under the surface instead of tinted on top of it. */

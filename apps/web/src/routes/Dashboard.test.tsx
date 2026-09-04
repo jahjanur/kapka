@@ -169,7 +169,13 @@ describe('the pause switch', () => {
     // §3: without this, stopping the emails means deleting the account.
     const user = userEvent.setup();
     renderDashboard();
-    await user.click(await screen.findByRole('button', { name: /Pause my emails/ }));
+    /* A switch reporting a state now, not a button naming an action — so it
+       is found by what it is and what it is set to. */
+    const toggle = await screen.findByRole('switch', {
+      name: /Email me about matching requests/,
+    });
+    expect(toggle).toHaveAttribute('aria-checked', 'true');
+    await user.click(toggle);
 
     await waitFor(() => {
       /* Both, not just availability: the matching query requires both and
@@ -191,9 +197,11 @@ describe('the pause switch', () => {
     const user = userEvent.setup();
     renderDashboard();
 
-    await user.click(
-      await screen.findByRole('button', { name: /Start emailing me again/ }),
-    );
+    const toggle = await screen.findByRole('switch', {
+      name: /Email me about matching requests/,
+    });
+    expect(toggle).toHaveAttribute('aria-checked', 'false');
+    await user.click(toggle);
     await waitFor(() => {
       expect(updateDonorProfile).toHaveBeenCalledWith(
         { isAvailable: true, notifyByEmail: true },
@@ -208,7 +216,13 @@ describe('the pause switch', () => {
     );
     const user = userEvent.setup();
     renderDashboard();
-    await user.click(await screen.findByRole('button', { name: /Pause my emails/ }));
+    /* A switch reporting a state now, not a button naming an action — so it
+       is found by what it is and what it is set to. */
+    const toggle = await screen.findByRole('switch', {
+      name: /Email me about matching requests/,
+    });
+    expect(toggle).toHaveAttribute('aria-checked', 'true');
+    await user.click(toggle);
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/could not reach/);
     // Still eligible, and still one status saying so.

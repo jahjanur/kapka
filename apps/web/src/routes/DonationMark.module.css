@@ -9,18 +9,25 @@
 }
 
 .mark path {
-  stroke-width: 1.5;
   stroke-linecap: round;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
 }
 
-.trace {
+.tail {
   stroke: var(--accent);
-  opacity: 0.55;
+  stroke-width: 1;
+  opacity: 0.4;
+}
+
+.spike {
+  stroke: var(--accent);
+  stroke-width: 2.25;
+  opacity: 0.75;
 }
 
 .drop {
   stroke: var(--accent);
+  stroke-width: 1.5;
   fill: var(--accent-surface);
 }

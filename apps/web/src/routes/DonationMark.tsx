@@ -26,8 +26,13 @@ export function DonationMark() {
         className={styles.drop}
         d="M48 8c-3.4 3.8-5.3 6.7-5.3 9a5.3 5.3 0 0 0 10.6 0c0-2.3-1.9-5.2-5.3-9Z"
       />
-      {/* One beat, centred under it. */}
-      <path className={styles.trace} d="M4 40h30l5-9 6 18 5-9h42" />
+      {/* One beat, centred under it, and drawn rather than defaulted: the
+          tails are hairlines and the spike carries more than twice that, so
+          the eye is pulled to the peak. SVG cannot taper one stroke, so it is
+          stepped across three segments sharing endpoints and round caps. */}
+      <path className={styles.tail} d="M4 40h30" />
+      <path className={styles.spike} d="m34 40 5-9 6 18 5-9" />
+      <path className={styles.tail} d="M50 40h42" />
     </svg>
   );
 }

@@ -140,12 +140,14 @@
   outline-offset: 2px;
 }
 
-/* The change affordance, on the picture. Ringed in the surface colour so it
-   reads as sitting on the disc rather than being part of the photograph. */
+/* The change affordance, on the picture and entirely within it. It used to
+   sit on the edge with its ring straddling the outline, which broke the one
+   silhouette on the page that should be a clean circle. Inset by its own
+   border so the disc stays a disc. */
 .badge {
   position: absolute;
-  inset-block-end: 0;
-  inset-inline-end: 0;
+  inset-block-end: 2px;
+  inset-inline-end: 2px;
   display: grid;
   place-items: center;
   inline-size: 1.75rem;

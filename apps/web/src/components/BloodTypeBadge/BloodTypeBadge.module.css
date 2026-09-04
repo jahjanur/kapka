@@ -1,9 +1,14 @@
 /* ============================================================================
-   BloodTypeBadge — the signature element (§6.3, §8 Tier 1)
+   BloodTypeBadge — the signature element (§8 Tier 1)
 
-   Hue carries the ABO group, fill vs outline carries the Rh sign, and the
-   literal text is ALWAYS visible. Colour is the secondary channel, never the
-   only one (§10).
+   One treatment for all eight types, everywhere in the product.
+
+   It used to be §6.3's coding: a hue per ABO group, filled or outlined for the
+   Rh sign. That put four more colours on a screen that already has a brand
+   colour and two status colours — a teal chip and a near-black one sitting
+   beside crimson, none of them the brand — and the type is written on the chip
+   in every case, so the hue was a second channel for something already said in
+   words. The text does the work; the chip is a surface for it.
    ========================================================================= */
 
 .badge {
@@ -29,68 +34,11 @@
   border-radius: var(--radius-full);
 }
 
-/* ── ABO group selects the hue set ───────────────────────────────────────── */
-.badge[data-group='O'] {
-  --bt-solid-bg: var(--bt-o-solid-bg);
-  --bt-solid-fg: var(--bt-o-solid-fg);
-  --bt-ink: var(--bt-o-ink);
-  --bt-border: var(--bt-o-border);
-  --bt-surface: var(--bt-o-surface);
-}
-.badge[data-group='A'] {
-  --bt-solid-bg: var(--bt-a-solid-bg);
-  --bt-solid-fg: var(--bt-a-solid-fg);
-  --bt-ink: var(--bt-a-ink);
-  --bt-border: var(--bt-a-border);
-  --bt-surface: var(--bt-a-surface);
-}
-.badge[data-group='B'] {
-  --bt-solid-bg: var(--bt-b-solid-bg);
-  --bt-solid-fg: var(--bt-b-solid-fg);
-  --bt-ink: var(--bt-b-ink);
-  --bt-border: var(--bt-b-border);
-  --bt-surface: var(--bt-b-surface);
-}
-.badge[data-group='AB'] {
-  --bt-solid-bg: var(--bt-ab-solid-bg);
-  --bt-solid-fg: var(--bt-ab-solid-fg);
-  --bt-ink: var(--bt-ab-ink);
-  --bt-border: var(--bt-ab-border);
-  --bt-surface: var(--bt-ab-surface);
-}
-
-/* ── Neutral, where there is nothing to tell apart ───────────────────────
-   Last, so it wins over whichever hue the group selected. The Rh sign still
-   reads: filled for positive, outlined for negative, exactly as elsewhere.
-   ---------------------------------------------------------------------- */
-.badge[data-tone='neutral'] {
-  --bt-solid-bg: var(--fg-primary);
-  --bt-solid-fg: var(--bg-surface);
-  --bt-ink: var(--fg-primary);
-  --bt-border: var(--border-default);
-  --bt-surface: var(--bg-surface-alt);
-}
-
-/* ── Rh sign selects fill vs outline ─────────────────────────────────────── */
-/* The filled half also gets depth: a highlight along the top edge and a glow
-   in its own hue underneath. Both are built from --bt-solid-bg, so a badge
-   still carries exactly one colour and the ABO hue is still the only thing
-   that varies between them. */
-.badge[data-rh='positive'] {
-  background-color: var(--bt-solid-bg);
-  background-image: linear-gradient(
-    160deg,
-    color-mix(in oklab, var(--slate-0) 22%, transparent),
-    transparent 55%
-  );
-  color: var(--bt-solid-fg);
-  box-shadow: 0 0.25rem 0.75rem -0.25rem
-    color-mix(in oklab, var(--bt-solid-bg) 60%, transparent);
-}
-.badge[data-rh='negative'] {
-  background-color: var(--bt-surface);
-  color: var(--bt-ink);
-  border-color: var(--bt-border);
+/* One surface, one ink, one hairline — for O− and for AB+ alike. */
+.badge {
+  color: var(--fg-primary);
+  background-color: var(--bg-surface-alt);
+  border-color: var(--border-subtle);
 }
 
 /* ── Sizes ───────────────────────────────────────────────────────────────── */

@@ -387,6 +387,7 @@ export default function Dashboard() {
                         and it is the most prominent button on the page. */}
                     {status.kind === 'needs_email_confirmation' && (
                       <Button
+                        variant="ghost"
                         size="sm"
                         onClick={() => void resendConfirmation()}
                         loading={resending}
@@ -429,273 +430,293 @@ export default function Dashboard() {
           )}
 
           {profile && (
-            <div className={styles.sections}>
-              {/* ══ 2. Your details ═════════════════════════════════════════
+            <>
+              <div className={styles.sections}>
+                {/* ══ 2. Your details ═════════════════════════════════════════
                   The single home for these three values. They used to be
                   printed here and again in the header, in two different
                   visual treatments.                                        */}
-              <section
-                className={styles.section}
-                style={{ '--tier': 1 } as CSSProperties}
-              >
-                <div className={styles.sectionHead}>
-                  <h2 className={styles.sectionTitle}>Your details</h2>
-                  {!editing && (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => startEditing(profile)}
-                    >
-                      Edit details
-                    </Button>
-                  )}
-                </div>
-
-                {formError && (
-                  <p className={styles.formError} role="alert">
-                    <Icon name="alertCircle" />
-                    {formError}
-                  </p>
-                )}
-
-                {editing ? (
-                  <form onSubmit={handleSubmit} noValidate>
-                    <Field
-                      label="Blood type"
-                      required
-                      help="Only change this if it was entered wrongly — it decides every request you hear about."
-                    >
-                      <div className={styles.types} role="group" aria-label="Blood type">
-                        {BLOOD_TYPES.map((type) => (
-                          <button
-                            key={type}
-                            type="button"
-                            aria-pressed={bloodType === type}
-                            className={cx(
-                              styles.typeButton,
-                              bloodType === type && styles.typeButtonOn,
-                            )}
-                            onClick={() => setBloodType(type)}
-                          >
-                            <BloodTypeLabel type={type} />
-                          </button>
-                        ))}
-                      </div>
-                    </Field>
-
-                    <Field label="City" required help="We match requests in your city.">
-                      <Picker
-                        placeholder="Choose your city"
-                        icon="mapPin"
-                        options={CITIES}
-                        value={city}
-                        onChange={setCity}
-                      />
-                    </Field>
-
-                    <fieldset className={styles.fieldset}>
-                      <legend className={styles.legend}>Last donation</legend>
-                      <label className={styles.check}>
-                        <input
-                          type="checkbox"
-                          checked={neverDonated}
-                          onChange={(event) => setNeverDonated(event.target.checked)}
-                        />
-                        I have never donated
-                      </label>
-                      {!neverDonated && (
-                        <Field label="Date of last donation">
-                          <Input
-                            type="date"
-                            max={today()}
-                            value={lastDonationDate}
-                            onChange={(event) => setLastDonationDate(event.target.value)}
-                          />
-                        </Field>
-                      )}
-                    </fieldset>
-
-                    <div className={styles.formActions}>
-                      <Button type="submit" loading={busy} loadingLabel="Saving…">
-                        Save changes
-                      </Button>
+                <section
+                  className={styles.section}
+                  style={{ '--tier': 1 } as CSSProperties}
+                >
+                  <div className={styles.sectionHead}>
+                    <h2 className={styles.sectionTitle}>Your details</h2>
+                    {!editing && (
                       <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={() => {
-                          setEditing(false);
-                          setFormError(null);
-                        }}
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => startEditing(profile)}
                       >
-                        Cancel
+                        Edit details
                       </Button>
-                    </div>
-                  </form>
-                ) : (
-                  <dl className={styles.details}>
-                    <div className={styles.detail}>
-                      <dt>
-                        <Icon name="droplet" aria-hidden="true" />
-                        Blood type
-                      </dt>
-                      {/* Neutral here: there is one blood type on this page
-                          and nothing to tell it apart from, so the ABO hue
-                          (§6.3) is carrying no information and reads as a
-                          second brand colour. Coded everywhere it is scanned
-                          against others. */}
-                      <dd>
-                        <BloodTypeBadge type={profile.bloodType} tone="neutral" />
-                      </dd>
-                    </div>
-                    <div className={styles.detail}>
-                      <dt>
-                        <Icon name="mapPin" aria-hidden="true" />
-                        City
-                      </dt>
-                      <dd>{profile.city}</dd>
-                    </div>
-                    <div className={styles.detail}>
-                      <dt>
-                        <Icon name="calendar" aria-hidden="true" />
-                        Last donation
-                      </dt>
-                      <dd>
-                        {profile.lastDonationDate ? (
-                          <time dateTime={profile.lastDonationDate}>
-                            {longDate(profile.lastDonationDate)}
-                          </time>
-                        ) : (
-                          'Never donated'
+                    )}
+                  </div>
+
+                  {formError && (
+                    <p className={styles.formError} role="alert">
+                      <Icon name="alertCircle" />
+                      {formError}
+                    </p>
+                  )}
+
+                  {editing ? (
+                    <form onSubmit={handleSubmit} noValidate>
+                      <Field
+                        label="Blood type"
+                        required
+                        help="Only change this if it was entered wrongly — it decides every request you hear about."
+                      >
+                        <div
+                          className={styles.types}
+                          role="group"
+                          aria-label="Blood type"
+                        >
+                          {BLOOD_TYPES.map((type) => (
+                            <button
+                              key={type}
+                              type="button"
+                              aria-pressed={bloodType === type}
+                              className={cx(
+                                styles.typeButton,
+                                bloodType === type && styles.typeButtonOn,
+                              )}
+                              onClick={() => setBloodType(type)}
+                            >
+                              <BloodTypeLabel type={type} />
+                            </button>
+                          ))}
+                        </div>
+                      </Field>
+
+                      <Field label="City" required help="We match requests in your city.">
+                        <Picker
+                          placeholder="Choose your city"
+                          icon="mapPin"
+                          options={CITIES}
+                          value={city}
+                          onChange={setCity}
+                        />
+                      </Field>
+
+                      <fieldset className={styles.fieldset}>
+                        <legend className={styles.legend}>Last donation</legend>
+                        <label className={styles.check}>
+                          <input
+                            type="checkbox"
+                            checked={neverDonated}
+                            onChange={(event) => setNeverDonated(event.target.checked)}
+                          />
+                          I have never donated
+                        </label>
+                        {!neverDonated && (
+                          <Field label="Date of last donation">
+                            <Input
+                              type="date"
+                              max={today()}
+                              value={lastDonationDate}
+                              onChange={(event) =>
+                                setLastDonationDate(event.target.value)
+                              }
+                            />
+                          </Field>
                         )}
-                        {/* Derived, so nobody counts 56 days themselves. It
+                      </fieldset>
+
+                      <div className={styles.formActions}>
+                        <Button type="submit" loading={busy} loadingLabel="Saving…">
+                          Save changes
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => {
+                            setEditing(false);
+                            setFormError(null);
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </form>
+                  ) : (
+                    <dl className={styles.details}>
+                      <div className={styles.detail}>
+                        <dt>
+                          <Icon name="droplet" aria-hidden="true" />
+                          Blood type
+                        </dt>
+                        <dd>
+                          <BloodTypeBadge type={profile.bloodType} />
+                        </dd>
+                      </div>
+                      <div className={styles.detail}>
+                        <dt>
+                          <Icon name="mapPin" aria-hidden="true" />
+                          City
+                        </dt>
+                        <dd>{profile.city}</dd>
+                      </div>
+                      <div className={styles.detail}>
+                        <dt>
+                          <Icon name="calendar" aria-hidden="true" />
+                          Last donation
+                        </dt>
+                        <dd>
+                          {profile.lastDonationDate ? (
+                            <time dateTime={profile.lastDonationDate}>
+                              {longDate(profile.lastDonationDate)}
+                            </time>
+                          ) : (
+                            'Never donated'
+                          )}
+                          {/* Derived, so nobody counts 56 days themselves. It
                             lived only inside the eligibility card before, so
                             the details list made you do the arithmetic. */}
-                        {profile.eligibleFrom && (
-                          <span className={styles.detailNote}>
-                            Eligible again{' '}
-                            <time dateTime={profile.eligibleFrom}>
-                              {longDate(profile.eligibleFrom)}
-                            </time>
-                          </span>
-                        )}
-                      </dd>
-                    </div>
-                  </dl>
-                )}
-              </section>
+                          {profile.eligibleFrom && (
+                            <span className={styles.detailNote}>
+                              Eligible again{' '}
+                              <time dateTime={profile.eligibleFrom}>
+                                {longDate(profile.eligibleFrom)}
+                              </time>
+                            </span>
+                          )}
+                        </dd>
+                      </div>
+                    </dl>
+                  )}
+                </section>
 
-              {/* ══ 3. Matching ═════════════════════════════════════════════
+                {/* ══ 3. Matching ═════════════════════════════════════════════
                   One section for the subscription: what it does, its switch,
                   and what it has sent. This was three cards — an account-type
                   chip, "You are on the list", and the history — each
                   describing a different face of the same thing.            */}
-              <section
-                className={styles.section}
-                style={{ '--tier': 2 } as CSSProperties}
-              >
-                <div className={styles.sectionHead}>
-                  <h2 className={styles.sectionTitle}>Matching</h2>
-                  <Button
-                    variant={emailsOn ? 'secondary' : 'primary'}
-                    size="sm"
-                    loading={busy}
-                    loadingLabel="Saving…"
-                    onClick={() =>
-                      void save(
-                        /* Both flags, together. The copy here has always been
+                <section
+                  className={styles.section}
+                  style={{ '--tier': 2 } as CSSProperties}
+                >
+                  <div className={styles.sectionHead}>
+                    <h2 className={styles.sectionTitle}>Matching</h2>
+                    {/* A switch showing a state, not a button naming an action.
+                      "Pause my emails" told you what would happen if you
+                      pressed it and left you to infer what was true now —
+                      which is the thing somebody opens this section to
+                      check. */}
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={emailsOn}
+                      aria-label="Email me about matching requests"
+                      className={styles.switch}
+                      disabled={busy}
+                      onClick={() =>
+                        void save(
+                          /* Both flags, together. The copy here has always been
                            about email while the control wrote is_available and
                            left notify_by_email alone — and the matching query
                            requires both, so a "paused" donor was only half
                            paused with nothing on screen saying which half. */
-                        { isAvailable: !emailsOn, notifyByEmail: !emailsOn },
-                        emailsOn
-                          ? 'Paused. We will not email you until you turn this back on.'
-                          : 'You are back on the list.',
-                      )
-                    }
-                  >
-                    {emailsOn ? 'Pause my emails' : 'Start emailing me again'}
-                  </Button>
-                </div>
+                          { isAvailable: !emailsOn, notifyByEmail: !emailsOn },
+                          emailsOn
+                            ? 'Paused. We will not email you until you turn this back on.'
+                            : 'You are back on the list.',
+                        )
+                      }
+                    >
+                      <span className={styles.switchTrack} aria-hidden="true">
+                        <span className={styles.switchThumb} />
+                      </span>
+                      <span className={styles.switchLabel}>
+                        {emailsOn ? 'On' : 'Paused'}
+                      </span>
+                    </button>
+                  </div>
 
-                {/* What the subscription IS, in one sentence, whatever state
+                  {/* What the subscription IS, in one sentence, whatever state
                     it is in. Whether it is running is the status element's
                     job — saying it here too is how the same fact ends up on
                     the page twice, which is what this rebuild is about. */}
-                <p className={styles.sectionBody}>
-                  When an admin approves a request your blood type can help with in your
-                  city, we email you. Pause it any time — nothing is deleted.
-                </p>
+                  <p className={styles.sectionBody}>
+                    When an admin approves a request your blood type can help with in your
+                    city, we email you. Pause it any time — nothing is deleted.
+                  </p>
 
-                <h3 className={styles.subHead}>What we have emailed you about</h3>
+                  <h3 className={styles.subHead}>What we have emailed you about</h3>
 
-                {loadingHistory && (
-                  <ul className={styles.history} aria-hidden="true">
-                    {Array.from({ length: 2 }, (_, i) => (
-                      <li key={i} className={styles.historyRow}>
-                        <div className={styles.historyMain}>
-                          <Skeleton width="9rem" height="1.2rem" />
-                          <div className={styles.historyMeta}>
-                            <Skeleton width="12rem" shape="text" />
+                  {loadingHistory && (
+                    <ul className={styles.history} aria-hidden="true">
+                      {Array.from({ length: 2 }, (_, i) => (
+                        <li key={i} className={styles.historyRow}>
+                          <div className={styles.historyMain}>
+                            <Skeleton width="9rem" height="1.2rem" />
+                            <div className={styles.historyMeta}>
+                              <Skeleton width="12rem" shape="text" />
+                            </div>
                           </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
 
-                {!loadingHistory && notifications?.length === 0 && (
-                  <div className={styles.empty}>
-                    <DonationMark />
-                    <p className={styles.emptyLine}>No requests have reached you yet.</p>
-                  </div>
-                )}
+                  {!loadingHistory && notifications?.length === 0 && (
+                    <div className={styles.empty}>
+                      <DonationMark />
+                      <p className={styles.emptyLine}>
+                        No requests have reached you yet.
+                      </p>
+                    </div>
+                  )}
 
-                {notifications && notifications.length > 0 && (
-                  <ul className={styles.history}>
-                    {notifications.map((row) => (
-                      <li key={row.requestId} className={styles.historyRow}>
-                        <div className={styles.historyMain}>
-                          <Link
-                            to={PATHS.request(row.requestId)}
-                            className={styles.historyLink}
-                          >
-                            {row.hospitalName}
-                          </Link>
-                          <p className={styles.historyMeta}>
-                            <BloodTypeLabel type={row.bloodType} /> · {row.city} ·{' '}
-                            <time dateTime={row.createdAt}>{timeAgo(row.createdAt)}</time>
-                          </p>
-                        </div>
-                        <div className={styles.historyTags}>
-                          {row.status !== 'sent' && (
-                            <span className={styles.historyWarn}>
-                              {row.status === 'queued'
-                                ? 'Queued — not sent yet'
-                                : 'We could not reach you'}
-                            </span>
-                          )}
-                          {row.requestStatus !== 'approved' && (
-                            <span className={styles.historyState}>
-                              {row.requestStatus === 'fulfilled'
-                                ? 'Fulfilled'
-                                : row.requestStatus === 'expired'
-                                  ? 'Expired'
-                                  : 'Closed'}
-                            </span>
-                          )}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
+                  {notifications && notifications.length > 0 && (
+                    <ul className={styles.history}>
+                      {notifications.map((row) => (
+                        <li key={row.requestId} className={styles.historyRow}>
+                          <div className={styles.historyMain}>
+                            <Link
+                              to={PATHS.request(row.requestId)}
+                              className={styles.historyLink}
+                            >
+                              {row.hospitalName}
+                            </Link>
+                            <p className={styles.historyMeta}>
+                              <BloodTypeLabel type={row.bloodType} /> · {row.city} ·{' '}
+                              <time dateTime={row.createdAt}>
+                                {timeAgo(row.createdAt)}
+                              </time>
+                            </p>
+                          </div>
+                          <div className={styles.historyTags}>
+                            {row.status !== 'sent' && (
+                              <span className={styles.historyWarn}>
+                                {row.status === 'queued'
+                                  ? 'Queued — not sent yet'
+                                  : 'We could not reach you'}
+                              </span>
+                            )}
+                            {row.requestStatus !== 'approved' && (
+                              <span className={styles.historyState}>
+                                {row.requestStatus === 'fulfilled'
+                                  ? 'Fulfilled'
+                                  : row.requestStatus === 'expired'
+                                    ? 'Expired'
+                                    : 'Closed'}
+                              </span>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              </div>
 
-              {/* ══ 4. Data and account ═════════════════════════════════════
-                  Recessed on purpose (§12): both are rights rather than
-                  tasks, and one of them cannot be undone. No card — a change
-                  of ground is what separates them from the working part of
-                  the page.                                                 */}
+              {/* ══ 4. Data and account ═══════════════════════════════════════
+                Recessed, and outside the panel above rather than inside it:
+                both are rights rather than tasks, and one cannot be undone.
+                A change of ground is what separates them from the working
+                part of the page — nested in the same surface, it was just
+                another section of it.                                     */}
               <section className={styles.footer} style={{ '--tier': 3 } as CSSProperties}>
                 <div className={styles.footerRow}>
                   <div>
@@ -719,15 +740,16 @@ export default function Dashboard() {
                     </p>
                   </div>
                   <Button
-                    variant="danger"
+                    variant="ghost"
                     size="sm"
+                    className={styles.deleteButton}
                     onClick={() => setConfirmingDelete(true)}
                   >
                     Delete my account
                   </Button>
                 </div>
               </section>
-            </div>
+            </>
           )}
 
           <Modal

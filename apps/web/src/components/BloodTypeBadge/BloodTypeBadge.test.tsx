@@ -14,18 +14,16 @@ describe('BloodTypeBadge', () => {
     expect(screen.getByText('O negative')).toBeInTheDocument();
   });
 
-  it('carries the group and Rh sign as data attributes for the fill/outline rule', () => {
-    const { container } = render(<BloodTypeBadge type="AB+" />);
-    const badge = container.firstElementChild;
-    expect(badge).toHaveAttribute('data-group', 'AB');
-    expect(badge).toHaveAttribute('data-rh', 'positive');
-  });
-
-  it('distinguishes Rh sign by attribute, not only by colour', () => {
-    const { container: neg } = render(<BloodTypeBadge type="B-" />);
-    const { container: pos } = render(<BloodTypeBadge type="B+" />);
-    expect(neg.firstElementChild).toHaveAttribute('data-rh', 'negative');
-    expect(pos.firstElementChild).toHaveAttribute('data-rh', 'positive');
+  it('gives every type the same treatment, and says which it is in words', () => {
+    /* The per-group hues are gone: four extra colours on screens that already
+       carry a brand colour and two status colours, for something the chip
+       writes out in every case. What tells B+ from O− is the text, which is
+       also the only channel a screen reader ever had. */
+    const { container: ab } = render(<BloodTypeBadge type="AB+" />);
+    const { container: o } = render(<BloodTypeBadge type="O-" />);
+    expect(ab.firstElementChild).not.toHaveAttribute('data-group');
+    expect(ab.firstElementChild?.className).toBe(o.firstElementChild?.className);
+    expect(screen.getByText('A B positive')).toBeInTheDocument();
   });
 
   it('renders every one of the eight types without a hyphen leaking through', () => {
@@ -42,7 +40,6 @@ describe('sizes', () => {
   it.each(['sm', 'md', 'lg'] as const)('renders at %s while keeping the text', (size) => {
     const { container, unmount } = render(<BloodTypeBadge type="A+" size={size} />);
     expect(container.textContent).toContain('A+');
-    expect(container.firstElementChild).toHaveAttribute('data-group', 'A');
     unmount();
   });
 });
