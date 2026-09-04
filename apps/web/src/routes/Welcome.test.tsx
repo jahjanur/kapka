@@ -2,6 +2,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SessionProvider } from '../lib/SessionProvider';
+import { ToastProvider } from '../components';
 import type { AuthProvider } from '../lib/api';
 import Welcome from './Welcome';
 
@@ -22,9 +23,13 @@ vi.mock('../lib/api', async () => {
 function renderGate() {
   return render(
     <SessionProvider>
-      <MemoryRouter initialEntries={['/register']}>
-        <Welcome />
-      </MemoryRouter>
+      {/* As App.tsx wraps it: the gate tells an already-registered donor so
+          in a toast on its way out. */}
+      <ToastProvider>
+        <MemoryRouter initialEntries={['/register']}>
+          <Welcome />
+        </MemoryRouter>
+      </ToastProvider>
     </SessionProvider>,
   );
 }

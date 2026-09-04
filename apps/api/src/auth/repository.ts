@@ -96,6 +96,19 @@ export interface RegisterInput {
  * can be exercised over real HTTP against a fake — which is what makes the
  * behaviour testable while no Postgres is running.
  */
+/**
+ * Every field a profile cannot be created without.
+ *
+ * `| undefined` spelled out on the optional one: exactOptionalPropertyTypes
+ * means an absent key and an explicit undefined are different types, and the
+ * schema's `.optional()` produces the latter.
+ */
+export interface DonorProfileInput {
+  bloodType: DonorProfileRecord['bloodType'];
+  city: string;
+  lastDonationDate?: string | null | undefined;
+}
+
 export interface AuthRepository {
   findUserByEmail(email: string): Promise<UserRecord | null>;
   findUserById(id: string): Promise<UserRecord | null>;
@@ -111,6 +124,22 @@ export interface AuthRepository {
     userId: string,
     patch: DonorProfilePatch,
   ): Promise<DonorProfileRecord | null>;
+  /**
+   * Writes a whole profile for an account that has none, and returns it.
+   *
+   * The counterpart to updateDonorProfile refusing to create one: a patch
+   * cannot invent a blood type, but a caller supplying every required field
+   * is not inventing anything. This is how a Google account — made with no
+   * profile, because Google knows neither blood type nor city — becomes a
+   * donor the matching query can actually see.
+   *
+   * Idempotent on the primary key: a second call replaces rather than
+   * raising, so a double submit is not an error page.
+   */
+  createDonorProfile(
+    userId: string,
+    input: DonorProfileInput,
+  ): Promise<DonorProfileRecord>;
   /** Everything this donor has been contacted about, newest first (§9.5). */
   listNotifications(userId: string): Promise<DonorNotification[]>;
   /** Everything held about one person, for them to take away (§12). */
@@ -333,6 +362,25 @@ export function createPgAuthRepository(db: pg.Pool = pool): AuthRepository {
         ],
       );
       return rows[0] ? toProfile(rows[0]) : null;
+    },
+
+    async createDonorProfile(userId, input) {
+      /* ON CONFLICT rather than an existence check: two submits arriving
+         together would both pass the check and the second would raise on the
+         primary key. The upsert makes the race a no-op instead. */
+      const { rows } = await db.query<ProfileRow>(
+        `INSERT INTO donor_profiles (user_id, blood_type, city, last_donation_date)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (user_id) DO UPDATE SET
+           blood_type = EXCLUDED.blood_type,
+           city = EXCLUDED.city,
+           last_donation_date = EXCLUDED.last_donation_date
+         RETURNING ${PROFILE_COLUMNS}`,
+        [userId, input.bloodType, input.city, input.lastDonationDate ?? null],
+      );
+      const row = rows[0];
+      if (!row) throw new Error('donor profile insert returned no row');
+      return toProfile(row);
     },
 
     async createUser(input) {

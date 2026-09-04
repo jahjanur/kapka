@@ -64,6 +64,7 @@ const sessionAs = (role: UserRole): Session => ({
     fullName: 'Admin Person',
     role,
     emailVerified: true,
+    hasDonorProfile: true,
   },
   accessToken: 'admin-token',
 });

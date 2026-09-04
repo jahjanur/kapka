@@ -590,8 +590,23 @@
   justify-self: start;
 }
 
+/* The tail is room for the sticky CTA to sit over rather than cover the last
+   card. Only when there is one: for a registered donor the bar is not
+   rendered at all, and the reserved strip would be a gap under the feed. */
 .page {
-  padding-block: var(--space-6) var(--space-24);
+  padding-block: var(--space-6) var(--space-8);
+}
+
+.page[data-cta] {
+  padding-block-end: var(--space-24);
+}
+
+/* From 48rem the bar is hidden whoever is reading, so nothing needs clearing
+   at any width above that. */
+@media (min-width: 48rem) {
+  .page[data-cta] {
+    padding-block-end: var(--space-8);
+  }
 }
 
 /* One column on a phone — filters above, cards below. Two from 64rem. */

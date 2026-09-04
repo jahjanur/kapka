@@ -58,6 +58,7 @@ const SESSION: Session = {
     fullName: 'Ana Petrovska',
     role: 'donor',
     emailVerified: true,
+    hasDonorProfile: true,
   },
   accessToken: 'token',
 };

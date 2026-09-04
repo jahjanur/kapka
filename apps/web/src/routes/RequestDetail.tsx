@@ -19,6 +19,7 @@ import { cx } from '../lib/cx';
 import { announceBloodType, DONATION_INTERVAL_DAYS } from '@kapka/shared';
 import { useRequest } from '../lib/useRequests';
 import { useSession } from '../lib/session';
+import { useDonorStatus } from '../lib/useDonorStatus';
 import { timeAgo } from '../lib/relativeTime';
 import { directionsUrl, isDiallable, telHref } from '../lib/directions';
 import { PATHS } from './paths';
@@ -128,7 +129,8 @@ function Prep({ icon, children }: { icon: IconName; children: ReactNode }) {
 /** One request in full (§9.4). */
 export default function RequestDetail() {
   const { id = '' } = useParams();
-  const { session, restoring } = useSession();
+  const { session } = useSession();
+  const { isLoading: authLoading, isAuthenticated, isRegisteredDonor } = useDonorStatus();
   const {
     data: request,
     isLoading,
@@ -139,12 +141,16 @@ export default function RequestDetail() {
   const phone = request?.contactPhone;
   const fit = request?.fit;
 
-  /* "Register as donor" is for people who cannot register — asking somebody
-     who just signed up to sign up again is the one thing this screen must not
-     do. `restoring` counts as signed in: the boot refresh has not answered
-     yet, and a CTA that flashes on every reload is the same bug with a
-     shorter fuse (see SessionValue.restoring). */
-  const signedOut = !session && !restoring;
+  /* Asking somebody who just registered to register again is the one thing
+     this screen must not do — it is where a new donor most needs to believe
+     it worked. `authLoading` counts as registered: the boot refresh has not
+     answered, and a CTA that flashes on every reload is the same bug with a
+     shorter fuse.
+
+     Not `!session`: an account is not a donor. Somebody signed in with Google
+     has no blood type on file and no way onto the list, so they still need
+     the prompt — pointed at the form that asks for what is missing. */
+  const showRegisterCta = !authLoading && !isRegisteredDonor;
 
   return (
     <>
@@ -341,15 +347,24 @@ export default function RequestDetail() {
                   on a phone — either way it is never more than a scroll away. */}
               <aside className={styles.rail}>
                 <Card>
-                  {signedOut && (
+                  {/* A registered donor gets no card here: the compatibility
+                      banner above already answers "can you help", against
+                      their actual blood type rather than in the abstract, and
+                      the hospital's number is below. */}
+                  {showRegisterCta && (
                     <>
                       <h2 className={styles.actionHeading}>Can you help?</h2>
                       <p className={styles.actionBody}>
-                        Register with your blood type and city. We email you whenever a
-                        matching request is approved — this one included.
+                        {isAuthenticated
+                          ? 'Add your blood type and city, and we will email you whenever a matching request is approved — this one included.'
+                          : 'Register with your blood type and city. We email you whenever a matching request is approved — this one included.'}
                       </p>
-                      <Button to="/register" fullWidth size="lg">
-                        Register as donor
+                      <Button
+                        to={isAuthenticated ? PATHS.createAccount : PATHS.register}
+                        fullWidth
+                        size="lg"
+                      >
+                        {isAuthenticated ? 'Become a donor' : 'Register as donor'}
                       </Button>
                     </>
                   )}
@@ -363,7 +378,7 @@ export default function RequestDetail() {
                           {phone}
                         </a>
                       </p>
-                    ) : signedOut ? (
+                    ) : !isAuthenticated && !authLoading ? (
                       <p className={styles.contactBody}>
                         <Icon name="eyeOff" />
                         Hidden while you are signed out. Contact details are never shown
@@ -417,18 +432,26 @@ export default function RequestDetail() {
                 <Icon name="phone" />
                 Call the hospital
               </a>
-            ) : signedOut ? (
+            ) : showRegisterCta ? (
               /* A Button, styled as one — the class it carries sizes it in the
                  row and nothing else. It used to also carry .action, which set
                  a surface and a border over the top of Button's own primary
                  styling and worked only because of the order two stylesheets
                  happened to land in. */
-              <Button to={PATHS.register} className={styles.actionButton} size="md">
+              <Button
+                to={isAuthenticated ? PATHS.createAccount : PATHS.register}
+                className={styles.actionButton}
+                size="md"
+              >
                 <Icon name="heart" />
                 {/* Two labels, one shown: the long one needs 245px and the
                     button only has that much room from about 460px up. */}
-                <span className={styles.actionShort}>Register</span>
-                <span className={styles.actionLong}>Register to see the number</span>
+                <span className={styles.actionShort}>
+                  {isAuthenticated ? 'Donate' : 'Register'}
+                </span>
+                <span className={styles.actionLong}>
+                  {isAuthenticated ? 'Become a donor' : 'Register to see the number'}
+                </span>
               </Button>
             ) : null}
           </Container>

@@ -106,6 +106,7 @@ const SIGNED_IN = {
       fullName: 'Ana Petrovska',
       role: 'donor' as const,
       emailVerified: true,
+      hasDonorProfile: true,
     },
     accessToken: 'token',
   },

@@ -74,6 +74,7 @@ beforeEach(() => {
       fullName: 'Ana Petrovska',
       role: 'donor',
       emailVerified: false,
+      hasDonorProfile: true,
     },
     accessToken: 'token',
   });

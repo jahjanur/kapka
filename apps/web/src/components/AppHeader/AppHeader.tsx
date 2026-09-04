@@ -8,6 +8,7 @@ import { Drawer } from '../Modal/Modal';
 import { KapkaMark } from './KapkaMark';
 import { MenuArt } from './MenuArt';
 import { useSession } from '../../lib/session';
+import { useDonorStatus } from '../../lib/useDonorStatus';
 import { PATHS } from '../../routes/paths';
 import styles from './AppHeader.module.css';
 
@@ -131,6 +132,9 @@ export function AppHeader({
   openRequests?: number | undefined;
 } = {}) {
   const { session } = useSession();
+  /* The one answer to "should this person be asked to register" — see
+     useDonorStatus for why it is not `session &&` or the role. */
+  const { isLoading, isAuthenticated, isRegisteredDonor } = useDonorStatus();
   const [menuOpen, setMenuOpen] = useState(false);
   const { pathname } = useLocation();
 
@@ -184,7 +188,13 @@ export function AppHeader({
           </nav>
 
           <div className={styles.actions}>
-            {session ? (
+            {/* Nothing until the boot refresh answers. This slot used to render
+                "Register" optimistically, so a returning donor watched it turn
+                into their own avatar a moment later — the flash that makes
+                somebody doubt their registration went through. The slot keeps
+                its width either way, so nothing moves when the answer
+                arrives. */}
+            {isLoading ? null : session ? (
               /* The way in to your own profile, and on a phone the only one
                  outside the menu. Labelled rather than left to the initial,
                  which is decoration — a screen reader announcing "A" is not a
@@ -306,8 +316,12 @@ export function AppHeader({
               ))}
             </nav>
 
-            {/* ── 5. The ask ─────────────────────────────────────────────── */}
-            {session ? (
+            {/* ── 5. The ask ───────────────────────────────────────────────
+                Nothing while the session is still resolving: a register card
+                that appears and then disappears reads as the registration
+                having failed, which is the exact doubt this is here to
+                remove. */}
+            {isLoading ? null : isRegisteredDonor ? (
               <p
                 className={styles.pledge}
                 style={{ '--menu-step': 5 } as React.CSSProperties}
@@ -323,8 +337,12 @@ export function AppHeader({
                 </span>
               </p>
             ) : (
+              /* Signed in without a profile lands here too, and should: an
+                 account is not a donor. What changes is where it goes — the
+                 form knows to ask for the two missing fields rather than for
+                 an account this person already has. */
               <Link
-                to={PATHS.register}
+                to={isAuthenticated ? PATHS.createAccount : PATHS.register}
                 className={styles.pledge}
                 style={{ '--menu-step': 5 } as React.CSSProperties}
               >
@@ -332,9 +350,13 @@ export function AppHeader({
                   <Icon name="heart" />
                 </span>
                 <span className={styles.rowText}>
-                  <span className={styles.pledgeTitle}>Register as a donor</span>
+                  <span className={styles.pledgeTitle}>
+                    {isAuthenticated ? 'Finish becoming a donor' : 'Register as a donor'}
+                  </span>
                   <span className={styles.rowNote}>
-                    One minute, and we only write when you can help.
+                    {isAuthenticated
+                      ? 'Your blood type and city are all that is missing.'
+                      : 'One minute, and we only write when you can help.'}
                   </span>
                 </span>
                 <Icon name="chevronRight" className={styles.rowChevron} />

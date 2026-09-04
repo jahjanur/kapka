@@ -46,11 +46,26 @@ interface SessionBody {
     fullName: string;
     role: UserRecord['role'];
     emailVerified: boolean;
+    /**
+     * Whether this account has a donor profile — which is NOT the same
+     * question as `role === 'donor'`.
+     *
+     * A Google sign-in creates a user with that role and no profile, because
+     * Google knows neither blood type nor city and both are NOT NULL. Such an
+     * account is invisible to the matching query, so a screen that reads the
+     * role to decide whether somebody is a donor tells them they will be
+     * emailed when they never will be.
+     *
+     * It travels with the session so the first paint is already right: the
+     * alternative is every screen fetching /api/me and showing the wrong
+     * thing until it answers.
+     */
+    hasDonorProfile: boolean;
   };
 }
 
 /** Everything about a user the client is allowed to see. Never the hash. */
-function publicUser(user: UserRecord): SessionBody['user'] {
+function publicUser(user: UserRecord, hasDonorProfile: boolean): SessionBody['user'] {
   return {
     id: user.id,
     email: user.email,
@@ -59,14 +74,22 @@ function publicUser(user: UserRecord): SessionBody['user'] {
     // The client shows a "verify your email" prompt from this. Verification
     // gates notifications (§12), not sign-in.
     emailVerified: user.emailVerified,
+    hasDonorProfile,
   };
 }
 
-function sessionBody(user: UserRecord, accessToken: string): SessionBody {
+/* A parameter rather than a lookup inside: registration knows the answer
+   without asking (it just wrote the row), and the sites that do not know are
+   made to say so at the call. */
+function sessionBody(
+  user: UserRecord,
+  accessToken: string,
+  hasDonorProfile: boolean,
+): SessionBody {
   return {
     accessToken,
     expiresIn: ACCESS_TOKEN_TTL_SECONDS,
-    user: publicUser(user),
+    user: publicUser(user, hasDonorProfile),
   };
 }
 
@@ -299,6 +322,11 @@ export function createAuthRouter(
     res.redirect(`${env.APP_BASE_URL}${OAUTH_LANDING}`);
   });
 
+  /* Asked once per session-issuing response. Cheap — a primary-key lookup —
+     and the alternative is a boolean that drifts from the row it describes. */
+  const hasProfile = async (userId: string) =>
+    (await repository.findDonorProfile(userId)) !== null;
+
   router.post('/auth/register', validateBody(registerSchema), async (req, res) => {
     const input = req.body as import('@kapka/shared').RegisterInput;
 
@@ -331,7 +359,9 @@ export function createAuthRouter(
     await startSession(user.id, (name, value, options) =>
       res.cookie(name, value, options),
     );
-    res.status(201).json(sessionBody(user, accessToken));
+    /* True without asking: createUser writes the user and the profile in one
+       transaction, so if there is a user here there is a profile. */
+    res.status(201).json(sessionBody(user, accessToken, true));
   });
 
   router.post('/auth/login', validateBody(loginSchema), async (req, res) => {
@@ -363,7 +393,7 @@ export function createAuthRouter(
     await startSession(user.id, (name, value, options) =>
       res.cookie(name, value, options),
     );
-    res.json(sessionBody(user, accessToken));
+    res.json(sessionBody(user, accessToken, await hasProfile(user.id)));
   });
 
   router.post('/auth/refresh', async (req, res) => {
@@ -424,7 +454,9 @@ export function createAuthRouter(
     res.cookie(REFRESH_COOKIE, next, refreshCookieOptions());
 
     const accessToken = await signAccessToken(user.id, user.role);
-    res.json(sessionBody(user, accessToken));
+    /* The refresh path is how a Google sign-in becomes a session, and it is
+       the one that most needs the real answer rather than the role. */
+    res.json(sessionBody(user, accessToken, await hasProfile(user.id)));
   });
 
   router.post('/auth/logout', async (req, res) => {
@@ -477,7 +509,7 @@ export function createAuthRouter(
     const answerSpent = async () => {
       const existing = await repository.findUserById(record.userId);
       if (existing?.emailVerified) {
-        res.json({ user: publicUser(existing) });
+        res.json({ user: publicUser(existing, await hasProfile(existing.id)) });
         return;
       }
       invalid();
@@ -512,7 +544,7 @@ export function createAuthRouter(
       return;
     }
 
-    res.json({ user: publicUser(user) });
+    res.json({ user: publicUser(user, await hasProfile(user.id)) });
   });
 
   router.post('/auth/verify-email/resend', requireAuth(repository), async (_req, res) => {

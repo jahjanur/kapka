@@ -51,6 +51,7 @@ const sessionAs = (role: UserRole): Session => ({
     fullName: 'Ana Donor',
     role,
     emailVerified: true,
+    hasDonorProfile: true,
   },
   accessToken: 'token',
 });

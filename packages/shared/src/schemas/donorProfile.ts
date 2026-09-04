@@ -18,3 +18,24 @@ export const donorProfilePatchSchema = z
   });
 
 export type DonorProfilePatchInput = z.infer<typeof donorProfilePatchSchema>;
+
+/**
+ * PUT /api/me/donor-profile — the whole profile, for an account that does not
+ * have one yet.
+ *
+ * Separate from the PATCH above rather than making it an upsert, and the
+ * difference is the reason PATCH refuses to create: blood type and city are
+ * NOT NULL and nobody may guess either. A PATCH carries some fields, so it
+ * can only ever update; a PUT carries all of them, so it can create.
+ *
+ * The case this exists for is a Google sign-in, which makes an account with
+ * no profile because Google knows neither field. Before this, that account
+ * could never become a donor at all.
+ */
+export const donorProfilePutSchema = z.strictObject({
+  bloodType: bloodTypeSchema,
+  city: citySchema,
+  lastDonationDate: dateOnlySchema.nullable().optional(),
+});
+
+export type DonorProfilePutInput = z.infer<typeof donorProfilePutSchema>;

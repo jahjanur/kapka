@@ -13,7 +13,13 @@ vi.mock('../lib/api', async () => {
   const actual = await vi.importActual<typeof import('../lib/api')>('../lib/api');
   return {
     ...actual,
-    api: { getRequest: (id: string, token?: string) => getRequest(id, token) },
+    api: {
+      getRequest: (id: string, token?: string) => getRequest(id, token),
+      /* Needed since the screen reads donor status: without it the provider's
+         boot refresh never settles, `restoring` stays true forever, and
+         everything gated on it renders nothing for the whole test. */
+      restoreSession: () => Promise.resolve(null),
+    },
   };
 });
 
@@ -32,15 +38,22 @@ const SESSION: Session = {
     fullName: 'Ana Petrovska',
     role: 'donor',
     emailVerified: true,
+    hasDonorProfile: true,
   },
   accessToken: 'access-token',
 };
 
-function SignedIn({ children }: { children: ReactNode }) {
+function SignedIn({
+  children,
+  hasDonorProfile = true,
+}: {
+  children: ReactNode;
+  hasDonorProfile?: boolean;
+}) {
   const { session, signIn } = useSession();
   useEffect(() => {
-    signIn(SESSION);
-  }, [signIn]);
+    signIn({ ...SESSION, user: { ...SESSION.user, hasDonorProfile } });
+  }, [signIn, hasDonorProfile]);
   return session ? <>{children}</> : null;
 }
 
@@ -57,7 +70,7 @@ const REQUEST: PublicBloodRequest = {
   expiresAt: new Date(Date.now() + 7 * 86_400_000).toISOString(),
 };
 
-const renderAt = (id = 'r2', { signedIn = false } = {}) => {
+const renderAt = (id = 'r2', { signedIn = false, hasDonorProfile = true } = {}) => {
   const screenEl = (
     <Routes>
       <Route path="/requests/:id" element={<RequestDetail />} />
@@ -66,7 +79,11 @@ const renderAt = (id = 'r2', { signedIn = false } = {}) => {
   return render(
     <MemoryRouter initialEntries={[`/requests/${id}`]}>
       <SessionProvider>
-        {signedIn ? <SignedIn>{screenEl}</SignedIn> : screenEl}
+        {signedIn ? (
+          <SignedIn hasDonorProfile={hasDonorProfile}>{screenEl}</SignedIn>
+        ) : (
+          screenEl
+        )}
       </SessionProvider>
     </MemoryRouter>,
   );
@@ -178,6 +195,22 @@ describe('one request in full', () => {
     expect(screen.queryByRole('link', { name: /Register to see the number/ })).toBeNull();
     expect(screen.queryByText(/Hidden while you are signed out/)).toBeNull();
     expect(screen.getByText(/has not listed a number/)).toBeInTheDocument();
+  });
+
+  it('asks a signed-in account with no donor profile to become one', async () => {
+    /* Signed in is not registered: a Google account has no blood type on
+       file, so the prompt stays — pointed at the screen that asks for it. */
+    getRequest.mockResolvedValue({ ...REQUEST, contactPhone: '+389 2 555 0100' });
+    renderAt('r2', { signedIn: true, hasDonorProfile: false });
+    await screen.findByText('City General Hospital, Skopje');
+
+    /* Awaited: the card renders nothing until the boot refresh answers, so
+       that a registered donor never watches it appear and vanish. */
+    expect(await screen.findByText('Can you help?')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Become a donor/ })).toHaveAttribute(
+      'href',
+      '/register/new',
+    );
   });
 
   it('presents the token, or the number never comes back at all', async () => {

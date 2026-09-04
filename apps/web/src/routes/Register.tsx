@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type SyntheticEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import {
   AppHeader,
   AuthLayout,
@@ -24,6 +24,8 @@ import { api, ApiError, type Session } from '../lib/api';
 import { useFieldErrors } from '../lib/useFieldErrors';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { useSession } from '../lib/session';
+import { useDonorStatus } from '../lib/useDonorStatus';
+import BecomeDonor from './BecomeDonor';
 import { PATHS } from './paths';
 import styles from './Register.module.css';
 
@@ -70,6 +72,12 @@ const STEP_TITLES: Record<Step, string> = {
  */
 export default function Register() {
   const { signIn } = useSession();
+  /* This form makes a NEW account, which is the wrong thing for everybody who
+     already has one. A registered donor is sent to their own profile, and an
+     account without a profile — a Google sign-in — gets the screen that asks
+     for the two fields it is missing instead of one that would answer "that
+     email already has an account". */
+  const { isLoading, isAuthenticated, isRegisteredDonor } = useDonorStatus();
   const singlePage = useMediaQuery(SINGLE_PAGE);
   const [step, setStep] = useState<Step>(1);
 
@@ -238,6 +246,9 @@ export default function Register() {
     }
   }
 
+  /* All after the hooks: an early return above them would change how many run
+     between renders. `registered` first — somebody who has just submitted this
+     form is looking at its confirmation, not at a redirect. */
   if (registered) {
     return (
       <>
@@ -292,6 +303,18 @@ export default function Register() {
       </>
     );
   }
+
+  /* Nothing until the session resolves, so this form never flashes at
+     somebody who is already signed in and about to be sent elsewhere. */
+  if (isLoading) return <AppHeader />;
+
+  /* Already a donor: the route stays reachable by URL, it just stops being a
+     form. Their own profile is the honest answer to "register". */
+  if (isRegisteredDonor) return <Navigate to={PATHS.dashboard} replace />;
+
+  /* An account with no donor profile. Not this form — it creates accounts,
+     and would only tell them the email is taken. */
+  if (isAuthenticated) return <BecomeDonor />;
 
   /* One page, or one step at a time. Unmounting the hidden step is safe:
      every value lives in this component's state, not in the inputs. */

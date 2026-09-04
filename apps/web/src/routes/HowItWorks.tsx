@@ -1,5 +1,7 @@
 import { AppHeader, Button, Container, Icon } from '../components';
 import { DONATION_INTERVAL_DAYS } from '@kapka/shared';
+import { useDonorStatus } from '../lib/useDonorStatus';
+import { PATHS } from './paths';
 import styles from './HowItWorks.module.css';
 
 const DONOR_STEPS = [
@@ -34,6 +36,7 @@ const REQUESTER_STEPS = [
 
 /** The explanation the feed links to, for people deciding whether to sign up. */
 export default function HowItWorks() {
+  const { isLoading, isAuthenticated, isRegisteredDonor } = useDonorStatus();
   return (
     <>
       <AppHeader />
@@ -94,16 +97,27 @@ export default function HowItWorks() {
             </p>
           </section>
 
-          <div className={styles.cta}>
-            <h2 className={styles.ctaHeading}>Ready?</h2>
-            <p className={styles.ctaBody}>
-              Registering takes about two minutes and one email address.
-            </p>
-            <Button to="/register" size="lg">
-              Register as donor
-              <Icon name="arrowRight" />
-            </Button>
-          </div>
+          {/* This block asked everybody to register, whoever was reading —
+              the page explaining how it works was inviting people who already
+              did it to do it again. Nothing while the session resolves, and
+              nothing at all once they are on the list. */}
+          {!isLoading && !isRegisteredDonor && (
+            <div className={styles.cta}>
+              <h2 className={styles.ctaHeading}>Ready?</h2>
+              <p className={styles.ctaBody}>
+                {isAuthenticated
+                  ? 'Your blood type and your city are all that is missing.'
+                  : 'Registering takes about two minutes and one email address.'}
+              </p>
+              <Button
+                to={isAuthenticated ? PATHS.createAccount : PATHS.register}
+                size="lg"
+              >
+                {isAuthenticated ? 'Become a donor' : 'Register as donor'}
+                <Icon name="arrowRight" />
+              </Button>
+            </div>
+          )}
         </Container>
       </div>
     </>

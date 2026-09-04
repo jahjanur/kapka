@@ -7,6 +7,7 @@ import type {
   DonorFit,
   DonorNotification,
   DonorProfilePatchInput,
+  DonorProfilePutInput,
   ModerationQueueItem,
   ErrorCode,
   PublicBloodRequest,
@@ -23,6 +24,18 @@ export interface SessionUser {
   fullName: string;
   role: UserRole;
   emailVerified: boolean;
+  /**
+   * Whether this account has a donor profile — NOT the same question as
+   * `role === 'donor'`.
+   *
+   * A Google sign-in creates an account with that role and no profile, since
+   * Google knows neither blood type nor city. That account is invisible to
+   * the matching query, so reading the role to decide who is a donor promises
+   * emails to somebody who will never get one.
+   *
+   * Read it through useDonorStatus rather than here — see that hook.
+   */
+  hasDonorProfile: boolean;
 }
 
 export interface Session {
@@ -181,6 +194,17 @@ export interface ApiClient {
   /** Partial by design: every field optional, at least one required. */
   updateDonorProfile(
     patch: DonorProfilePatchInput,
+    accessToken: string,
+  ): Promise<DonorProfile>;
+  /**
+   * Writes a whole profile for an account that has none — how somebody who
+   * signed in with Google becomes a donor the matching query can see.
+   *
+   * Whole, not partial, and that is the difference that lets it create:
+   * updateDonorProfile cannot invent a blood type, and this one is given it.
+   */
+  createDonorProfile(
+    input: DonorProfilePutInput,
     accessToken: string,
   ): Promise<DonorProfile>;
   /** Everything held about the caller, for them to keep (§12). */
@@ -374,6 +398,13 @@ function createHttpClient(baseUrl: string): ApiClient {
       );
       return donorProfile;
     },
+    async createDonorProfile(input, accessToken) {
+      const { donorProfile } = await call<{ donorProfile: DonorProfile }>(
+        '/me/donor-profile',
+        { method: 'PUT', headers: authed(accessToken), body: JSON.stringify(input) },
+      );
+      return donorProfile;
+    },
     exportMyData(accessToken) {
       return call<DonorExport>('/me/export', { headers: authed(accessToken) });
     },
@@ -448,6 +479,7 @@ const DEMO_USER: SessionUser = {
   fullName: 'Demo Donor',
   role: 'donor',
   emailVerified: true,
+  hasDonorProfile: true,
 };
 
 const DEMO_PROFILE: DonorProfile = {
@@ -554,6 +586,8 @@ function createDemoClient(): ApiClient {
         fullName: input.fullName,
         role: 'donor',
         emailVerified: false,
+        // Registering writes a profile, here as in the real API.
+        hasDonorProfile: true,
       };
       demoProfile = {
         bloodType: input.bloodType,
@@ -612,6 +646,21 @@ function createDemoClient(): ApiClient {
     async getMe() {
       await latency(null);
       return { user: demoUser, donorProfile: { ...demoProfile } };
+    },
+    async createDonorProfile(input) {
+      await latency(null);
+      demoProfile = {
+        bloodType: input.bloodType,
+        city: input.city,
+        lastDonationDate: input.lastDonationDate ?? null,
+        isAvailable: true,
+        notifyByEmail: true,
+        eligibleFrom: null,
+      };
+      /* The session says so from here on, the way the real API's would: the
+         flag is what every screen reads to stop advertising registration. */
+      demoUser = { ...demoUser, hasDonorProfile: true };
+      return { ...demoProfile };
     },
     async updateDonorProfile(patch) {
       await latency(null);

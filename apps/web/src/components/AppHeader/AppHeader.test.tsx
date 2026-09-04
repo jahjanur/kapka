@@ -16,15 +16,22 @@ const SESSION: Session = {
     fullName: 'Ana Petrovska',
     role: 'donor',
     emailVerified: true,
+    hasDonorProfile: true,
   },
   accessToken: 'token',
 };
 
-function SignedIn({ children }: { children: ReactNode }) {
+function SignedIn({
+  children,
+  session: given = SESSION,
+}: {
+  children: ReactNode;
+  session?: Session;
+}) {
   const { session, signIn } = useSession();
   useEffect(() => {
-    signIn(SESSION);
-  }, [signIn]);
+    signIn(given);
+  }, [signIn, given]);
   return session ? <>{children}</> : null;
 }
 
@@ -54,22 +61,25 @@ const hrefsIn = (container: HTMLElement) =>
   [...container.querySelectorAll('a')].map((a) => a.getAttribute('href') ?? '');
 
 describe('the product header', () => {
-  it('shows the name and a way to register', () => {
+  it('shows the name and a way to register', async () => {
     renderHeader();
     expect(screen.getByRole('link', { name: /Kapka/ })).toHaveAttribute('href', '/');
-    // A link, not a button: it navigates, so it has to be openable in a tab.
-    expect(screen.getByRole('link', { name: /Register/ })).toHaveAttribute(
+    /* Awaited, not queried straight away: the action slot renders nothing
+       until the boot refresh answers, so that a returning donor never sees
+       "Register" turn into their own avatar. A link, not a button — it
+       navigates, so it has to be openable in a tab. */
+    expect(await screen.findByRole('link', { name: /Register/ })).toHaveAttribute(
       'href',
       '/register',
     );
   });
 
-  it('takes a signed-in reader to their own profile', () => {
+  it('takes a signed-in reader to their own profile', async () => {
     /* On a phone this is the only way there: the nav is hidden below 48rem,
        so while the avatar was a plain span, /me was reachable by typing the
        URL and by nothing else. */
     renderSignedInHeader();
-    expect(screen.getByRole('link', { name: 'Your profile' })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: 'Your profile' })).toHaveAttribute(
       'href',
       '/me',
     );
@@ -172,6 +182,47 @@ describe('the product header', () => {
     renderHeader();
     await user.click(screen.getByRole('button', { name: 'Menu' }));
     expect(within(screen.getByRole('dialog')).queryByText(/open$/)).toBeNull();
+  });
+
+  it('never asks a registered donor to register, anywhere in the menu', async () => {
+    /* The whole point of the change: somebody who has just registered and is
+       still checking it worked must not be invited to do it again. */
+    const user = userEvent.setup();
+    renderSignedInHeader();
+    await screen.findByRole('link', { name: 'Your profile' });
+
+    await user.click(screen.getByRole('button', { name: 'Menu' }));
+    const menu = within(screen.getByRole('dialog'));
+    expect(menu.queryByRole('link', { name: /Register/i })).toBeNull();
+    expect(menu.queryByText(/Become a donor/i)).toBeNull();
+    expect(menu.getByText(/You are on the list/)).toBeInTheDocument();
+  });
+
+  it('still asks a signed-in account with no donor profile', async () => {
+    /* An account is not a donor: a Google sign-in has the role and no blood
+       type, so it is invisible to matching. It keeps the prompt — pointed at
+       the form that asks for what is missing rather than for an account it
+       already has. */
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <SessionProvider>
+          <SignedIn
+            session={{ ...SESSION, user: { ...SESSION.user, hasDonorProfile: false } }}
+          >
+            <AppHeader />
+          </SignedIn>
+        </SessionProvider>
+      </MemoryRouter>,
+    );
+    await screen.findByRole('link', { name: 'Your profile' });
+
+    await user.click(screen.getByRole('button', { name: 'Menu' }));
+    const menu = within(screen.getByRole('dialog'));
+    expect(menu.getByRole('link', { name: /Finish becoming a donor/ })).toHaveAttribute(
+      'href',
+      '/register/new',
+    );
   });
 
   it('keeps the menu out of the page until it is asked for', () => {

@@ -28,6 +28,7 @@ const CONFIRMED: SessionUser = {
   fullName: 'Ana Petrovska',
   role: 'donor',
   emailVerified: true,
+  hasDonorProfile: true,
 };
 
 const SESSION: Session = {

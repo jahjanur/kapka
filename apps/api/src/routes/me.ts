@@ -3,8 +3,10 @@ import {
   apiError,
   deleteAccountSchema,
   donorProfilePatchSchema,
+  donorProfilePutSchema,
   type DeleteAccountInput,
   type DonorProfilePatchInput,
+  type DonorProfilePutInput,
 } from '@kapka/shared';
 import { getAuth } from '../auth/context';
 import { verifyPassword } from '../auth/passwords';
@@ -41,6 +43,11 @@ export function createMeRouter(repository: AuthRepository): Router {
         fullName: user.fullName,
         role: user.role,
         emailVerified: user.emailVerified,
+        /* The same flag the session carries, so a screen reading either one
+           gets the same answer. Derived here rather than stored: the profile
+           row is the fact, and a boolean beside it that could disagree is a
+           bug waiting for someone to trust the wrong one. */
+        hasDonorProfile: profile !== null,
       },
       // Null for a requester or an admin, who never had one.
       donorProfile: profile,
@@ -175,6 +182,40 @@ export function createMeRouter(repository: AuthRepository): Router {
           .json(apiError('NOT_FOUND', 'This account does not have a donor profile.'));
         return;
       }
+
+      res.json({ donorProfile: profile });
+    },
+  );
+
+  /**
+   * PUT /api/me/donor-profile — become a donor, for an account that is not
+   * one yet.
+   *
+   * The PATCH above refuses to create, and rightly: a partial update cannot
+   * invent a blood type. This one is handed every required field, so it is
+   * not inventing anything.
+   *
+   * The account it exists for is a Google sign-in, which is created with no
+   * profile because Google knows neither blood type nor city. Until this,
+   * such an account could never be matched or emailed and had no way to fix
+   * that — it was a donor in name and invisible to the query that matters.
+   *
+   * Not restricted to accounts without a profile: sending a whole profile for
+   * one that exists is a replace, which is what PUT means, and refusing it
+   * would only turn a double submit into an error.
+   */
+  router.put(
+    '/me/donor-profile',
+    requireAuth(repository),
+    validateBody(donorProfilePutSchema),
+    async (req, res) => {
+      const auth = getAuth(res);
+      if (!auth) return;
+
+      const profile = await repository.createDonorProfile(
+        auth.userId,
+        req.body as DonorProfilePutInput,
+      );
 
       res.json({ donorProfile: profile });
     },

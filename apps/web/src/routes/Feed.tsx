@@ -23,7 +23,7 @@ import {
 import { BLOOD_TYPES, CITIES, type BloodType, type Urgency } from '@kapka/shared';
 import { useCountUp } from '../lib/useCountUp';
 import { useRequests } from '../lib/useRequests';
-import { useSession } from '../lib/session';
+import { useDonorStatus } from '../lib/useDonorStatus';
 import { PATHS } from './paths';
 import styles from './Feed.module.css';
 
@@ -74,7 +74,6 @@ function Stat({
 
 export default function Feed() {
   const { data, isLoading, error, refetch } = useRequests();
-  const { session, restoring } = useSession();
 
   /*
    * Registering is for somebody who has no account, and this screen used to
@@ -88,12 +87,18 @@ export default function Feed() {
    * signed in, your own settings if you are the donor being asked to
    * register, and otherwise the other thing this page is for.
    */
-  const isDonor = session?.user.role === 'donor';
-  const heroPrimary = !session
-    ? { to: PATHS.register, label: 'Register as donor' }
-    : isDonor
+  /* Was `session?.user.role === 'donor'`, which is not the same question: a
+     Google account carries that role with no profile behind it, so this page
+     told somebody the matching query can never see that we would email them
+     when their type was needed. See useDonorStatus. */
+  const { isLoading: authLoading, isAuthenticated, isRegisteredDonor } = useDonorStatus();
+  const heroPrimary = authLoading
+    ? null
+    : isRegisteredDonor
       ? { to: PATHS.dashboard, label: 'Your profile' }
-      : null;
+      : isAuthenticated
+        ? { to: PATHS.createAccount, label: 'Become a donor' }
+        : { to: PATHS.register, label: 'Register as donor' };
 
   const [urgency, setUrgency] = useState<Urgency | null>(null);
   const [bloodType, setBloodType] = useState<BloodType | null>(null);
@@ -203,10 +208,10 @@ export default function Feed() {
                   Every drop of your blood can bring hope and save a life.
                 </p>
                 <div className={styles.heroActions}>
-                  {/* Read on the session as it stands rather than waiting for
-                      the boot refresh: signed out is both the common case and
-                      what the header assumes, so the pair of buttons is stable
-                      for most readers instead of appearing a moment late. */}
+                  {/* Nothing until the boot refresh answers. This used to read
+                      the session as it stood, which meant a registered donor
+                      watched "Register as donor" become "Your profile" — the
+                      flash that makes somebody doubt they ever registered. */}
                   {heroPrimary && (
                     <Button to={heroPrimary.to} size="lg">
                       <Icon name="heart" />
@@ -357,7 +362,14 @@ export default function Feed() {
           One grid holds both, so the filters can be a strip above the cards
           on a phone and a column beside them on a wide screen without the
           markup changing. Sticky in both places, from the same rule.       */}
-      <div className={styles.page} id={LIST_ID}>
+      {/* The bottom padding exists to clear the sticky CTA. With no CTA to
+          clear — a registered donor — it is a hole under the last card, so
+          the page says which case it is in and the stylesheet answers. */}
+      <div
+        className={styles.page}
+        id={LIST_ID}
+        data-cta={!authLoading && !isRegisteredDonor ? '' : undefined}
+      >
         <Container>
           <div className={styles.layout}>
             <aside className={styles.filters} aria-label="Filter requests">
@@ -503,15 +515,21 @@ export default function Feed() {
                     <EmptyState
                       headline="No open requests right now"
                       body={
-                        !session
-                          ? 'That is good news. Register as a donor and we will email you the moment someone with your blood type needs help.'
-                          : isDonor
-                            ? 'That is good news. We will email you the moment someone with your blood type needs help.'
-                            : 'That is good news. New requests appear here once an admin has approved them.'
+                        isRegisteredDonor
+                          ? 'That is good news. We will email you the moment someone with your blood type needs help.'
+                          : authLoading
+                            ? 'That is good news. New requests appear here once an admin has approved them.'
+                            : isAuthenticated
+                              ? 'That is good news. Add your blood type and city, and we will email you the moment someone needs your help.'
+                              : 'That is good news. Register as a donor and we will email you the moment someone with your blood type needs help.'
                       }
                       action={
-                        session ? undefined : (
-                          <Button to={PATHS.register}>Register as donor</Button>
+                        authLoading || isRegisteredDonor ? undefined : (
+                          <Button
+                            to={isAuthenticated ? PATHS.createAccount : PATHS.register}
+                          >
+                            {isAuthenticated ? 'Become a donor' : 'Register as donor'}
+                          </Button>
                         )
                       }
                     />
@@ -538,10 +556,14 @@ export default function Feed() {
           hidden until 240px of scroll anyway, so waiting costs nothing and a
           fixed bar flashing in and out over the cards would be worse than a
           button that settles. */}
-      {!restoring && !session && (
+      {!authLoading && !isRegisteredDonor && (
         <div className={`${styles.mobileCta} ${scrolled ? styles.mobileCtaVisible : ''}`}>
-          <Button to={PATHS.register} fullWidth size="lg">
-            Register as donor
+          <Button
+            to={isAuthenticated ? PATHS.createAccount : PATHS.register}
+            fullWidth
+            size="lg"
+          >
+            {isAuthenticated ? 'Become a donor' : 'Register as donor'}
           </Button>
         </div>
       )}

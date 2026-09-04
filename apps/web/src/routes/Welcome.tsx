@@ -1,4 +1,5 @@
-import { useEffect, useState, type ReactElement } from 'react';
+import { useEffect, useRef, useState, type ReactElement } from 'react';
+import { Navigate } from 'react-router-dom';
 import {
   AppHeader,
   Button,
@@ -10,6 +11,8 @@ import {
 } from '../components';
 import { api, type AuthProvider } from '../lib/api';
 import { PATHS } from './paths';
+import { useDonorStatus } from '../lib/useDonorStatus';
+import { useToast } from '../components';
 import styles from './Welcome.module.css';
 
 /** What each provider's button says and shows. */
@@ -41,6 +44,26 @@ const PENDING: AuthProvider[] = ['google'];
  * something, and an arrow is what says so before the words are read.
  */
 export default function Welcome() {
+  /*
+   * The route stays reachable — a bookmark, a link in an old email, a typed
+   * URL — it just stops being a gate for somebody who is already through it.
+   * Redirected rather than rewritten in place, because the answer to "where
+   * do I register" for a registered donor is their own profile, and leaving
+   * them on a page headed "Create account" is the doubt this whole change is
+   * about.
+   */
+  const { isLoading, isRegisteredDonor } = useDonorStatus();
+  const toast = useToast();
+  /* A ref, not state: this latch exists so the toast is shown once, and it is
+     never read during a render — making it state would ask React for another
+     pass to record something nothing renders. */
+  const announced = useRef(false);
+  useEffect(() => {
+    if (isLoading || !isRegisteredDonor || announced.current) return;
+    announced.current = true;
+    toast.show('You are already registered as a donor.');
+  }, [isLoading, isRegisteredDonor, toast]);
+
   /*
    * Asked of the API rather than assumed, because the credentials live on the
    * server: a deployment with none configured offers none, and renders no
@@ -79,6 +102,10 @@ export default function Welcome() {
      space it reserves is the real row's own height rather than a number
      guessed in the stylesheet. */
   const shown = providers ?? PENDING;
+
+  /* After the hooks, never before: an early return above them would change
+     how many run between renders. */
+  if (!isLoading && isRegisteredDonor) return <Navigate to={PATHS.dashboard} replace />;
 
   return (
     <>

@@ -104,6 +104,21 @@ export function createFakeAuthRepository(): AuthRepository & {
       return Promise.resolve(next);
     },
 
+    createDonorProfile(userId, input) {
+      /* Replaces, like the real one's upsert: the primary key is the user, so
+         there is only ever one of these per account. */
+      const next: DonorProfileRecord = {
+        bloodType: input.bloodType,
+        city: input.city,
+        lastDonationDate: input.lastDonationDate ?? null,
+        isAvailable: true,
+        notifyByEmail: true,
+        eligibleFrom: null,
+      };
+      profiles.set(userId, next);
+      return Promise.resolve(next);
+    },
+
     findUserByEmail(email) {
       // users.email is CITEXT in Postgres, so matching is case-insensitive.
       const found = [...users.values()].find(
