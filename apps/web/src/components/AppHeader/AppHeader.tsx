@@ -4,7 +4,6 @@ import { Button } from '../Button/Button';
 import { Container } from '../layout/Container';
 import { Icon, type IconName } from '../Icon/Icon';
 import { Sheet } from '../Modal/Modal';
-import { ThemeToggle } from '../ThemeToggle/ThemeToggle';
 import { useSession } from '../../lib/session';
 import { PATHS } from '../../routes/paths';
 import styles from './AppHeader.module.css';
@@ -79,10 +78,6 @@ export function AppHeader() {
           </nav>
 
           <div className={styles.actions}>
-            <span className={styles.themeToggle}>
-              <ThemeToggle />
-            </span>
-
             {session ? (
               /* The way in to your own profile, and on a phone the only one
                  outside the menu. Labelled rather than left to the initial,
@@ -161,11 +156,6 @@ export function AppHeader() {
               </NavLink>
             )}
           </nav>
-
-          <div className={styles.menuFoot}>
-            <span className={styles.menuFootLabel}>Theme</span>
-            <ThemeToggle />
-          </div>
         </Sheet>
       )}
     </header>

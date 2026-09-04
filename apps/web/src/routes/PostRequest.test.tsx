@@ -4,7 +4,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuthedBloodRequest, CreateRequestInput } from '@kapka/shared';
-import { ThemeProvider } from '../lib/ThemeProvider';
 import { SessionProvider } from '../lib/SessionProvider';
 import { useSession } from '../lib/session';
 import { ApiError, type Session } from '../lib/api';
@@ -75,17 +74,15 @@ function SignedIn({ children }: { children: ReactNode }) {
 function renderPage({ signedIn = true } = {}) {
   return render(
     <MemoryRouter>
-      <ThemeProvider>
-        <SessionProvider>
-          {signedIn ? (
-            <SignedIn>
-              <PostRequest />
-            </SignedIn>
-          ) : (
+      <SessionProvider>
+        {signedIn ? (
+          <SignedIn>
             <PostRequest />
-          )}
-        </SessionProvider>
-      </ThemeProvider>
+          </SignedIn>
+        ) : (
+          <PostRequest />
+        )}
+      </SessionProvider>
     </MemoryRouter>,
   );
 }

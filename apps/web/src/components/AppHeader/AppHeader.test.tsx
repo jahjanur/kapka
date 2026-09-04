@@ -3,7 +3,6 @@ import { MemoryRouter } from 'react-router-dom';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { ThemeProvider } from '../../lib/ThemeProvider';
 import { SessionProvider } from '../../lib/SessionProvider';
 import { STATIC_PATHS } from '../../routes/paths';
 import { useSession } from '../../lib/session';
@@ -32,13 +31,11 @@ function SignedIn({ children }: { children: ReactNode }) {
 function renderSignedInHeader() {
   return render(
     <MemoryRouter>
-      <ThemeProvider>
-        <SessionProvider>
-          <SignedIn>
-            <AppHeader />
-          </SignedIn>
-        </SessionProvider>
-      </ThemeProvider>
+      <SessionProvider>
+        <SignedIn>
+          <AppHeader />
+        </SignedIn>
+      </SessionProvider>
     </MemoryRouter>,
   );
 }
@@ -46,11 +43,9 @@ function renderSignedInHeader() {
 function renderHeader() {
   return render(
     <MemoryRouter>
-      <ThemeProvider>
-        <SessionProvider>
-          <AppHeader />
-        </SessionProvider>
-      </ThemeProvider>
+      <SessionProvider>
+        <AppHeader />
+      </SessionProvider>
     </MemoryRouter>,
   );
 }

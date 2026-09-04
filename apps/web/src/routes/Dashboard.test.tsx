@@ -5,7 +5,6 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DonorNotification, DonorProfilePatchInput } from '@kapka/shared';
 import { ToastProvider } from '../components';
-import { ThemeProvider } from '../lib/ThemeProvider';
 import { SessionProvider } from '../lib/SessionProvider';
 import { useSession } from '../lib/session';
 import { ApiError, type DonorProfile, type Me, type Session } from '../lib/api';
@@ -85,22 +84,20 @@ function SignedIn({ children }: { children: ReactNode }) {
 function renderDashboard({ signedIn = true } = {}) {
   return render(
     <MemoryRouter>
-      <ThemeProvider>
-        <SessionProvider>
-          {/* Mirrors App.tsx. The screen reports a finished export through a
+      <SessionProvider>
+        {/* Mirrors App.tsx. The screen reports a finished export through a
               toast, and useToast refuses to work without its provider rather
               than dropping messages silently. */}
-          <ToastProvider>
-            {signedIn ? (
-              <SignedIn>
-                <Dashboard />
-              </SignedIn>
-            ) : (
+        <ToastProvider>
+          {signedIn ? (
+            <SignedIn>
               <Dashboard />
-            )}
-          </ToastProvider>
-        </SessionProvider>
-      </ThemeProvider>
+            </SignedIn>
+          ) : (
+            <Dashboard />
+          )}
+        </ToastProvider>
+      </SessionProvider>
     </MemoryRouter>,
   );
 }

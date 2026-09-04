@@ -1,5 +1,12 @@
 <!doctype html>
-<html lang="en">
+<!--
+  data-theme is set here and never changes. The product is light-only: the
+  tokens still carry a dark palette, but it is reachable only through
+  [data-theme="dark"] or the absence of this attribute, so pinning it here is
+  what keeps a reader whose OS is dark from getting half a dark UI with no
+  control to change it back.
+-->
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta
@@ -11,10 +18,10 @@
       wherever this is hosted, rather than depending on a header the host
       may or may not be configured to send.
 
-      script-src carries a hash, not 'unsafe-inline': the one inline script
-      here is the theme applied before first paint, and its hash is checked
-      against the script by bundle/csp.test.ts — edit one without the other
-      and the build fails rather than the page silently breaking.
+      script-src is 'self' and nothing else. There is no inline script to
+      allow: the one that used to be here applied a stored theme before first
+      paint, and the product is light-only now. Adding another means adding
+      its hash — never 'unsafe-inline', which csp.test.ts refuses.
 
       style-src has to allow inline. The layout primitives pass their values
       through the style attribute by design (Grid's --col-min, Skeleton's
@@ -35,28 +42,13 @@
     -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'sha256-DwRj04hfjcXprycgjHSADDS+mzHOtGteZyc+l7YEWHQ='; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org https://*.tile.openstreetmap.org; font-src 'self'; connect-src 'self';"
+      content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org https://*.tile.openstreetmap.org; font-src 'self'; connect-src 'self';"
     />
     <title>Kapka</title>
     <meta
       name="description"
       content="Urgent blood donation matching — find compatible, eligible donors nearby in seconds."
     />
-
-    <!-- Set the theme before first paint so a dark-mode user never gets a
-         white flash. Mirrors the storage key in src/lib/theme.tsx. -->
-    <script>
-      (function () {
-        try {
-          var stored = localStorage.getItem('kapka.theme');
-          if (stored === 'light' || stored === 'dark') {
-            document.documentElement.setAttribute('data-theme', stored);
-          }
-        } catch (e) {
-          /* no stored preference — fall through to the OS setting */
-        }
-      })();
-    </script>
 
     <!-- Preload only the Latin subset: it is on the critical path for every
          page today. The Cyrillic subset is declared with a unicode-range and

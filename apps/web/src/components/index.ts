@@ -19,7 +19,6 @@ export { OfflineBanner } from './OfflineBanner/OfflineBanner';
 export { ToastProvider } from './Toast/ToastProvider';
 export { useToast, type ToastTone, type ToastOptions } from './Toast/toastContext';
 export * from './layout';
-export { ThemeToggle } from './ThemeToggle/ThemeToggle';
 export { AppHeader } from './AppHeader/AppHeader';
 export { AuthLayout } from './AuthLayout/AuthLayout';
 export { EmptyState } from './EmptyState/EmptyState';

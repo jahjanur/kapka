@@ -2,7 +2,6 @@ import { MemoryRouter } from 'react-router-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ThemeProvider } from '../lib/ThemeProvider';
 import { SessionProvider } from '../lib/SessionProvider';
 import type { RegisterInput } from '@kapka/shared';
 import { ApiError, type Session } from '../lib/api';
@@ -19,9 +18,9 @@ vi.mock('../lib/api', async () => {
  * asks whether it has room for a single page — so the untouched default is the
  * phone, in two steps. Each test says which one it is about.
  *
- * Only the min-width query is answered: ThemeProvider asks about
- * prefers-color-scheme through the same function, and a blanket yes would
- * quietly put every desktop test in the dark theme.
+ * Only the min-width query is answered. A blanket yes would say yes to every
+ * other query the app asks through the same function — hover, reduced motion —
+ * and quietly change what a "desktop" test is rendering.
  */
 function setViewport(kind: 'phone' | 'desktop') {
   window.matchMedia = (query: string): MediaQueryList =>
@@ -40,11 +39,9 @@ function setViewport(kind: 'phone' | 'desktop') {
 function renderPage() {
   return render(
     <MemoryRouter>
-      <ThemeProvider>
-        <SessionProvider>
-          <Register />
-        </SessionProvider>
-      </ThemeProvider>
+      <SessionProvider>
+        <Register />
+      </SessionProvider>
     </MemoryRouter>,
   );
 }

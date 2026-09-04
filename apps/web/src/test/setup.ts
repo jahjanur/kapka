@@ -26,10 +26,9 @@ afterEach(() => {
 });
 
 /**
- * jsdom does not implement matchMedia, so anything reading a media query —
- * ThemeProvider asking for prefers-color-scheme — throws on render. This is a
- * jsdom gap rather than a defect in the component, so it is filled here rather
- * than defended against in the code.
+ * jsdom does not implement matchMedia, so anything reading a media query
+ * throws on render. This is a jsdom gap rather than a defect in the component,
+ * so it is filled here rather than defended against in the code.
  *
  * "No match" for everything except prefers-reduced-motion, which answers yes:
  * a test runs in a document with no layout, no paint and no compositor, and

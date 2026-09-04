@@ -3,7 +3,6 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PublicBloodRequest } from '@kapka/shared';
-import { ThemeProvider } from '../lib/ThemeProvider';
 import { SessionProvider } from '../lib/SessionProvider';
 import { useSession } from '../lib/session';
 import { ApiError, type Session, type ViewedRequest } from '../lib/api';
@@ -66,11 +65,9 @@ const renderAt = (id = 'r2', { signedIn = false } = {}) => {
   );
   return render(
     <MemoryRouter initialEntries={[`/requests/${id}`]}>
-      <ThemeProvider>
-        <SessionProvider>
-          {signedIn ? <SignedIn>{screenEl}</SignedIn> : screenEl}
-        </SessionProvider>
-      </ThemeProvider>
+      <SessionProvider>
+        {signedIn ? <SignedIn>{screenEl}</SignedIn> : screenEl}
+      </SessionProvider>
     </MemoryRouter>,
   );
 };

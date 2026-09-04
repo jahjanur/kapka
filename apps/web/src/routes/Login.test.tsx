@@ -4,7 +4,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LoginInput } from '@kapka/shared';
-import { ThemeProvider } from '../lib/ThemeProvider';
 import { SessionProvider } from '../lib/SessionProvider';
 import { useSession } from '../lib/session';
 import { ApiError, type Session } from '../lib/api';
@@ -42,13 +41,11 @@ function Signed({ children }: { children: ReactNode }) {
 function renderLogin() {
   return render(
     <MemoryRouter>
-      <ThemeProvider>
-        <SessionProvider>
-          <Signed>
-            <Login />
-          </Signed>
-        </SessionProvider>
-      </ThemeProvider>
+      <SessionProvider>
+        <Signed>
+          <Login />
+        </Signed>
+      </SessionProvider>
     </MemoryRouter>,
   );
 }

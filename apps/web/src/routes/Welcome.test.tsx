@@ -1,7 +1,6 @@
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ThemeProvider } from '../lib/ThemeProvider';
 import { SessionProvider } from '../lib/SessionProvider';
 import type { AuthProvider } from '../lib/api';
 import Welcome from './Welcome';
@@ -22,13 +21,11 @@ vi.mock('../lib/api', async () => {
 
 function renderGate() {
   return render(
-    <ThemeProvider>
-      <SessionProvider>
-        <MemoryRouter initialEntries={['/register']}>
-          <Welcome />
-        </MemoryRouter>
-      </SessionProvider>
-    </ThemeProvider>,
+    <SessionProvider>
+      <MemoryRouter initialEntries={['/register']}>
+        <Welcome />
+      </MemoryRouter>
+    </SessionProvider>,
   );
 }
 

@@ -302,37 +302,6 @@
   color: var(--accent);
 }
 
-/* Theme is a preference, so it sits under a rule rather than among the
-   destinations — it is not somewhere you can go. */
-.menuFoot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  margin-block-start: var(--space-4);
-  padding-block-start: var(--space-4);
-  border-block-start: 1px solid var(--border-subtle);
-}
-
-.menuFootLabel {
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  color: var(--fg-secondary);
-}
-
-/* §9.1: on a phone the header is the wordmark plus ONE action. The theme
-   toggle is a preference control, not a task, so it waits for the room —
-   putting it here at 360px pushed the header past the viewport. */
-.themeToggle {
-  display: none;
-}
-
-@media (min-width: 48rem) {
-  .themeToggle {
-    display: block;
-  }
-}
-
 /* Short label on a phone; the hero carries the full "Register as donor". */
 .registerLong {
   display: none;

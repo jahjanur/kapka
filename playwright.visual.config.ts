@@ -12,12 +12,11 @@ import { defineConfig, devices } from '@playwright/test';
  */
 
 const WIDTHS = [360, 768, 1280] as const;
-const THEMES = ['light', 'dark'] as const;
 
 export default defineConfig({
   testDir: './visual',
   testMatch: '**/*.visual.ts',
-  /* Serial. Six projects each drive one page through fifty screenshots; in
+  /* Serial. Three projects each drive one page through fifty screenshots; in
      parallel they contend for CPU, and a loaded machine renders text a
      fraction differently, which is exactly the thing this suite measures. */
   workers: 1,
@@ -45,19 +44,16 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
 
-  projects: WIDTHS.flatMap((width) =>
-    THEMES.map((theme) => ({
-      name: `${String(width)}-${theme}`,
-      use: {
-        ...devices['Desktop Chrome'],
-        viewport: { width, height: 900 },
-        /* Matched to the theme the harness sets, so anything reading the
-           media query directly agrees with the data-theme attribute. */
-        colorScheme: theme,
-      },
-      metadata: { theme },
-    })),
-  ),
+  /* Width only. The product is light-only — index.html pins data-theme, so a
+     dark project would photograph the same pixels under a second name. */
+  projects: WIDTHS.map((width) => ({
+    name: String(width),
+    use: {
+      ...devices['Desktop Chrome'],
+      viewport: { width, height: 900 },
+      colorScheme: 'light' as const,
+    },
+  })),
 
   webServer: {
     /* No VITE_API_URL: the specimens are given their props directly and must

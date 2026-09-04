@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 /**
- * Every component variant, at 360, 768 and 1280, in both themes.
+ * Every component variant, at 360, 768 and 1280.
  *
  * The specimens live in apps/web/visual-harness — a page on the dev server
  * that is not a route in the app and not in the production build. The list is
@@ -24,7 +24,7 @@ interface Specimen {
   solo: boolean;
 }
 
-async function openHarness(page: Page, theme: string, only?: string): Promise<void> {
+async function openHarness(page: Page, only?: string): Promise<void> {
   /* Only Date.now() is pinned, not the timers. Installing a controllable
      clock stops React's scheduler as well, and a page that never renders
      photographs nothing. */
@@ -35,8 +35,8 @@ async function openHarness(page: Page, theme: string, only?: string): Promise<vo
      rather than after each one: this is the only place that needs a
      connection, so this is the place that should insist on having one. */
   await page.context().setOffline(false);
-  const query = only ? `&only=${encodeURIComponent(only)}` : '';
-  await page.goto(`/visual-harness.html?theme=${theme}${query}`);
+  const query = only ? `?only=${encodeURIComponent(only)}` : '';
+  await page.goto(`/visual-harness.html${query}`);
   // Inter is self-hosted, so this is a local read — but it is still a read,
   // and a screenshot taken before it lands is a screenshot of the fallback.
   await page.evaluate(() => document.fonts.ready);
@@ -68,10 +68,8 @@ const PREPARE: Record<string, (page: Page) => Promise<void>> = {
    allowed to sit and retry past it. */
 const BRIEF = 3_000;
 
-test('every component variant', async ({ page }, testInfo) => {
-  const theme = String(testInfo.project.metadata.theme);
-
-  await openHarness(page, theme);
+test('every component variant', async ({ page }) => {
+  await openHarness(page);
   // Asserted rather than declared globally: this file is not part of the web
   // app's project, and the harness is what guarantees the shape.
   const specimens: Specimen[] = await page.evaluate(
@@ -93,7 +91,7 @@ test('every component variant', async ({ page }, testInfo) => {
      against the viewport, so these get a page each and are shot whole. */
   for (const specimen of specimens.filter((one) => one.solo)) {
     await test.step(specimen.id, async () => {
-      await openHarness(page, theme, specimen.id);
+      await openHarness(page, specimen.id);
       await PREPARE[specimen.id]?.(page);
       await expect.soft(page).toHaveScreenshot(`${specimen.id}.png`, { timeout: BRIEF });
     });

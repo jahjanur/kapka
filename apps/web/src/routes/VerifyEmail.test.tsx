@@ -3,7 +3,6 @@ import { MemoryRouter } from 'react-router-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ThemeProvider } from '../lib/ThemeProvider';
 import { SessionProvider } from '../lib/SessionProvider';
 import { useSession } from '../lib/session';
 import { ApiError, type ResendResult, type Session, type SessionUser } from '../lib/api';
@@ -48,17 +47,15 @@ function SignedIn({ children }: { children: ReactNode }) {
 function renderPage(search: string, signedIn = false) {
   return render(
     <MemoryRouter initialEntries={[`/verify-email${search}`]}>
-      <ThemeProvider>
-        <SessionProvider>
-          {signedIn ? (
-            <SignedIn>
-              <VerifyEmail />
-            </SignedIn>
-          ) : (
+      <SessionProvider>
+        {signedIn ? (
+          <SignedIn>
             <VerifyEmail />
-          )}
-        </SessionProvider>
-      </ThemeProvider>
+          </SignedIn>
+        ) : (
+          <VerifyEmail />
+        )}
+      </SessionProvider>
     </MemoryRouter>,
   );
 }

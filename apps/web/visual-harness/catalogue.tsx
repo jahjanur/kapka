@@ -27,7 +27,6 @@ import {
   Skeleton,
   Stack,
   Textarea,
-  ThemeToggle,
   Picker,
   UrgencyPill,
   VitalSign,
@@ -549,7 +548,6 @@ export const SPECIMENS: Specimen[] = [
       </SessionContext>
     ),
   },
-  { id: 'theme-toggle', render: () => <ThemeToggle /> },
 
   /* ── Picker ───────────────────────────────────────────────────────────── */
   {

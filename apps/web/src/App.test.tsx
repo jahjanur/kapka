@@ -8,7 +8,7 @@ import { App } from './App';
  * dev build serves.
  *
  * The unit tests each render one screen with its providers supplied by hand,
- * so every one of them would still pass with ThemeProvider or SessionProvider
+ * so every one of them would still pass with SessionProvider or ToastProvider
  * missing from App — a blank page in the browser and a green suite. This is
  * the test that fails instead.
  */

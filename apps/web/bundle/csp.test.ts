@@ -26,17 +26,24 @@ describe('the Content Security Policy', () => {
     expect(csp).not.toBe('');
   });
 
-  it('matches the inline script it has to allow', () => {
-    const script = /<script>([\s\S]*?)<\/script>/.exec(html)?.[1] ?? '';
-    expect(script).toContain('kapka.theme');
+  it('carries a hash for every inline script, or allows none at all', () => {
+    /* There is no inline script in the document today — the theme one went
+       with dark mode. This is the guard for the next one: an inline script
+       whose hash is not in the policy does not run, and that failure is
+       silent and production-only. Add the script, add the hash. */
+    const script = /<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/.exec(html)?.[1];
+    if (script === undefined) {
+      expect(csp).not.toContain('sha256-');
+      return;
+    }
 
     const hash = createHash('sha256').update(script).digest('base64');
     expect(csp).toContain(`'sha256-${hash}'`);
   });
 
   it('does not allow arbitrary inline script', () => {
-    /* The point of the hash. 'unsafe-inline' in script-src would let any
-       injected <script> run, which is most of what a CSP is for. */
+    /* 'unsafe-inline' in script-src would let any injected <script> run,
+       which is most of what a CSP is for. */
     const scriptSrc = /script-src ([^;]+)/.exec(csp)?.[1] ?? '';
     expect(scriptSrc).not.toContain('unsafe-inline');
     expect(scriptSrc).not.toContain('unsafe-eval');

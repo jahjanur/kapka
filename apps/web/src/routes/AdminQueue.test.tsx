@@ -4,7 +4,6 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ModerationQueueItem, UserRole } from '@kapka/shared';
-import { ThemeProvider } from '../lib/ThemeProvider';
 import { SessionProvider } from '../lib/SessionProvider';
 import { useSession } from '../lib/session';
 import { ApiError, type ApprovalOutcome, type Session } from '../lib/api';
@@ -96,17 +95,15 @@ function renderQueue({ role }: { role?: UserRole | null } = {}) {
   const as = role === undefined ? 'admin' : role;
   return render(
     <MemoryRouter>
-      <ThemeProvider>
-        <SessionProvider>
-          {as ? (
-            <SignedIn as={as}>
-              <AdminQueue />
-            </SignedIn>
-          ) : (
+      <SessionProvider>
+        {as ? (
+          <SignedIn as={as}>
             <AdminQueue />
-          )}
-        </SessionProvider>
-      </ThemeProvider>
+          </SignedIn>
+        ) : (
+          <AdminQueue />
+        )}
+      </SessionProvider>
     </MemoryRouter>,
   );
 }

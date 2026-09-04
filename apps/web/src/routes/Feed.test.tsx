@@ -4,7 +4,6 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PublicBloodRequest, UserRole } from '@kapka/shared';
-import { ThemeProvider } from '../lib/ThemeProvider';
 import { SessionProvider } from '../lib/SessionProvider';
 import { ApiError, type Session } from '../lib/api';
 import { useSession } from '../lib/session';
@@ -67,17 +66,15 @@ function SignedIn({ as, children }: { as: UserRole; children: ReactNode }) {
 const renderFeed = ({ as }: { as?: UserRole } = {}) =>
   render(
     <MemoryRouter>
-      <ThemeProvider>
-        <SessionProvider>
-          {as ? (
-            <SignedIn as={as}>
-              <Feed />
-            </SignedIn>
-          ) : (
+      <SessionProvider>
+        {as ? (
+          <SignedIn as={as}>
             <Feed />
-          )}
-        </SessionProvider>
-      </ThemeProvider>
+          </SignedIn>
+        ) : (
+          <Feed />
+        )}
+      </SessionProvider>
     </MemoryRouter>,
   );
 
