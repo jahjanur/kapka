@@ -1,79 +1,35 @@
 import styles from './MenuSignoff.module.css';
 
 /**
- * The sign-off band at the foot of the drawer.
+ * The sign-off at the foot of the drawer.
  *
- * It drops three of the four layers the mockup stacks in one square inch —
- * the overlap is the clutter, not any one of the pieces. What survives is a
- * single wave bleeding off the bottom edge, and one message.
+ * A supplied artwork, replacing the band that was drawn here. It carries its
+ * own message as part of the picture — "Every donation can save a life. Thank
+ * you for being part of Kapka." — so unlike the drawn decoration it is NOT
+ * aria-hidden: the alt text is that sentence, or the message is simply lost to
+ * anybody who cannot see it.
  *
- * The script variant is not here, and was not a near miss. Cursive drawn as
- * hand-authored path data came out as marks that read as letters only if you
- * already know what they say — the same failure as drawing hands. Real script
- * means a real script face, self-hosted because font-src is 'self': a
- * deliberate 15-25KB, not something to slip in behind a decoration.
- *
- * Everything here is decoration and is marked so: aria-hidden, and no part of
- * it takes a pointer event.
- */
-
-/** One layer, off both edges, along the foot. */
-function Wave() {
-  return (
-    <svg
-      className={styles.wave}
-      viewBox="0 0 320 64"
-      preserveAspectRatio="none"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d="M-4 30c46-16 74-16 120 0s76 16 120 0 68-12 88-4v42H-4Z" />
-    </svg>
-  );
-}
-
-/**
- * The pulse glyph, drawn rather than defaulted.
- *
- * A hairline zigzag is what a chart looks like. SVG cannot taper one stroke,
- * so the taper is stepped across three segments that share endpoints and round
- * caps: hairline tails, and more than double that through the spike. At this
- * size the joins disappear and the line has a hand behind it.
- */
-function Pulse() {
-  return (
-    <svg
-      className={styles.pulse}
-      viewBox="0 0 40 28"
-      fill="none"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path className={styles.pulseTail} d="M1 15h9" />
-      <path className={styles.pulseSpike} d="m10 15 4.5-11L20 25l4-11" />
-      <path className={styles.pulseTail} d="M24 14h15" />
-    </svg>
-  );
-}
-
-/**
- * The pulse glyph and two lines of plain type, over one wave.
- *
- * No heart and no script. The heart was cropped mid-curve against the panel's
- * edge, and the script said the same thing as the message beside it in the
- * same space — which is most of why that corner felt crowded.
+ * Two things worth knowing about the trade, since everything else in this
+ * product is drawn rather than shipped as a picture. The words are pixels now,
+ * so they cannot be translated, selected, or resized with the page. And it is
+ * a raster: served at 760px for a slot about 312 wide — twice over, for a
+ * dense screen — rather than the 1686px it arrived at, which was 1.5MB for a
+ * strip at the bottom of a menu.
  */
 export function MenuSignoff() {
   return (
-    <div className={styles.band} aria-hidden="true">
-      <Wave />
-      <div className={styles.message}>
-        <Pulse />
-        <p className={styles.lines}>
-          <span className={styles.lead}>Every donation can save a life.</span>
-          <span className={styles.sub}>Thank you for being part of Kapka.</span>
-        </p>
-      </div>
+    <div className={styles.band}>
+      <img
+        className={styles.art}
+        src="/img/menu-signoff.png"
+        alt="Every donation can save a life. Thank you for being part of Kapka."
+        /* Both given, so the space is held from the first layout pass and
+           nothing below it moves when the file arrives. */
+        width={760}
+        height={420}
+        loading="lazy"
+        decoding="async"
+      />
     </div>
   );
 }
