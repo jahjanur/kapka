@@ -1,45 +1,58 @@
 import styles from './MenuArt.module.css';
 
 /**
- * The drawing that closes the menu: a drop falling into a heartbeat, where
- * the impact is the R-wave.
+ * The drawing that closes the menu: a drop falls, and the line rises to meet
+ * it.
  *
- * One idea, drawn once. The trace runs flat across the panel, spikes exactly
- * where the drop lands, and settles — so the drop is not an ornament beside a
- * line, it is the reason the line moves. That is the whole product in a
- * gesture: one person gives, and somewhere a pulse holds.
+ * One event, not two objects sharing a box. The drop lands on the exact x the
+ * spike climbs to, and the spike only exists because the drop arrived — which
+ * is the whole product in a gesture, and the thing the old version missed by
+ * perching a tiny drop beside a line that was already there.
  *
- * Line art rather than fills: the panel above it is already carrying two
- * tinted surfaces, and a third block of colour down there flattened the whole
- * thing into stripes. At 1.5px it reads as drawn.
+ * The weight is drawn rather than defaulted. A single stroke-width across
+ * every path is what made the last one read as a chart: here the tails are
+ * hairlines, the approach thickens, and the spike carries more than twice the
+ * tails, so the eye is pulled to the peak and the line has a hand behind it.
+ * SVG cannot taper one stroke, so the taper is stepped across five segments
+ * that share endpoints and round caps — at this size the joins disappear.
  *
- * Decorative, and marked so — it says nothing the rows above have not.
+ * The baseline runs past both edges of the viewBox and is clipped by it, so
+ * the drawing meets the panel's sides rather than floating inside them.
+ *
+ * Decorative, and marked so: it says nothing the menu has not.
  */
 export function MenuArt() {
   return (
     <svg
       className={styles.art}
-      viewBox="0 0 296 96"
+      viewBox="0 0 320 104"
       fill="none"
       aria-hidden="true"
       focusable="false"
     >
-      {/* The fall: a dotted descent, so the drop reads as having travelled
-          rather than as hanging there. */}
-      <path className={styles.fall} d="M120 6v14" />
+      {/* Left tail — a hairline, and the quietest thing here. */}
+      <path className={styles.tail} d="M-12 74H128" />
 
-      {/* The drop itself, at the top of its fall and directly above the
-          spike — the two are one event, so they share a vertical. */}
+      {/* The approach: the line thickens and dips, the way it gathers before
+          a beat. */}
+      <path className={styles.lead} d="M128 74h10l6 7" />
+
+      {/* The spike. Heaviest, and the only segment that moves. It climbs to
+          exactly where the drop is waiting. */}
+      <path className={styles.spike} d="M144 81 160 26l10 62 10-15" pathLength={1} />
+
+      {/* The settle, and a small second bump before the line goes quiet. */}
+      <path className={styles.decay} d="M180 73h8l6-7 6 8h6" />
+
+      {/* Right tail, matching the left. */}
+      <path className={styles.tail} d="M206 74H332" />
+
+      {/* The drop, resting where the spike reaches. Big enough to be a drop
+          rather than a dot, and filled so it reads as the one solid thing in
+          a drawing of lines. */}
       <path
         className={styles.drop}
-        d="M120 24c-3.1 3.4-4.9 6-4.9 8.2a4.9 4.9 0 0 0 9.8 0c0-2.2-1.8-4.8-4.9-8.2Z"
-      />
-
-      {/* The trace. Flat, then the drop lands: a small dip, the R-wave up
-          through where the drop was, the S below the line, and away. */}
-      <path
-        className={styles.trace}
-        d="M0 62h96l8 .2 6 6.5 4-38.5 6 52 5-20.2 5 8h18l6-9 5 9h132"
+        d="M160 4c-5.4 7-8.6 11.3-8.6 14a8.6 8.6 0 0 0 17.2 0c0-2.7-3.2-7-8.6-14Z"
       />
     </svg>
   );
