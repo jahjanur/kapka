@@ -161,6 +161,28 @@ describe('one request in full', () => {
     expect(call).toHaveAttribute('href', 'tel:+38925550100');
   });
 
+  it('never asks a signed-in donor to register', async () => {
+    // They already did. The rail used to hold the sign-up card whoever was
+    // reading it, so registering was the last thing a new donor was told.
+    getRequest.mockResolvedValue({ ...REQUEST, contactPhone: '+389 2 555 0100' });
+    renderAt('r2', { signedIn: true });
+    await screen.findByText('City General Hospital, Skopje');
+
+    expect(screen.queryByText('Can you help?')).toBeNull();
+    expect(screen.queryByRole('link', { name: /Register/ })).toBeNull();
+  });
+
+  it('does not send a signed-in donor to register for a number nobody listed', async () => {
+    // No contactPhone with a token means the hospital gave none — not that
+    // the reader needs an account to see it.
+    renderAt('r2', { signedIn: true });
+    await screen.findByText('City General Hospital, Skopje');
+
+    expect(screen.queryByRole('link', { name: /Register to see the number/ })).toBeNull();
+    expect(screen.queryByText(/Hidden while you are signed out/)).toBeNull();
+    expect(screen.getByText(/has not listed a number/)).toBeInTheDocument();
+  });
+
   it('presents the token, or the number never comes back at all', async () => {
     // The API selects the contact column only when there is a viewer, so a
     // request fetched anonymously has no number to show however we render it.

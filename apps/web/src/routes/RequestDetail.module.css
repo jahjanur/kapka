@@ -359,6 +359,15 @@
   border-block-start: 1px solid var(--border-subtle);
 }
 
+/* Signed in, the register CTA above it is gone and contact is all the card
+   holds — a rule across the top of a card's first thing is a rule under
+   nothing. */
+.contact:first-child {
+  margin-block-start: 0;
+  padding-block-start: 0;
+  border-block-start: none;
+}
+
 .contactHeading {
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);

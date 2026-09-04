@@ -128,7 +128,7 @@ function Prep({ icon, children }: { icon: IconName; children: ReactNode }) {
 /** One request in full (§9.4). */
 export default function RequestDetail() {
   const { id = '' } = useParams();
-  const { session } = useSession();
+  const { session, restoring } = useSession();
   const {
     data: request,
     isLoading,
@@ -138,6 +138,13 @@ export default function RequestDetail() {
 
   const phone = request?.contactPhone;
   const fit = request?.fit;
+
+  /* "Register as donor" is for people who cannot register — asking somebody
+     who just signed up to sign up again is the one thing this screen must not
+     do. `restoring` counts as signed in: the boot refresh has not answered
+     yet, and a CTA that flashes on every reload is the same bug with a
+     shorter fuse (see SessionValue.restoring). */
+  const signedOut = !session && !restoring;
 
   return (
     <>
@@ -334,14 +341,18 @@ export default function RequestDetail() {
                   on a phone — either way it is never more than a scroll away. */}
               <aside className={styles.rail}>
                 <Card>
-                  <h2 className={styles.actionHeading}>Can you help?</h2>
-                  <p className={styles.actionBody}>
-                    Register with your blood type and city. We email you whenever a
-                    matching request is approved — this one included.
-                  </p>
-                  <Button to="/register" fullWidth size="lg">
-                    Register as donor
-                  </Button>
+                  {signedOut && (
+                    <>
+                      <h2 className={styles.actionHeading}>Can you help?</h2>
+                      <p className={styles.actionBody}>
+                        Register with your blood type and city. We email you whenever a
+                        matching request is approved — this one included.
+                      </p>
+                      <Button to="/register" fullWidth size="lg">
+                        Register as donor
+                      </Button>
+                    </>
+                  )}
 
                   <div className={styles.contact}>
                     <h3 className={styles.contactHeading}>Hospital contact</h3>
@@ -352,11 +363,19 @@ export default function RequestDetail() {
                           {phone}
                         </a>
                       </p>
-                    ) : (
+                    ) : signedOut ? (
                       <p className={styles.contactBody}>
                         <Icon name="eyeOff" />
                         Hidden while you are signed out. Contact details are never shown
                         on the public feed (§12).
+                      </p>
+                    ) : (
+                      /* Signed in and still no number: the hospital never gave
+                         one. Saying "sign in to see it" here would send a donor
+                         looking for something that does not exist. */
+                      <p className={styles.contactBody}>
+                        <Icon name="info" />
+                        This hospital has not listed a number. Directions are below.
                       </p>
                     )}
                   </div>
@@ -398,7 +417,7 @@ export default function RequestDetail() {
                 <Icon name="phone" />
                 Call the hospital
               </a>
-            ) : (
+            ) : signedOut ? (
               /* A Button, styled as one — the class it carries sizes it in the
                  row and nothing else. It used to also carry .action, which set
                  a surface and a border over the top of Button's own primary
@@ -411,7 +430,7 @@ export default function RequestDetail() {
                 <span className={styles.actionShort}>Register</span>
                 <span className={styles.actionLong}>Register to see the number</span>
               </Button>
-            )}
+            ) : null}
           </Container>
         </div>
       )}
