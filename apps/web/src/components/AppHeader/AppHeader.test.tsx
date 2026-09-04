@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { ThemeProvider } from '../../lib/ThemeProvider';
 import { SessionProvider } from '../../lib/SessionProvider';
@@ -108,6 +109,44 @@ describe('the product header', () => {
     for (const href of hrefsIn(container)) {
       expect(STATIC_PATHS).toContain(href);
     }
+  });
+
+  it('reaches every destination from a phone, where the inline nav is hidden', async () => {
+    /* The nav is display:none below 48rem. Before the menu existed that made
+       "Post a request" and "How it works" reachable by typing the URL and by
+       nothing else — a header of a wordmark and one button. */
+    const user = userEvent.setup();
+    renderHeader();
+
+    await user.click(screen.getByRole('button', { name: 'Menu' }));
+
+    const menu = screen.getByRole('dialog');
+    expect(within(menu).getByRole('link', { name: /Post a request/ })).toHaveAttribute(
+      'href',
+      '/requests/new',
+    );
+    expect(within(menu).getByRole('link', { name: /How it works/ })).toHaveAttribute(
+      'href',
+      '/how-it-works',
+    );
+  });
+
+  it('offers a signed-in reader their profile in the menu', async () => {
+    const user = userEvent.setup();
+    renderSignedInHeader();
+
+    await user.click(screen.getByRole('button', { name: 'Menu' }));
+    expect(
+      within(screen.getByRole('dialog')).getByRole('link', { name: /Your profile/ }),
+    ).toHaveAttribute('href', '/me');
+  });
+
+  it('keeps the menu out of the page until it is asked for', () => {
+    /* Mounted only while open. Left standing behind a closed dialog, every
+       destination would be in the accessibility tree twice. */
+    renderHeader();
+    expect(screen.queryByRole('dialog', { hidden: true })).toBeNull();
+    expect(screen.getAllByRole('link', { name: 'Requests' })).toHaveLength(1);
   });
 
   it('names the current screen for a screen reader, not only by colour', () => {

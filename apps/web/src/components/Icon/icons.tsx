@@ -159,6 +159,7 @@ export const ICONS = {
       <path d="M8 21h8M12 17v4" />
     </>
   ),
+  menu: <path d="M4 7h16M4 12h16M4 17h16" />,
 } as const;
 
 export type IconName = keyof typeof ICONS;
