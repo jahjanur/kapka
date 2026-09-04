@@ -75,9 +75,10 @@ describe('the product header', () => {
   });
 
   it('takes a signed-in reader to their own profile', async () => {
-    /* On a phone this is the only way there: the nav is hidden below 48rem,
-       so while the avatar was a plain span, /me was reachable by typing the
-       URL and by nothing else. */
+    /* The wide-screen way there. On a phone it is display:none and the menu
+       carries it instead — the test below this one holds that half down.
+       jsdom applies no CSS, so this asserts the link exists and is pointed
+       correctly, not which width shows it. */
     renderSignedInHeader();
     expect(await screen.findByRole('link', { name: 'Your profile' })).toHaveAttribute(
       'href',
