@@ -1,17 +1,17 @@
 /* ============================================================================
    The live figures at the foot of the menu.
 
-   Editorial rather than decorative: the numerals are the largest type in the
-   panel and their labels are the quietest, because the number is the news and
-   the label is only what it is called.
+   A recessed panel: it sits lower than the white around it, which is what
+   separates real reported numbers from the navigation above them without
+   needing another card edge.
    ========================================================================= */
 
 .activity {
-  margin-block-start: var(--space-6);
-  padding-block-start: var(--space-5);
-  /* A rule, not a card. The figures belong to the menu rather than sitting in
-     a box at the end of it. */
-  border-block-start: 1px solid var(--border-subtle);
+  margin-block-start: var(--space-5);
+  padding: var(--space-4);
+  background-color: var(--bg-surface-alt);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
 }
 
 .heading {
@@ -23,22 +23,50 @@
 .figures {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
+  gap: var(--space-3);
   margin-block-start: var(--space-3);
+  /* The height is the same whether these are figures or their placeholders,
+     so nothing below moves when the numbers arrive. */
+  min-block-size: 2.75rem;
 }
 
-/* Reversed, so the numeral reads above the label while the DOM keeps
-   term-then-value — which is the order that makes sense when it is heard
-   rather than seen. */
 .figure {
   display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+/* A rule between them rather than a border on each — one line, and it belongs
+   to neither figure. */
+.figure + .figure {
+  padding-inline-start: var(--space-3);
+  border-inline-start: 1px solid var(--border-subtle);
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: var(--space-8);
+  block-size: var(--space-8);
+  font-size: var(--text-base);
+  color: var(--accent);
+  background-color: var(--accent-surface);
+  border-radius: var(--radius-full);
+}
+
+/* Reversed, so the numeral reads above its label while the DOM keeps
+   term-then-value — the order that makes sense when it is heard. */
+.figureText {
+  display: flex;
   flex-direction: column-reverse;
-  gap: 2px;
+  gap: 1px;
   min-inline-size: 0;
 }
 
 .value {
-  font-size: var(--text-3xl);
+  font-size: var(--text-2xl);
   font-weight: var(--weight-bold);
   /* Tabular: the figure counts up on open, and proportional digits would
      shuffle the label under it on every frame. */
@@ -52,13 +80,32 @@
   font-size: var(--text-xs);
   line-height: var(--leading-snug);
   color: var(--fg-secondary);
+  /* Wraps rather than truncates: at 320px the drawer is 280 wide and two
+     columns of icon-plus-text left "Open re…", which is not a label. */
+  overflow-wrap: anywhere;
+}
+
+/* Nothing open: one calm line, in the same block, at the same height. */
+.calm {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: 2.75rem;
+  margin-block-start: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+}
+
+.calmMark {
+  flex: none;
+  color: var(--success);
 }
 
 /* ── Arrival ─────────────────────────────────────────────────────────────
    Last in the drawer's stagger, on the same cadence as the rows above it, so
    the panel opens as one sequence rather than a list plus an afterthought.
    The numerals count themselves up separately — see useCountUp, which stops
-   for prefers-reduced-motion in JavaScript because CSS cannot stop a
+   for prefers-reduced-motion in JavaScript, because CSS cannot stop a
    changing number.
    ---------------------------------------------------------------------- */
 @media (prefers-reduced-motion: no-preference) {

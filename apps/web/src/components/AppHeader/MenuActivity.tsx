@@ -1,4 +1,6 @@
 import { useMemo } from 'react';
+import { Icon } from '../Icon/Icon';
+import { Skeleton } from '../Skeleton/Skeleton';
 import { useCountUp } from '../../lib/useCountUp';
 import { useRequests } from '../../lib/useRequests';
 import styles from './MenuActivity.module.css';
@@ -6,72 +8,110 @@ import styles from './MenuActivity.module.css';
 /**
  * What is actually happening, at the foot of the menu.
  *
- * It replaces a chip row and an illustration that were there because the
- * space was empty. Decoration in a space that size always reads as padding,
- * however well it is drawn — so the rule now is that the foot of this panel
- * either says something true or is not there.
+ * The numbers are the live list, not a copy of it: `open` is how many requests
+ * are unanswered and `units` is what they add up to, both from the same
+ * endpoint the feed's own counters read. Nothing here is stored, so nothing
+ * here can drift from what the feed shows, and nothing can be invented — if
+ * the list is empty, these cannot be either.
  *
- * The numbers are the live list, not a copy of it: `open` is how many
- * requests are unanswered and `units` is what they add up to, both from the
- * same endpoint the feed reads. Nothing here is written down anywhere; if the
- * list is empty, these cannot be either.
- *
- * The fetch is free until it is wanted. This whole panel is mounted only
- * while the menu is open (see AppHeader), so the request happens when
- * somebody opens the menu and not on any of the thirteen screens that render
- * the header.
+ * The fetch is free until it is wanted. This panel is mounted only while the
+ * menu is open (see AppHeader), so the request happens when somebody opens the
+ * menu and on none of the thirteen screens that render the header. There is a
+ * test in AppHeader.test.tsx watching for exactly that.
  */
 export function MenuActivity() {
   const { data, isLoading, error } = useRequests();
 
   const stats = useMemo(() => {
-    if (!data || data.length === 0) return null;
+    if (!data) return null;
     return {
       open: data.length,
       units: data.reduce((total, request) => total + request.unitsNeeded, 0),
     };
   }, [data]);
 
-  /* Nothing true to say yet, or nothing true to say at all: no skeleton, no
-     zero, no placeholder. The drawer simply ends where its content does —
-     which is a better answer than holding space for news that is not there. */
-  if (isLoading || error || !stats) return null;
+  /* A failed fetch says nothing here. A menu is not where somebody finds out
+     that a count could not be loaded — the feed will tell them properly. */
+  if (error) return null;
 
-  return <Figures open={stats.open} units={stats.units} />;
+  return (
+    /* Real information, so real semantics: a labelled region, and the figures
+       as term-and-value pairs read as "Open requests, 7". */
+    <section className={styles.activity} aria-labelledby="menu-activity">
+      <h3 className={styles.heading} id="menu-activity">
+        Right now
+      </h3>
+
+      {isLoading || !stats ? (
+        /* The space is held rather than filled with a zero. The height here
+           matches the figures below exactly, so nothing moves when they
+           arrive. */
+        <div className={styles.figures} aria-hidden="true">
+          <Placeholder />
+          <Placeholder />
+        </div>
+      ) : stats.open === 0 ? (
+        /* Nothing open is good news, and "0" set in display type is not how
+           good news should look at the foot of a menu. */
+        <p className={styles.calm}>
+          <Icon name="checkCircle" className={styles.calmMark} />
+          No open requests right now.
+        </p>
+      ) : (
+        <Figures open={stats.open} units={stats.units} />
+      )}
+    </section>
+  );
+}
+
+function Placeholder() {
+  return (
+    <div className={styles.figure}>
+      <span className={styles.mark} />
+      <div className={styles.figureText}>
+        <Skeleton width="2.5rem" height="2rem" />
+        <Skeleton width="4.5rem" shape="text" />
+      </div>
+    </div>
+  );
 }
 
 /**
- * Split out so the counters are only mounted once there is something to count
- * — a hook cannot live behind the early return above it, and a count that
- * starts at zero before the data lands would animate from nothing to nothing.
+ * Split out so the counters mount only once there is something to count: a
+ * hook cannot live behind an early return, and a count starting at zero before
+ * the data lands would animate from nothing to nothing.
  */
 function Figures({ open, units }: { open: number; units: number }) {
   const shownOpen = useCountUp(open);
   const shownUnits = useCountUp(units);
 
   return (
-    /* Real information gets real semantics: a labelled group of term-and-value
-       pairs, read as "Open requests, 7". The numerals are visually above their
-       labels and after them in the DOM, which is the order that makes sense
-       heard. */
-    <section className={styles.activity} aria-labelledby="menu-activity">
-      <h3 className={styles.heading} id="menu-activity">
-        Right now
-      </h3>
-      <dl className={styles.figures}>
-        <div className={styles.figure}>
+    <dl className={styles.figures}>
+      <div className={styles.figure}>
+        {/* A request is somebody asking; a unit is the blood itself. The two
+            glyphs say which is which rather than repeating one drop twice. */}
+        <span className={styles.mark} aria-hidden="true">
+          <Icon name="clipboard" />
+        </span>
+        <div className={styles.figureText}>
           <dt className={styles.label}>Open requests</dt>
           <dd className={styles.value} data-numeric>
             {shownOpen}
           </dd>
         </div>
-        <div className={styles.figure}>
+      </div>
+
+      <div className={styles.figure}>
+        <span className={styles.mark} aria-hidden="true">
+          <Icon name="droplet" />
+        </span>
+        <div className={styles.figureText}>
           <dt className={styles.label}>Units needed</dt>
           <dd className={styles.value} data-numeric>
             {shownUnits}
           </dd>
         </div>
-      </dl>
-    </section>
+      </div>
+    </dl>
   );
 }

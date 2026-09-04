@@ -47,33 +47,35 @@ describe('the menu’s live figures', () => {
     expect(screen.getByText('Units needed')).toBeInTheDocument();
   });
 
-  it('is not there at all while the answer is on its way', () => {
-    /* No skeleton and no zero. The foot of the menu either says something
-       true or is not there — a placeholder is the filler this replaced. */
+  it('holds the space while the answer is on its way, and shows no number', () => {
+    /* A skeleton, not a flash of "0" — and the same height either way, so
+       nothing below it moves when the figures land. */
     listRequests.mockReturnValue(new Promise(() => undefined));
     render(<MenuActivity />);
-    expect(figures()).toBeNull();
+
+    expect(figures()).toBeInTheDocument();
+    expect(screen.queryByText('0')).toBeNull();
+    expect(screen.queryByText('Open requests')).toBeNull();
   });
 
-  it('is not there when nothing is open', async () => {
+  it('says so plainly when nothing is open', async () => {
     // Zero open requests is good news, and "0" set in display type is not how
-    // good news should look at the bottom of a menu.
+    // good news should look at the foot of a menu.
     listRequests.mockResolvedValue([]);
-    const { container } = render(<MenuActivity />);
-    await vi.waitFor(() => {
-      expect(listRequests).toHaveBeenCalled();
-    });
-    expect(figures()).toBeNull();
-    expect(container.textContent).toBe('');
+    render(<MenuActivity />);
+
+    expect(await screen.findByText('No open requests right now.')).toBeInTheDocument();
+    expect(screen.queryByText('0')).toBeNull();
   });
 
-  it('is not there when the request fails', async () => {
+  it('is not there at all when the request fails', async () => {
     // A menu is not the place to report that a count could not be fetched.
     listRequests.mockRejectedValue(new ApiError('INTERNAL', 'No.', 500));
-    render(<MenuActivity />);
+    const { container } = render(<MenuActivity />);
+
     await vi.waitFor(() => {
-      expect(listRequests).toHaveBeenCalled();
+      expect(figures()).toBeNull();
     });
-    expect(figures()).toBeNull();
+    expect(container.textContent).toBe('');
   });
 });

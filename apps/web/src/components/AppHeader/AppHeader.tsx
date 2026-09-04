@@ -6,6 +6,7 @@ import { Icon, type IconName } from '../Icon/Icon';
 import { Drawer } from '../Modal/Modal';
 import { KapkaMark } from './KapkaMark';
 import { MenuActivity } from './MenuActivity';
+import { MenuSignoff } from './MenuSignoff';
 import { useSession } from '../../lib/session';
 import { useDonorStatus } from '../../lib/useDonorStatus';
 import { PATHS } from '../../routes/paths';
@@ -369,6 +370,8 @@ export function AppHeader({
                 app about water. The foot of this panel now says something
                 true or is not there at all. */}
             <MenuActivity />
+
+            <MenuSignoff />
           </div>
         </Drawer>
       )}

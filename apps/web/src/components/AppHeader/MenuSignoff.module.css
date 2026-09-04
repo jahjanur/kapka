@@ -1,0 +1,84 @@
+/* ============================================================================
+   The sign-off band at the foot of the drawer.
+
+   One decorative layer, not four. The mockup stacked a heart, a script, two
+   waves and a message in the same square inch, and no amount of drawing
+   quality survives that — the crowding was the overlap itself.
+   ========================================================================= */
+
+.band {
+  position: relative;
+  margin-block-start: var(--space-6);
+  /* Out to the panel's edges and past its bottom inset, so the wave meets the
+     sides and the corner rather than stopping short of them. */
+  margin-inline: calc(var(--space-5) * -1);
+  margin-block-end: calc(max(var(--space-5), env(safe-area-inset-bottom)) * -1);
+  padding: var(--space-5) var(--space-5) var(--space-6);
+  /* Decoration, all of it: it must never take a tap meant for a row above. */
+  pointer-events: none;
+}
+
+/* One wave, along the bottom edge, behind everything. Stretched rather than
+   scaled — it is a band of colour, and a droplet's proportions are not at
+   stake. */
+.wave {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline: 0;
+  inline-size: 100%;
+  block-size: 4rem;
+  fill: color-mix(in oklab, var(--accent-surface) 75%, transparent);
+}
+
+/* ── The message ─────────────────────────────────────────────────────────── */
+.message {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.lines {
+  display: grid;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.lead {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-snug);
+  color: var(--fg-primary);
+}
+
+.sub {
+  font-size: var(--text-xs);
+  line-height: var(--leading-snug);
+  color: var(--fg-secondary);
+}
+
+/* ── The pulse glyph ─────────────────────────────────────────────────────
+   Tapered across three segments: the tails at 1.25, the spike at 3. That
+   step is the whole difference between a drawn mark and a default zigzag.
+   ---------------------------------------------------------------------- */
+.pulse {
+  flex: none;
+  inline-size: 2.5rem;
+  block-size: auto;
+}
+
+.pulse path {
+  stroke: var(--accent);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.pulseTail {
+  stroke-width: 1.25;
+  opacity: 0.5;
+}
+
+.pulseSpike {
+  stroke-width: 3;
+}
