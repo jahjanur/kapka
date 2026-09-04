@@ -655,7 +655,7 @@ function createDemoClient(): ApiClient {
         lastDonationDate: input.lastDonationDate ?? null,
         isAvailable: true,
         notifyByEmail: true,
-        eligibleFrom: null,
+        eligibleFrom: demoEligibleFrom(input.lastDonationDate ?? null),
       };
       /* The session says so from here on, the way the real API's would: the
          flag is what every screen reads to stop advertising registration. */
@@ -673,8 +673,16 @@ function createDemoClient(): ApiClient {
         ...demoProfile,
         ...(patch.bloodType === undefined ? {} : { bloodType: patch.bloodType }),
         ...(patch.city === undefined ? {} : { city: patch.city }),
+        /* The real API recomputes eligible_from in SQL whenever the date
+           moves, so the demo has to as well: without it, saving a donation
+           from three days ago left the page saying "You can give today" —
+           the screen contradicting the system, which is the whole thing the
+           status resolver exists to prevent. */
         ...('lastDonationDate' in patch
-          ? { lastDonationDate: patch.lastDonationDate ?? null }
+          ? {
+              lastDonationDate: patch.lastDonationDate ?? null,
+              eligibleFrom: demoEligibleFrom(patch.lastDonationDate ?? null),
+            }
           : {}),
         ...(patch.isAvailable === undefined ? {} : { isAvailable: patch.isAvailable }),
         ...(patch.notifyByEmail === undefined

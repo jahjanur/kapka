@@ -59,6 +59,18 @@
   --bt-surface: var(--bt-ab-surface);
 }
 
+/* ── Neutral, where there is nothing to tell apart ───────────────────────
+   Last, so it wins over whichever hue the group selected. The Rh sign still
+   reads: filled for positive, outlined for negative, exactly as elsewhere.
+   ---------------------------------------------------------------------- */
+.badge[data-tone='neutral'] {
+  --bt-solid-bg: var(--fg-primary);
+  --bt-solid-fg: var(--bg-surface);
+  --bt-ink: var(--fg-primary);
+  --bt-border: var(--border-default);
+  --bt-surface: var(--bg-surface-alt);
+}
+
 /* ── Rh sign selects fill vs outline ─────────────────────────────────────── */
 /* The filled half also gets depth: a highlight along the top edge and a glow
    in its own hue underneath. Both are built from --bt-solid-bg, so a badge

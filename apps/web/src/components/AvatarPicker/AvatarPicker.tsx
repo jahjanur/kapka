@@ -8,6 +8,13 @@ interface AvatarPickerProps {
   /** Shown while there is no picture, and behind one that is still loading. */
   initial: string;
   accessToken: string;
+  /**
+   * Puts the affordance on the picture rather than in a button beside it.
+   *
+   * The full form's outlined "Add a picture" button is as wide as a name, and
+   * next to one in a header it pushed the name to an ellipsis at 320px.
+   */
+  compact?: boolean;
 }
 
 /**
@@ -23,7 +30,11 @@ interface AvatarPickerProps {
  * look like again if the picture is removed, so the shape on the page never
  * empties out.
  */
-export function AvatarPicker({ initial, accessToken }: AvatarPickerProps) {
+export function AvatarPicker({
+  initial,
+  accessToken,
+  compact = false,
+}: AvatarPickerProps) {
   const [url, setUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -97,6 +108,58 @@ export function AvatarPicker({ initial, accessToken }: AvatarPickerProps) {
     } finally {
       setBusy(false);
     }
+  }
+
+  if (compact) {
+    /* The affordance is on the picture, not beside it: a label wrapping the
+       avatar, with a badge saying so. The separate outlined button it
+       replaces was as wide as the name next to it and pushed it to an
+       ellipsis at 320px. */
+    return (
+      <div className={styles.picker} data-compact="">
+        <label className={styles.avatarLabel}>
+          <span className={styles.avatar} data-busy={busy || undefined}>
+            {url ? (
+              <img className={styles.image} src={url} alt="" />
+            ) : (
+              <span aria-hidden="true">{initial}</span>
+            )}
+          </span>
+          <span className={styles.badge} aria-hidden="true">
+            <Icon name="user" />
+          </span>
+          <span className="visually-hidden">
+            {url ? 'Change your picture' : 'Add a picture'}
+          </span>
+          <input
+            ref={fileInput}
+            type="file"
+            className={styles.file}
+            accept="image/jpeg,image/png,image/webp"
+            disabled={busy}
+            onChange={(event) => void choose(event.target.files?.[0])}
+          />
+        </label>
+
+        {url && (
+          <button
+            type="button"
+            className={styles.removeBadge}
+            onClick={() => void remove()}
+            disabled={busy}
+          >
+            <Icon name="close" />
+            <span className="visually-hidden">Remove your picture</span>
+          </button>
+        )}
+
+        {error && (
+          <p className={styles.error} role="alert">
+            {error}
+          </p>
+        )}
+      </div>
+    );
   }
 
   return (

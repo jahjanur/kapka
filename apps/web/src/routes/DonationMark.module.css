@@ -1,0 +1,26 @@
+/* The empty-history mark. One weight across both paths, so the drop and the
+   trace read as drawn by one hand. */
+
+.mark {
+  display: block;
+  inline-size: 6rem;
+  block-size: auto;
+  margin-inline: auto;
+}
+
+.mark path {
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.trace {
+  stroke: var(--accent);
+  opacity: 0.55;
+}
+
+.drop {
+  stroke: var(--accent);
+  fill: var(--accent-surface);
+}

@@ -160,6 +160,13 @@ export const ICONS = {
     </>
   ),
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+  download: (
+    <>
+      <path d="M12 3v12" />
+      <path d="m7.5 10.5 4.5 4.5 4.5-4.5" />
+      <path d="M4 19h16" />
+    </>
+  ),
   /* The droplet again, carrying the plus that means "add one". Same outline
      as `droplet` rather than a second drawing of one, so the pair reads as
      one idea in two states — browse the drops, add a drop. */

@@ -14,7 +14,24 @@
 }
 
 .avatar {
-  composes: identityAvatar from '../../routes/Dashboard.module.css';
+  /* Was `composes: identityAvatar from Dashboard.module.css`. Brought here
+     because it is this component's disc: reaching into a route's stylesheet
+     made the rule invisible to that route — it read as unused, and deleting
+     it left the avatar with no size at all. A component owning its own
+     drawing cannot be broken from a page it does not know about. */
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: 3.5rem;
+  block-size: 3.5rem;
+  border-radius: var(--radius-full);
+  background-color: var(--accent);
+  background-image: var(--gradient-accent);
+  color: var(--fg-onAccent);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  box-shadow: var(--glow-accent);
   overflow: hidden;
   transition: opacity var(--dur-fast) var(--ease-out);
 }
@@ -96,4 +113,82 @@
   flex-basis: 100%;
   font-size: var(--text-sm);
   color: var(--danger-ink);
+}
+
+/* ── Compact: the control is the picture ─────────────────────────────────
+   For a header, where a button beside the avatar costs the width the name
+   needs. The label wraps the avatar, so the whole thing is the target, and
+   the badge is what says so.
+   ---------------------------------------------------------------------- */
+.picker[data-compact] {
+  position: relative;
+  display: block;
+  flex: none;
+}
+
+.avatarLabel {
+  position: relative;
+  display: block;
+  cursor: pointer;
+  border-radius: var(--radius-full);
+}
+
+.avatarLabel:focus-within {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.badge,
+.removeBadge {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  font-size: var(--text-sm);
+  color: var(--fg-onAccent);
+  background-color: var(--accent);
+  border: 2px solid var(--bg-surface);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+}
+
+/* The visible badge is 28px; the target is 44. Everything a thumb needs,
+   nothing a layout has to make room for. */
+.badge::after,
+.removeBadge::after {
+  content: '';
+  position: absolute;
+  inset: 50% auto auto 50%;
+  inline-size: var(--hit-min);
+  block-size: var(--hit-min);
+  translate: -50% -50%;
+}
+
+.badge {
+  inset-block-end: 0;
+  inset-inline-end: 0;
+}
+
+.removeBadge {
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  color: var(--fg-secondary);
+  background-color: var(--bg-surface-alt);
+  padding: 0;
+}
+
+@media (hover: hover) {
+  .removeBadge:hover {
+    color: var(--danger-ink);
+    background-color: var(--danger-surface);
+  }
+}
+
+.picker[data-compact] .error {
+  position: absolute;
+  inset-block-start: 100%;
+  inset-inline-start: 0;
+  inline-size: max-content;
+  max-inline-size: 12rem;
 }

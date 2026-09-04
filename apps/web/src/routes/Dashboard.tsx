@@ -1,4 +1,4 @@
-import { useState, type SyntheticEvent } from 'react';
+import { useEffect, useState, type CSSProperties, type SyntheticEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   BLOOD_TYPES,
@@ -25,8 +25,11 @@ import {
   Picker,
   Skeleton,
   useToast,
+  type IconName,
 } from '../components';
 import { api, ApiError, type DonorProfile } from '../lib/api';
+import { resolveDonorStatus, type DonorStatusKind } from '../lib/donorStatus';
+import { DonationMark } from './DonationMark';
 import { cx } from '../lib/cx';
 import { timeAgo } from '../lib/relativeTime';
 import { useMe, useMyNotifications } from '../lib/useRequests';
@@ -34,7 +37,56 @@ import { useSession } from '../lib/session';
 import { PATHS } from './paths';
 import styles from './Dashboard.module.css';
 
-const TODAY = new Date().toISOString().slice(0, 10);
+/* Recomputed per render rather than frozen at module load: a tab left open
+   overnight kept yesterday's date as the maximum. */
+const today = () => new Date().toISOString().slice(0, 10);
+
+/** How long a confirmation stays on screen before it stops being news. */
+const NOTE_MS = 6000;
+
+/**
+ * What each status says, and how loudly.
+ *
+ * One table, so the four states are written next to each other and cannot
+ * drift apart the way three separate branches did. Tone is meaning, not
+ * decoration: amber is the one that blocks, green the one that is clear, and
+ * the two in between are neutral because neither is wrong — one is a choice
+ * and the other is a wait.
+ */
+const STATUS: Record<
+  DonorStatusKind,
+  {
+    tone: 'blocked' | 'paused' | 'waiting' | 'ready';
+    icon: IconName;
+    title: string;
+    body: string;
+  }
+> = {
+  needs_email_confirmation: {
+    tone: 'blocked',
+    icon: 'alertCircle',
+    title: 'Confirm your email to be matched',
+    body: 'Until you open the link we sent you, no request will reach you — a donor we cannot confirm is left out of the matching.',
+  },
+  paused: {
+    tone: 'paused',
+    icon: 'eyeOff',
+    title: 'Your emails are paused',
+    body: 'Nothing is being sent to you. Your account and your details are untouched.',
+  },
+  cooling_down: {
+    tone: 'waiting',
+    icon: 'clock',
+    title: 'You cannot give just yet',
+    body: '',
+  },
+  eligible: {
+    tone: 'ready',
+    icon: 'checkCircle',
+    title: 'You can give today',
+    body: 'We will email you when a matching request near you is approved.',
+  },
+};
 
 /** Said in the reader's terms, not the column's. */
 const ACCOUNT_TYPE: Record<UserRole, string> = {
@@ -73,10 +125,29 @@ export default function Dashboard() {
      leaves this tab's session saying unconfirmed until the next refresh. */
   const me = data?.user ?? session?.user ?? null;
 
+  /* Exactly one status, from one resolver, mirroring the five conditions the
+     matching query applies. Null only while there is nothing to resolve from,
+     and the space it will occupy is reserved either way. */
+  const status = me && profile ? resolveDonorStatus(me, profile) : null;
+
+  /* One switch, both flags. The query requires both, so anything less is a
+     donor who is half on the list. */
+  const emailsOn = profile ? profile.isAvailable && profile.notifyByEmail : false;
+
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+
+  /* Announced, then taken down. It used to be set and never cleared — no
+     timer, no reset — so one successful save left a green bar at the foot of
+     the page for the rest of the session, including underneath a later red
+     error saying the opposite. */
+  useEffect(() => {
+    if (note === null) return;
+    const timer = setTimeout(() => setNote(null), NOTE_MS);
+    return () => clearTimeout(timer);
+  }, [note]);
 
   const { show } = useToast();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -122,6 +193,11 @@ export default function Dashboard() {
     setResending(true);
     try {
       const result = await api.resendVerification(token);
+      /* If the address turns out to be confirmed already — done in another
+         tab, usually — the status on this page is out of date and saying so
+         in a toast while the block below still says the opposite is how the
+         contradiction gets back in. Ask again instead. */
+      if (result.emailVerified) refetch();
       show(
         result.emailVerified
           ? 'That address is already confirmed. You are on the list.'
@@ -251,195 +327,129 @@ export default function Dashboard() {
               that can say the address is still unconfirmed — and an
               unconfirmed donor is not in the matching query, however
               complete the rest of this page looks (§12).                   */}
-          {me && (
-            <header className={styles.identity}>
-              <p className={styles.eyebrow}>Your profile</p>
+          {/* ══ 1. Identity and status ═══════════════════════════════════
+              One block, one elevation, and the only raised surface on the
+              page. Who you are and whether a request can reach you are the
+              two things somebody opens this page for, so they are the two
+              things above the fold and nothing else competes for that
+              weight.
 
-              <div className={styles.identityTop}>
+              The status inside it is exactly one element, from one resolver.
+              It used to be three independent branches, which is how an amber
+              "no request will ever reach you" came to sit above a green
+              "nothing is holding you back".                                */}
+          {me && (
+            <header className={styles.identity} style={{ '--tier': 0 } as CSSProperties}>
+              <div className={styles.identityRow}>
+                <AvatarPicker
+                  compact
+                  initial={me.fullName.slice(0, 1).toUpperCase()}
+                  accessToken={session.accessToken}
+                />
                 <div className={styles.identityWho}>
                   <h1 className={styles.title}>{me.fullName}</h1>
+                  {/* The address, once. It used to be printed again inside
+                      the warning below, a few pixels away. */}
                   <p className={styles.identityEmail}>{me.email}</p>
+                  <p className={styles.identityRole}>{ACCOUNT_TYPE[me.role]}</p>
                 </div>
               </div>
 
-              {/* The picture, and the two controls for it. Below the name
-                  rather than beside it: the controls need a line of their
-                  own, and squeezing them next to a heading is what turns a
-                  profile header into a toolbar. */}
-              <AvatarPicker
-                initial={me.fullName.slice(0, 1).toUpperCase()}
-                accessToken={session.accessToken}
-              />
-
-              {/* Never the colour alone: each chip carries its own words, and
-                  the pending one carries an icon as well. */}
-              <ul className={styles.chips}>
-                <li className={styles.chip}>{ACCOUNT_TYPE[me.role]}</li>
-                <li
-                  className={cx(
-                    styles.chip,
-                    me.emailVerified ? styles.chipDone : styles.chipPending,
-                  )}
-                >
-                  <Icon name={me.emailVerified ? 'checkCircle' : 'alertCircle'} />
-                  {me.emailVerified ? 'Email confirmed' : 'Email not confirmed'}
-                </li>
-              </ul>
-
-              {!me.emailVerified && (
-                <div className={styles.verify}>
-                  <p className={styles.verifyLine}>
-                    Until you open the link we sent to {me.email}, no request will ever
-                    reach you — a donor we cannot confirm is left out of the matching.
-                  </p>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => void resendConfirmation()}
-                    loading={resending}
-                    loadingLabel="Sending a new link…"
+              {/* The space is held whether or not the answer has arrived, so
+                  nothing below it moves when it does. */}
+              <div className={styles.statusSlot}>
+                {status && (
+                  <div
+                    className={styles.status}
+                    data-tone={STATUS[status.kind].tone}
+                    role="status"
                   >
-                    Send the link again
-                  </Button>
-                </div>
-              )}
-
-              {/* The two facts that decide which requests are yours, where
-                  somebody looks first. Two and not three: whether the emails
-                  are on is the whole subject of the card directly below, and
-                  a summary that repeats the thing under it is noise. Changing
-                  either is further down, where the consequence is explained.
-                  Both are also side by side at 360px rather than two-and-one,
-                  which is what a third would cost here. */}
-              {profile && (
-                <dl className={styles.facts}>
-                  <div className={styles.fact}>
-                    <dt>Blood type</dt>
-                    <dd>
-                      <BloodTypeBadge type={profile.bloodType} />
-                    </dd>
+                    <span className={styles.statusMark} aria-hidden="true">
+                      <Icon name={STATUS[status.kind].icon} />
+                    </span>
+                    <div className={styles.statusText}>
+                      <p className={styles.statusTitle}>{STATUS[status.kind].title}</p>
+                      <p className={styles.statusBody}>
+                        {status.kind === 'cooling_down' && status.eligibleFrom ? (
+                          <>
+                            You can give again on{' '}
+                            <time dateTime={status.eligibleFrom}>
+                              {longDate(status.eligibleFrom)}
+                            </time>
+                            , {DONATION_INTERVAL_DAYS} days after your last donation.
+                          </>
+                        ) : (
+                          STATUS[status.kind].body
+                        )}
+                      </p>
+                    </div>
+                    {/* The one blocking state is the only one with an action,
+                        and it is the most prominent button on the page. */}
+                    {status.kind === 'needs_email_confirmation' && (
+                      <Button
+                        size="sm"
+                        onClick={() => void resendConfirmation()}
+                        loading={resending}
+                        loadingLabel="Sending a new link…"
+                        className={styles.statusAction}
+                      >
+                        Resend confirmation link
+                      </Button>
+                    )}
                   </div>
-                  <div className={styles.fact}>
-                    <dt>City</dt>
-                    <dd className={styles.factText}>{profile.city}</dd>
-                  </div>
-                </dl>
-              )}
+                )}
+              </div>
             </header>
           )}
 
-          {isLoading && (
-            /* Two cards, shaped like the two that arrive — a heading, a line
-               of body, and the action that sits under it. */
-            <div className={styles.grid} aria-hidden="true">
-              {Array.from({ length: 2 }, (_, i) => (
-                <section key={i} className={styles.card}>
-                  <Skeleton width="55%" height="1.4rem" />
-                  <div className={styles.cardBody}>
-                    <Skeleton width="100%" shape="text" />
-                  </div>
-                  <div className={styles.cardActions}>
-                    <Skeleton width="9rem" height="2.75rem" />
-                  </div>
-                </section>
-              ))}
+          {isLoading && !profile && (
+            <div className={styles.sections} aria-hidden="true">
+              <section className={styles.section}>
+                <Skeleton width="9rem" height="1.4rem" />
+                <Skeleton width="100%" height="6rem" />
+              </section>
             </div>
           )}
 
           {error && (
-            <ErrorState error={error} subject="your settings" onRetry={refetch} />
+            <div className={styles.state}>
+              <ErrorState error={error} subject="your settings" onRetry={refetch} />
+            </div>
           )}
 
           {!isLoading && !error && !profile && (
-            <EmptyState
-              icon="info"
-              headline="This account is not a donor"
-              body="Only donor accounts have a blood type and a city on file. Nothing here applies to you."
-              action={<Button to={PATHS.feed}>See open requests</Button>}
-            />
+            <div className={styles.state}>
+              <EmptyState
+                icon="alertCircle"
+                headline="This account is not a donor"
+                body="Only donor accounts have a blood type and a city on file. Nothing here applies to you."
+                action={<Button to={PATHS.createAccount}>Become a donor</Button>}
+              />
+            </div>
           )}
 
           {profile && (
-            <div className={styles.grid}>
-              {/* ── Eligibility ───────────────────────────────────────────
-                  The one question a donor opens this page to ask. The date
-                  comes from the API, which computes it in SQL — a browser
-                  doing this arithmetic is how a timezone decides who may
-                  give (§5.2).                                              */}
+            <div className={styles.sections}>
+              {/* ══ 2. Your details ═════════════════════════════════════════
+                  The single home for these three values. They used to be
+                  printed here and again in the header, in two different
+                  visual treatments.                                        */}
               <section
-                className={cx(
-                  styles.card,
-                  profile.eligibleFrom ? styles.cardWaiting : styles.cardReady,
-                )}
+                className={styles.section}
+                style={{ '--tier': 1 } as CSSProperties}
               >
-                <span className={styles.cardMark} aria-hidden="true">
-                  <Icon name={profile.eligibleFrom ? 'clock' : 'checkCircle'} />
-                </span>
-                <h2 className={styles.cardTitle}>
-                  {profile.eligibleFrom
-                    ? 'You cannot give just yet'
-                    : 'You can give today'}
-                </h2>
-                <p className={styles.cardBody}>
-                  {profile.eligibleFrom ? (
-                    <>
-                      Your last donation was{' '}
-                      {profile.lastDonationDate ? (
-                        <time dateTime={profile.lastDonationDate}>
-                          {longDate(profile.lastDonationDate)}
-                        </time>
-                      ) : (
-                        'recorded'
-                      )}
-                      . You are eligible again on{' '}
-                      <time dateTime={profile.eligibleFrom}>
-                        {longDate(profile.eligibleFrom)}
-                      </time>
-                      , {DONATION_INTERVAL_DAYS} days after giving.
-                    </>
-                  ) : (
-                    <>
-                      Nothing is holding you back. We will email you when a matching
-                      request in {profile.city} is approved.
-                    </>
+                <div className={styles.sectionHead}>
+                  <h2 className={styles.sectionTitle}>Your details</h2>
+                  {!editing && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => startEditing(profile)}
+                    >
+                      Edit details
+                    </Button>
                   )}
-                </p>
-              </section>
-
-              {/* ── The pause switch ──────────────────────────────────────
-                  §3: without this, stopping the emails means deleting the
-                  account. Paused is a state to come back from, not an exit. */}
-              <section className={styles.card}>
-                <h2 className={styles.cardTitle}>
-                  {profile.isAvailable ? 'You are on the list' : 'Your emails are paused'}
-                </h2>
-                <p className={styles.cardBody}>
-                  {profile.isAvailable
-                    ? 'You will be emailed when someone near you needs your blood type. Pause it any time — nothing is deleted and you keep your account.'
-                    : 'We are not emailing you about anything. Your account and your details are untouched; turn this back on whenever you are ready.'}
-                </p>
-                <div className={styles.cardActions}>
-                  <Button
-                    variant={profile.isAvailable ? 'secondary' : 'primary'}
-                    onClick={() =>
-                      void save(
-                        { isAvailable: !profile.isAvailable },
-                        profile.isAvailable
-                          ? 'Paused. We will not email you until you turn this back on.'
-                          : 'You are back on the list.',
-                      )
-                    }
-                    loading={busy}
-                    loadingLabel="Saving…"
-                  >
-                    {profile.isAvailable ? 'Pause my emails' : 'Start emailing me again'}
-                  </Button>
                 </div>
-              </section>
-
-              {/* ── Profile ───────────────────────────────────────────── */}
-              <section className={cx(styles.card, styles.cardWide)}>
-                <h2 className={styles.cardTitle}>Your details</h2>
 
                 {formError && (
                   <p className={styles.formError} role="alert">
@@ -449,7 +459,7 @@ export default function Dashboard() {
                 )}
 
                 {editing ? (
-                  <form className={styles.form} onSubmit={handleSubmit} noValidate>
+                  <form onSubmit={handleSubmit} noValidate>
                     <Field
                       label="Blood type"
                       required
@@ -460,11 +470,11 @@ export default function Dashboard() {
                           <button
                             key={type}
                             type="button"
+                            aria-pressed={bloodType === type}
                             className={cx(
                               styles.typeButton,
                               bloodType === type && styles.typeButtonOn,
                             )}
-                            aria-pressed={bloodType === type}
                             onClick={() => setBloodType(type)}
                           >
                             <BloodTypeLabel type={type} />
@@ -497,7 +507,7 @@ export default function Dashboard() {
                         <Field label="Date of last donation">
                           <Input
                             type="date"
-                            max={TODAY}
+                            max={today()}
                             value={lastDonationDate}
                             onChange={(event) => setLastDonationDate(event.target.value)}
                           />
@@ -505,66 +515,121 @@ export default function Dashboard() {
                       )}
                     </fieldset>
 
-                    <div className={styles.cardActions}>
+                    <div className={styles.formActions}>
                       <Button type="submit" loading={busy} loadingLabel="Saving…">
                         Save changes
                       </Button>
                       <Button
                         type="button"
                         variant="ghost"
-                        onClick={() => setEditing(false)}
+                        onClick={() => {
+                          setEditing(false);
+                          setFormError(null);
+                        }}
                       >
                         Cancel
                       </Button>
                     </div>
                   </form>
                 ) : (
-                  <>
-                    <dl className={styles.facts}>
-                      <div>
-                        <dt>Blood type</dt>
-                        <dd>
-                          <BloodTypeLabel type={profile.bloodType} />
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>City</dt>
-                        <dd>{profile.city}</dd>
-                      </div>
-                      <div>
-                        <dt>Last donation</dt>
-                        <dd>
-                          {profile.lastDonationDate ? (
-                            <time dateTime={profile.lastDonationDate}>
-                              {longDate(profile.lastDonationDate)}
-                            </time>
-                          ) : (
-                            'Never donated'
-                          )}
-                        </dd>
-                      </div>
-                    </dl>
-                    <div className={styles.cardActions}>
-                      <Button variant="secondary" onClick={() => startEditing(profile)}>
-                        Edit details
-                      </Button>
+                  <dl className={styles.details}>
+                    <div className={styles.detail}>
+                      <dt>
+                        <Icon name="droplet" aria-hidden="true" />
+                        Blood type
+                      </dt>
+                      {/* Neutral here: there is one blood type on this page
+                          and nothing to tell it apart from, so the ABO hue
+                          (§6.3) is carrying no information and reads as a
+                          second brand colour. Coded everywhere it is scanned
+                          against others. */}
+                      <dd>
+                        <BloodTypeBadge type={profile.bloodType} tone="neutral" />
+                      </dd>
                     </div>
-                  </>
+                    <div className={styles.detail}>
+                      <dt>
+                        <Icon name="mapPin" aria-hidden="true" />
+                        City
+                      </dt>
+                      <dd>{profile.city}</dd>
+                    </div>
+                    <div className={styles.detail}>
+                      <dt>
+                        <Icon name="calendar" aria-hidden="true" />
+                        Last donation
+                      </dt>
+                      <dd>
+                        {profile.lastDonationDate ? (
+                          <time dateTime={profile.lastDonationDate}>
+                            {longDate(profile.lastDonationDate)}
+                          </time>
+                        ) : (
+                          'Never donated'
+                        )}
+                        {/* Derived, so nobody counts 56 days themselves. It
+                            lived only inside the eligibility card before, so
+                            the details list made you do the arithmetic. */}
+                        {profile.eligibleFrom && (
+                          <span className={styles.detailNote}>
+                            Eligible again{' '}
+                            <time dateTime={profile.eligibleFrom}>
+                              {longDate(profile.eligibleFrom)}
+                            </time>
+                          </span>
+                        )}
+                      </dd>
+                    </div>
+                  </dl>
                 )}
               </section>
-              {/* ── What we have sent ─────────────────────────────────────
-                  §9.5. A donor asked to give blood by an automated system is
-                  owed a plain answer to "what have you sent me". The delivery
-                  status is here rather than tidied away: a queued row is one
-                  the free-tier ceiling held back (§5.3) and a failed one
-                  never arrived, and calling either of them sent would be a
-                  list of emails they never got.                             */}
-              <section className={cx(styles.card, styles.cardWide)}>
-                <h2 className={styles.cardTitle}>What we have emailed you about</h2>
+
+              {/* ══ 3. Matching ═════════════════════════════════════════════
+                  One section for the subscription: what it does, its switch,
+                  and what it has sent. This was three cards — an account-type
+                  chip, "You are on the list", and the history — each
+                  describing a different face of the same thing.            */}
+              <section
+                className={styles.section}
+                style={{ '--tier': 2 } as CSSProperties}
+              >
+                <div className={styles.sectionHead}>
+                  <h2 className={styles.sectionTitle}>Matching</h2>
+                  <Button
+                    variant={emailsOn ? 'secondary' : 'primary'}
+                    size="sm"
+                    loading={busy}
+                    loadingLabel="Saving…"
+                    onClick={() =>
+                      void save(
+                        /* Both flags, together. The copy here has always been
+                           about email while the control wrote is_available and
+                           left notify_by_email alone — and the matching query
+                           requires both, so a "paused" donor was only half
+                           paused with nothing on screen saying which half. */
+                        { isAvailable: !emailsOn, notifyByEmail: !emailsOn },
+                        emailsOn
+                          ? 'Paused. We will not email you until you turn this back on.'
+                          : 'You are back on the list.',
+                      )
+                    }
+                  >
+                    {emailsOn ? 'Pause my emails' : 'Start emailing me again'}
+                  </Button>
+                </div>
+
+                {/* What the subscription IS, in one sentence, whatever state
+                    it is in. Whether it is running is the status element's
+                    job — saying it here too is how the same fact ends up on
+                    the page twice, which is what this rebuild is about. */}
+                <p className={styles.sectionBody}>
+                  When an admin approves a request your blood type can help with in your
+                  city, we email you. Pause it any time — nothing is deleted.
+                </p>
+
+                <h3 className={styles.subHead}>What we have emailed you about</h3>
 
                 {loadingHistory && (
-                  /* Shaped like a history row: a hospital name over a line of
-                     meta, with the same rule between them. */
                   <ul className={styles.history} aria-hidden="true">
                     {Array.from({ length: 2 }, (_, i) => (
                       <li key={i} className={styles.historyRow}>
@@ -580,10 +645,10 @@ export default function Dashboard() {
                 )}
 
                 {!loadingHistory && notifications?.length === 0 && (
-                  <p className={styles.cardBody}>
-                    Nothing yet. When an admin approves a request your blood type can help
-                    with in {profile.city}, it will appear here — and in your inbox.
-                  </p>
+                  <div className={styles.empty}>
+                    <DonationMark />
+                    <p className={styles.emptyLine}>No requests have reached you yet.</p>
+                  </div>
                 )}
 
                 {notifications && notifications.length > 0 && (
@@ -625,22 +690,39 @@ export default function Dashboard() {
                   </ul>
                 )}
               </section>
-              {/* ── Your data ─────────────────────────────────────────────
-                  §12: a donor may take their data and may leave. Both live
-                  at the bottom, away from the switches somebody uses often,
-                  and one of them cannot be undone.                          */}
-              <section className={cx(styles.card, styles.cardWide)}>
-                <h2 className={styles.cardTitle}>Your data</h2>
-                <p className={styles.cardBody}>
-                  Everything we hold about you — your account, your details, the requests
-                  you have posted and every email we have sent you.
-                </p>
-                <div className={styles.cardActions}>
-                  <Button variant="secondary" onClick={() => void download()}>
-                    <Icon name="arrowRight" />
-                    Download my data
+
+              {/* ══ 4. Data and account ═════════════════════════════════════
+                  Recessed on purpose (§12): both are rights rather than
+                  tasks, and one of them cannot be undone. No card — a change
+                  of ground is what separates them from the working part of
+                  the page.                                                 */}
+              <section className={styles.footer} style={{ '--tier': 3 } as CSSProperties}>
+                <div className={styles.footerRow}>
+                  <div>
+                    <h2 className={styles.footerTitle}>Your data</h2>
+                    <p className={styles.footerBody}>
+                      Your account, your details, the requests you have posted and every
+                      email we have sent you.
+                    </p>
+                  </div>
+                  <Button variant="secondary" size="sm" onClick={() => void download()}>
+                    <Icon name="download" />
+                    Download
                   </Button>
-                  <Button variant="ghost" onClick={() => setConfirmingDelete(true)}>
+                </div>
+
+                <div className={styles.footerRow}>
+                  <div>
+                    <h2 className={styles.footerTitle}>Delete your account</h2>
+                    <p className={styles.footerBody}>
+                      Removes everything above. This cannot be undone.
+                    </p>
+                  </div>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() => setConfirmingDelete(true)}
+                  >
                     Delete my account
                   </Button>
                 </div>
@@ -672,11 +754,11 @@ export default function Dashboard() {
               </>
             }
           >
-            <p className={styles.cardBody}>
+            <p className={styles.modalBody}>
               This removes your account, your donor details and any requests you have
               posted, along with the phone number on them. It cannot be undone.
             </p>
-            <p className={styles.cardBody}>
+            <p className={styles.modalBody}>
               The record that we emailed you about a request stays, with your name taken
               off it — otherwise the daily email count would read low and donors who are
               still here would stop being reached.

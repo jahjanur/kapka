@@ -154,9 +154,13 @@ describe('eligibility', () => {
     renderDashboard();
 
     expect(await screen.findByText('You cannot give just yet')).toBeInTheDocument();
-    // A bare day parses as UTC midnight, which formats as the day before
-    // west of Greenwich.
-    expect(screen.getByText(/6 October 2026|October 6, 2026/)).toBeInTheDocument();
+    /* A bare day parses as UTC midnight, which formats as the day before west
+       of Greenwich. It appears twice by design now — in the status, and beside
+       the last donation so the details list does not make you count 56 days
+       yourself — so this asks for at least one rather than exactly one. */
+    expect(screen.getAllByText(/6 October 2026|October 6, 2026/).length).toBeGreaterThan(
+      0,
+    );
   });
 });
 
@@ -168,7 +172,13 @@ describe('the pause switch', () => {
     await user.click(await screen.findByRole('button', { name: /Pause my emails/ }));
 
     await waitFor(() => {
-      expect(updateDonorProfile).toHaveBeenCalledWith({ isAvailable: false }, 'token');
+      /* Both, not just availability: the matching query requires both and
+         this card's copy has always been about email. Writing one left the
+         donor half paused. */
+      expect(updateDonorProfile).toHaveBeenCalledWith(
+        { isAvailable: false, notifyByEmail: false },
+        'token',
+      );
     });
     expect(await screen.findByText(/Your emails are paused/)).toBeInTheDocument();
     expect(
@@ -185,7 +195,10 @@ describe('the pause switch', () => {
       await screen.findByRole('button', { name: /Start emailing me again/ }),
     );
     await waitFor(() => {
-      expect(updateDonorProfile).toHaveBeenCalledWith({ isAvailable: true }, 'token');
+      expect(updateDonorProfile).toHaveBeenCalledWith(
+        { isAvailable: true, notifyByEmail: true },
+        'token',
+      );
     });
   });
 
@@ -198,7 +211,8 @@ describe('the pause switch', () => {
     await user.click(await screen.findByRole('button', { name: /Pause my emails/ }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/could not reach/);
-    expect(screen.getByText('You are on the list')).toBeInTheDocument();
+    // Still eligible, and still one status saying so.
+    expect(screen.getByText('You can give today')).toBeInTheDocument();
   });
 });
 
@@ -289,8 +303,13 @@ describe('what we have emailed them about', () => {
   });
 
   it('says nothing has been sent, rather than showing an empty box', async () => {
+    /* One sentence over a drawing. It used to be a paragraph re-explaining
+       the matching rules and naming the city for the fourth time on the
+       page. */
     renderDashboard();
-    expect(await screen.findByText(/Nothing yet/)).toBeInTheDocument();
+    expect(
+      await screen.findByText('No requests have reached you yet.'),
+    ).toBeInTheDocument();
   });
 
   it('does not call a queued notification sent', async () => {
@@ -398,7 +417,7 @@ describe('taking your data, and leaving', () => {
   it('asks the API for the export when the data is downloaded', async () => {
     const user = userEvent.setup();
     renderDashboard();
-    await user.click(await screen.findByRole('button', { name: /Download my data/ }));
+    await user.click(await screen.findByRole('button', { name: /^Download$/ }));
 
     await waitFor(() => {
       expect(exportMyData).toHaveBeenCalledWith('token');
@@ -428,8 +447,16 @@ describe('who the profile belongs to', () => {
     getMe.mockResolvedValue(unconfirmed());
     renderDashboard();
 
-    expect(await screen.findByText(/Email not confirmed/)).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /Send the link again/ }));
+    /* One status element, not a chip and a block and a card that could
+       disagree — the resolver puts this above everything else because
+       nothing is sent to an unconfirmed address. */
+    expect(
+      await screen.findByText('Confirm your email to be matched'),
+    ).toBeInTheDocument();
+    // And the state it contradicted is not also on screen.
+    expect(screen.queryByText('You can give today')).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: /Resend confirmation link/ }));
 
     await waitFor(() => {
       expect(resendVerification).toHaveBeenCalledWith('token');
@@ -438,8 +465,8 @@ describe('who the profile belongs to', () => {
 
   it('does not offer a confirmation link to somebody who has used theirs', async () => {
     renderDashboard();
-    expect(await screen.findByText('Email confirmed')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Send the link again/ })).toBeNull();
+    expect(await screen.findByText('You can give today')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Resend confirmation link/ })).toBeNull();
   });
 
   it('still names a requester, who has no donor settings to show', async () => {

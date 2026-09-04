@@ -28,6 +28,16 @@ export function BloodTypeLabel({ type }: { type: BloodType }) {
 interface BloodTypeBadgeProps extends HTMLAttributes<HTMLSpanElement> {
   type: BloodType;
   size?: 'sm' | 'md' | 'lg';
+  /**
+   * 'coded' is the default and the system §6.3 describes: hue carries the ABO
+   * group so a column of cards can be scanned for one.
+   *
+   * 'neutral' drops the hue. For the one place a blood type is not being
+   * scanned against others — your own, on your own profile — where a colour
+   * that means "B" among absent alternatives means nothing, and reads as a
+   * second brand colour on a page that has one.
+   */
+  tone?: 'coded' | 'neutral';
 }
 
 /**
@@ -38,6 +48,7 @@ interface BloodTypeBadgeProps extends HTMLAttributes<HTMLSpanElement> {
 export function BloodTypeBadge({
   type,
   size = 'md',
+  tone = 'coded',
   className,
   ...rest
 }: BloodTypeBadgeProps) {
@@ -47,6 +58,7 @@ export function BloodTypeBadge({
       className={cx(styles.badge, styles[size], className)}
       data-group={group}
       data-rh={rh}
+      data-tone={tone}
       {...rest}
     >
       <BloodTypeLabel type={type} />
