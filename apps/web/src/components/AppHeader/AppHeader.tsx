@@ -8,11 +8,73 @@ import { useSession } from '../../lib/session';
 import { PATHS } from '../../routes/paths';
 import styles from './AppHeader.module.css';
 
-const NAV: { to: string; label: string; end: boolean; icon: IconName }[] = [
-  { to: PATHS.feed, label: 'Requests', end: true, icon: 'droplet' },
-  { to: PATHS.postRequest, label: 'Post a request', end: false, icon: 'clipboard' },
-  { to: PATHS.howItWorks, label: 'How it works', end: false, icon: 'info' },
+interface NavItem {
+  to: string;
+  label: string;
+  end: boolean;
+  icon: IconName;
+  /** The line under the label in the menu. The inline nav shows the label alone. */
+  note: string;
+}
+
+const NAV: NavItem[] = [
+  {
+    to: PATHS.feed,
+    label: 'Requests',
+    end: true,
+    icon: 'droplet',
+    note: 'Browse blood requests',
+  },
+  {
+    to: PATHS.postRequest,
+    label: 'Post a request',
+    end: false,
+    icon: 'clipboard',
+    note: 'Ask for blood donation',
+  },
+  {
+    to: PATHS.howItWorks,
+    label: 'How it works',
+    end: false,
+    icon: 'info',
+    note: 'Learn more about Kapka',
+  },
 ];
+
+/**
+ * One destination in the menu: an icon, what it is, and what you would go
+ * there for.
+ *
+ * The note is not decoration — "Post a request" and "Requests" are two words
+ * apart and mean opposite things, and the line under each is what tells them
+ * apart at a glance.
+ */
+function MenuRow({
+  to,
+  end,
+  icon,
+  label,
+  note,
+}: Omit<NavItem, 'note'> & { note: string }) {
+  return (
+    <NavLink
+      to={to}
+      end={end}
+      className={({ isActive }) =>
+        isActive ? `${styles.menuRow} ${styles.menuRowActive}` : styles.menuRow
+      }
+    >
+      <span className={styles.menuRowMark} aria-hidden="true">
+        <Icon name={icon} />
+      </span>
+      <span className={styles.menuRowText}>
+        <span className={styles.menuRowTitle}>{label}</span>
+        <span className={styles.menuRowNote}>{note}</span>
+      </span>
+      <Icon name="chevronRight" className={styles.menuChevron} />
+    </NavLink>
+  );
+}
 
 /**
  * Sticky, and deliberately thin — on a phone the header is competing with the
@@ -123,40 +185,106 @@ export function AppHeader() {
         Modal).
       */}
       {menuOpen && (
-        <Drawer open title="Menu" onClose={() => setMenuOpen(false)}>
-          <nav className={styles.menuNav} aria-label="Main">
-            {NAV.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) =>
-                  isActive
-                    ? `${styles.menuLink} ${styles.menuLinkActive}`
-                    : styles.menuLink
+        <Drawer
+          open
+          title="Menu"
+          onClose={() => setMenuOpen(false)}
+          head={
+            <span className={styles.menuBrand}>
+              <Icon name="droplet" className={styles.menuBrandMark} />
+              <span>
+                <span className={styles.menuBrandName}>Kapka</span>
+                <span className={styles.menuBrandLine}>
+                  Together for a healthier tomorrow
+                </span>
+              </span>
+            </span>
+          }
+        >
+          {/* Who you are, before where you can go: signed out, the way in is
+              the first thing the menu offers rather than an afterthought
+              under the destinations. */}
+          <Link
+            to={session ? PATHS.dashboard : PATHS.login}
+            className={styles.menuAccount}
+          >
+            <span className={styles.menuAccountAvatar} aria-hidden="true">
+              {session ? (
+                session.user.fullName.slice(0, 1).toUpperCase()
+              ) : (
+                <Icon name="user" />
+              )}
+            </span>
+            <span className={styles.menuRowText}>
+              <span className={styles.menuRowTitle}>
+                {session ? session.user.fullName : 'Not signed in'}
+              </span>
+              <span
+                className={
+                  session
+                    ? `${styles.menuRowNote} ${styles.menuRowNoteClamp}`
+                    : styles.menuRowNote
                 }
               >
-                <Icon name={item.icon} className={styles.menuIcon} />
-                {item.label}
-                <Icon name="chevronRight" className={styles.menuChevron} />
-              </NavLink>
-            ))}
+                {session ? session.user.email : 'Sign in to access more features'}
+              </span>
+            </span>
+            <Icon name="chevronRight" className={styles.menuChevron} />
+          </Link>
 
-            {session && (
-              <NavLink
-                to={PATHS.dashboard}
-                className={({ isActive }) =>
-                  isActive
-                    ? `${styles.menuLink} ${styles.menuLinkActive}`
-                    : styles.menuLink
-                }
-              >
-                <Icon name="user" className={styles.menuIcon} />
-                Your profile
-                <Icon name="chevronRight" className={styles.menuChevron} />
-              </NavLink>
-            )}
+          <nav className={styles.menuGroup} aria-label="Main">
+            {NAV.map((item) => (
+              <MenuRow key={item.to} {...item} />
+            ))}
           </nav>
+
+          {/* No "Profile" row: signed in, the card above already goes there,
+              and two links to one screen in a panel this size is noise. */}
+          <div className={styles.menuGroup}>
+            <MenuRow
+              to={PATHS.privacy}
+              end={false}
+              icon="shieldCheck"
+              label="Privacy"
+              note="What we store, and what we never show"
+            />
+          </div>
+
+          {/* Signed out this is the ask, so it is a link; signed in the ask has
+              been answered and a chevron would point at nothing. */}
+          {session ? (
+            <p className={styles.menuPitch}>
+              <span className={styles.menuPitchMark} aria-hidden="true">
+                <Icon name="heart" />
+              </span>
+              <span className={styles.menuRowText}>
+                <span className={styles.menuPitchTitle}>Small actions save lives.</span>
+                <span className={styles.menuRowNote}>
+                  Thank you for being part of the change.
+                </span>
+              </span>
+            </p>
+          ) : (
+            <Link to={PATHS.register} className={styles.menuPitch}>
+              <span className={styles.menuPitchMark} aria-hidden="true">
+                <Icon name="heart" />
+              </span>
+              <span className={styles.menuRowText}>
+                <span className={styles.menuPitchTitle}>Small actions save lives.</span>
+                <span className={styles.menuRowNote}>
+                  Register as a donor and we will email you when you match.
+                </span>
+              </span>
+              <Icon name="chevronRight" className={styles.menuChevron} />
+            </Link>
+          )}
+
+          {/* Decorative, and the only thing in the menu that is. It signs the
+              panel off rather than saying anything a reader has to act on. */}
+          <span className={styles.menuFlourish} aria-hidden="true">
+            <span className={styles.menuFlourishText}>Donate. Save lives.</span>
+            <Icon name="heart" />
+          </span>
         </Drawer>
       )}
     </header>

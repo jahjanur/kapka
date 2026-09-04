@@ -126,14 +126,31 @@ describe('the product header', () => {
     );
   });
 
-  it('offers a signed-in reader their profile in the menu', async () => {
+  it('heads the menu with who you are, and where that goes', async () => {
     const user = userEvent.setup();
     renderSignedInHeader();
 
     await user.click(screen.getByRole('button', { name: 'Menu' }));
-    expect(
-      within(screen.getByRole('dialog')).getByRole('link', { name: /Your profile/ }),
-    ).toHaveAttribute('href', '/me');
+    const menu = within(screen.getByRole('dialog'));
+    expect(menu.getByRole('link', { name: /Ana Petrovska/ })).toHaveAttribute(
+      'href',
+      '/me',
+    );
+  });
+
+  it('offers a signed-out reader the way in, not their profile', async () => {
+    /* The card at the top of the menu is the account state, so signed out it
+       has to be the way to get one — a profile link would be a door to a
+       screen that redirects you straight back out. */
+    const user = userEvent.setup();
+    renderHeader();
+
+    await user.click(screen.getByRole('button', { name: 'Menu' }));
+    const menu = within(screen.getByRole('dialog'));
+    expect(menu.getByRole('link', { name: /Not signed in/ })).toHaveAttribute(
+      'href',
+      '/login',
+    );
   });
 
   it('keeps the menu out of the page until it is asked for', () => {

@@ -11,6 +11,15 @@ interface ModalProps {
   onClose: () => void;
   /** Names the dialog for a screen reader, and heads it for everyone else. */
   title: string;
+  /**
+   * Shown in the head instead of the title — a brand lockup, a summary,
+   * anything a plain heading cannot be.
+   *
+   * `title` is still required and still names the dialog; it is rendered
+   * visually hidden rather than dropped, because the accessible name is not
+   * decoration to be replaced by a nicer-looking one.
+   */
+  head?: ReactNode;
   children: ReactNode;
   /** Actions, kept below the content so a long body scrolls under them. */
   footer?: ReactNode;
@@ -51,6 +60,7 @@ export function Modal({
   open,
   onClose,
   title,
+  head,
   children,
   footer,
   shape = 'auto',
@@ -112,9 +122,13 @@ export function Modal({
         <span className={styles.grabber} aria-hidden="true" />
 
         <header className={styles.head}>
-          <h2 id="modal-title" className={styles.title}>
+          <h2
+            id="modal-title"
+            className={head === undefined ? styles.title : 'visually-hidden'}
+          >
             {title}
           </h2>
+          {head}
           {dismissible && (
             <button
               type="button"

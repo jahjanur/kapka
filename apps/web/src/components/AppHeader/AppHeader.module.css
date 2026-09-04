@@ -247,48 +247,169 @@
   }
 }
 
-.menuNav {
-  display: grid;
-  gap: var(--space-1);
-}
+/* ── Inside the drawer ───────────────────────────────────────────────────
+   Rows, not links in a list: on a phone the whole width is the target, and
+   anything smaller is a link you have to aim at. Each carries an icon, what
+   it is, and what you would go there for — "Requests" and "Post a request"
+   are two words apart and mean opposite things.
+   ---------------------------------------------------------------------- */
 
-/* A row, not a link in a list: on a phone the whole width is the target, and
-   anything smaller is a link you have to aim at. */
-.menuLink {
+/* The brand lockup that heads the panel. The dialog is still named "Menu"
+   for a screen reader — see Modal's `head`. */
+.menuBrand {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  min-block-size: var(--hit-min);
-  padding-inline: var(--space-3);
-  font-size: var(--text-base);
-  font-weight: var(--weight-medium);
+  min-inline-size: 0;
+}
+
+.menuBrandMark {
+  flex: none;
+  font-size: var(--text-3xl);
+  color: var(--accent);
+}
+
+.menuBrandName {
+  display: block;
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-tight);
   color: var(--fg-primary);
+}
+
+.menuBrandLine {
+  display: block;
+  font-size: var(--text-xs);
+  line-height: var(--leading-snug);
+  color: var(--fg-secondary);
+}
+
+/* Who you are, before where you can go. A filled card rather than a row, so
+   it reads as the state it is rather than as a fourth destination. */
+.menuAccount {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  margin-block-end: var(--space-4);
+  background-color: var(--bg-surface-alt);
+  border-radius: var(--radius-lg);
   text-decoration: none;
-  border-radius: var(--radius-md);
   transition: background-color var(--dur-fast) var(--ease-out);
 }
 
 @media (hover: hover) {
-  .menuLink:hover {
-    background-color: var(--bg-surface-alt);
+  .menuAccount:hover {
+    background-color: var(--bg-inset);
   }
 }
-.menuLink:active {
-  background-color: var(--bg-surface-alt);
-}
 
-/* Same rule as the inline nav: weight and colour, never colour alone, and
-   aria-current carries it to anyone who hears the page instead. */
-.menuLinkActive {
+.menuAccountAvatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: var(--space-10);
+  block-size: var(--space-10);
+  font-size: var(--text-base);
   font-weight: var(--weight-semibold);
   color: var(--accent-ink);
   background-color: var(--accent-surface);
+  border-radius: var(--radius-full);
 }
 
-.menuIcon {
-  flex: none;
+/* A group is a run of destinations with a rule above it, except the first —
+   the rule is what separates two kinds of place, so one above the top of the
+   list would be separating the list from nothing. */
+.menuGroup {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.menuGroup + .menuGroup {
+  margin-block-start: var(--space-3);
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.menuRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2);
+  text-decoration: none;
+  border-radius: var(--radius-lg);
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .menuRow:hover {
+    background-color: var(--bg-surface-alt);
+  }
+}
+.menuRow:active {
+  background-color: var(--bg-surface-alt);
+}
+
+/* Weight and colour, never colour alone, and aria-current carries the same
+   thing to anyone who hears the page instead. */
+.menuRowActive {
+  background-color: var(--accent-surface);
+}
+
+.menuRowActive .menuRowTitle {
+  color: var(--accent-ink);
+  font-weight: var(--weight-semibold);
+}
+
+.menuRowActive .menuChevron {
   color: var(--accent);
+}
+
+/* The icon in a tile of its own, so a column of rows has a column of marks
+   down its edge rather than glyphs of five different widths. */
+.menuRowMark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: var(--space-10);
+  block-size: var(--space-10);
   font-size: var(--text-lg);
+  color: var(--accent);
+  background-color: var(--bg-surface-alt);
+  border-radius: var(--radius-md);
+}
+
+.menuRowActive .menuRowMark {
+  background-color: var(--bg-surface);
+}
+
+.menuRowText {
+  display: grid;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.menuRowTitle {
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-snug);
+  color: var(--fg-primary);
+}
+
+.menuRowNote {
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  color: var(--fg-secondary);
+}
+
+/* For the email, and only the email: it is a single unbreakable word, so it
+   is cut rather than allowed to push the chevron off the panel. Every other
+   note is a sentence and wraps like one. */
+.menuRowNoteClamp {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Points the way without asking to be read — the row is already the link. */
@@ -298,8 +419,63 @@
   color: var(--fg-muted);
 }
 
-.menuLinkActive .menuChevron {
+/* The ask, at the foot of the panel where a menu has run out of destinations
+   and there is room to say why any of this exists. */
+.menuPitch {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-block-start: var(--space-4);
+  padding: var(--space-3);
+  background-color: var(--accent-surface);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+}
+
+.menuPitchMark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: var(--space-10);
+  block-size: var(--space-10);
+  font-size: var(--text-lg);
   color: var(--accent);
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-full);
+}
+
+.menuPitchTitle {
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  color: var(--accent-ink);
+}
+
+/* Signs the panel off. Italic rather than a script face: a second font for
+   three decorative words is 20KB on the critical path for nothing. */
+.menuFlourish {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-block-start: var(--space-6);
+  padding-block: var(--space-5);
+  font-size: var(--text-lg);
+  font-style: italic;
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+  color: var(--accent);
+  /* The wave under it, without an image: one soft rise from the bottom edge. */
+  background: radial-gradient(
+    120% 100% at 50% 100%,
+    var(--accent-surface),
+    transparent 70%
+  );
+  border-radius: var(--radius-lg);
+}
+
+.menuFlourishText {
+  opacity: 0.9;
 }
 
 /* Short label on a phone; the hero carries the full "Register as donor". */
