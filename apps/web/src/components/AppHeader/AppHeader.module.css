@@ -15,11 +15,12 @@
   inset-block-start: 0;
   z-index: var(--z-header);
   padding-block: var(--bar-gap);
-  /* The air around the bar is still air the page scrolls through, and a line
-     of body text passing across that sliver reads as a rendering fault. The
-     strip blurs what goes behind it so the gap stays air rather than becoming
-     a letterbox onto the page. */
-  backdrop-filter: blur(var(--blur-chrome));
+  /* Nothing here: no background, no blur, no tint. The strip is wider than
+     the pill, so anything painted on it is painted across the whole page —
+     and a blur pulls whatever is scrolling underneath into that band. Over
+     the red hero it smeared into a pink haze the width of the window, which
+     reads as a rendering fault rather than as chrome. The gap either side of
+     the pill is page, and shows page. */
 }
 
 @media (min-width: 48rem) {
@@ -42,8 +43,10 @@
    */
   block-size: calc(var(--header-height) - var(--bar-gap) * 2);
   padding-inline: var(--space-3);
-  background-color: var(--surface-glass);
-  backdrop-filter: blur(var(--blur-chrome));
+  /* Opaque, not glass. A translucent pill needs a blur behind it to stay
+     readable over strong colour, and that blur is the haze — so the pill
+     carries its own surface instead and owes the strip nothing. */
+  background-color: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-full);
   box-shadow: var(--elevation-1);
