@@ -1,128 +1,122 @@
 /* ============================================================================
-   The menu's closing drawing — see MenuArt.tsx for what it is.
+   The menu's closing drawing — see MenuArt.tsx.
 
-   Monochrome plus one tint: everything is --accent, and the drop's fill is
-   the only second value. Both are tokens, so the drawing follows the palette
-   rather than carrying a copy of it.
+   One colour in four strengths: the pool palest, the rings stepping down as
+   they go out, the drop solid. Every value is a token, so the drawing follows
+   the palette rather than carrying a copy of it.
    ========================================================================= */
 
 .art {
   display: block;
   inline-size: 100%;
+  /* Big enough to read as a picture rather than a mark, capped so it never
+     takes the panel over on a tablet. */
+  max-inline-size: 15rem;
   block-size: auto;
+  margin-inline: auto;
   /* It sits under the menu rows and must never take a tap meant for one. */
   pointer-events: none;
 }
 
-.art path {
-  stroke: var(--accent);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  /* Widths below are viewBox units and would scale with the drawing; this
-     keeps the hairline a hairline at every panel width. */
-  vector-effect: non-scaling-stroke;
+.pool {
+  fill: color-mix(in oklab, var(--accent-surface) 80%, transparent);
 }
 
-/* ── The weight ──────────────────────────────────────────────────────────
-   The whole point of the redraw. Three steps from tail to peak, plus opacity
-   falling away with them, so the line reads as tapering rather than as five
-   strokes that happen to touch.
+/* ── The rings ───────────────────────────────────────────────────────────
+   Weight and opacity both fall away outward. Two channels rather than one is
+   what makes them read as the same ring at three distances instead of three
+   different rings.
    ---------------------------------------------------------------------- */
-.tail {
-  stroke-width: 1;
-  opacity: 0.45;
+.ringNear,
+.ringMid,
+.ringFar {
+  fill: none;
+  stroke: var(--accent);
+  /* They scale about their own centre, which is the point the drop went in. */
+  transform-box: fill-box;
+  transform-origin: center;
 }
 
-.lead {
-  stroke-width: 1.5;
-  opacity: 0.7;
-}
-
-.spike {
+.ringNear {
   stroke-width: 2.5;
+  opacity: 0.55;
 }
 
-.decay {
-  stroke-width: 1.5;
-  opacity: 0.7;
+.ringMid {
+  stroke-width: 1.75;
+  opacity: 0.32;
+}
+
+.ringFar {
+  stroke-width: 1.25;
+  opacity: 0.18;
 }
 
 .drop {
-  stroke-width: 1.5;
-  fill: var(--accent-surface);
+  fill: var(--accent);
 }
 
-/* ── At rest ─────────────────────────────────────────────────────────────
-   The composed mark: the drop landed, the spike drawn to meet it. This is
-   what anybody who has asked for less motion sees, and it is the finished
-   drawing rather than a paused frame of one.
-   ---------------------------------------------------------------------- */
-.spike {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 0;
+.shine {
+  fill: none;
+  stroke: var(--fg-onAccent);
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.45;
 }
 
-/* ── The beat ────────────────────────────────────────────────────────────
-   Five and a half seconds, of which about one is movement: the drop falls,
-   the line answers, the mark holds, the line settles, and then nothing for
-   over a second. A menu opened by somebody whose relative needs blood today
-   is not the place for something that keeps asking to be looked at.
+/* ── The ripple ──────────────────────────────────────────────────────────
+   Each ring grows out of the last and fades, one behind the other, over six
+   and a half seconds. Slow enough to notice only if you are looking at it,
+   which is the right amount of life for a panel somebody opens when their
+   relative needs blood today.
 
-   Only transform, opacity and stroke-dashoffset animate — nothing here can
-   move the layout or ask for a reflow.
+   Transform and opacity only: nothing here can move the layout or ask for a
+   reflow. At rest — anybody who has asked for less motion — the three rings
+   simply sit where they are drawn, which is the finished picture rather than
+   a paused frame of one.
    ---------------------------------------------------------------------- */
 @media (prefers-reduced-motion: no-preference) {
-  .drop {
-    animation: fall calc(var(--dur-beat) * 2.5) var(--ease-out) infinite;
+  .ringNear,
+  .ringMid,
+  .ringFar {
+    animation: ripple calc(var(--dur-beat) * 3) var(--ease-out) infinite;
   }
 
-  .spike {
-    animation: erupt calc(var(--dur-beat) * 2.5) var(--ease-out) infinite;
+  .ringMid {
+    animation-delay: calc(var(--dur-slow) * 1.2);
+  }
+
+  .ringFar {
+    animation-delay: calc(var(--dur-slow) * 2.4);
+  }
+
+  .drop,
+  .shine {
+    animation: bob calc(var(--dur-beat) * 3) var(--ease-in-out) infinite;
   }
 }
 
-@keyframes fall {
-  0% {
-    translate: 0 -42px;
-    opacity: 0;
-  }
-  /* Falling. */
-  6% {
-    opacity: 1;
-  }
-  10% {
-    translate: 0 0;
-    opacity: 1;
-  }
-  /* Held: the drawing as it is meant to be seen. */
-  70% {
-    translate: 0 0;
-    opacity: 1;
-  }
-  /* Gone, and away before the line finishes settling. */
-  78%,
-  100% {
-    translate: 0 0;
-    opacity: 0;
-  }
-}
-
-@keyframes erupt {
-  /* Flat, and waiting. */
+/* The rings breathe outward and come back; they never leave. Fading them to
+   nothing put the drawing at a bare drop over an empty pool for five of every
+   six and a half seconds, which does not read as a pause — it reads as the
+   rings having failed to render. Opacity is left alone so each ring keeps the
+   strength that places it at its distance. */
+@keyframes ripple {
   0%,
-  10% {
-    stroke-dashoffset: 1;
-  }
-  /* The answer: fast, because a beat is. */
-  17% {
-    stroke-dashoffset: 0;
-  }
-  70% {
-    stroke-dashoffset: 0;
-  }
-  /* Settling back to a flat line. */
-  80%,
   100% {
-    stroke-dashoffset: 1;
+    scale: 0.95;
+  }
+  50% {
+    scale: 1.06;
+  }
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -6px;
   }
 }
